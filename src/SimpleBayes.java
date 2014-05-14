@@ -13,23 +13,7 @@ import java.util.Iterator;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
-
-/**
- * Couchbase imports.
- */
-import com.couchbase.client.CouchbaseClient;
-
-/**
- * JSON parsing library imports.
- * TODO: replace the GSON library with jansson
- */
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonPrimitive;
+import java.io.InputStreamReader;
 
 /**
  * WEKA library and data structures imports.
@@ -39,7 +23,6 @@ import weka.classifiers.bayes.net.EditableBayesNet;
 import weka.classifiers.bayes.net.MarginCalculator;
 
 
-
 /**
  * SimpleBayes class will perform bayes net operations with incoming data and
  * produce results in the form of a probability distribution. This simple
@@ -47,36 +30,36 @@ import weka.classifiers.bayes.net.MarginCalculator;
  * data store (in Couchbase) and setting evidence values in the child nodes
  * of this model. A liklihook distribution is extracted from the root node
  * of the model and stored in the database.
+ *
+ * args[ 0 ] -> XML Bayes File Length
+ * args[ 1 ] -> rootNode
+ * args[ 2 ] -> evidenceFragment
+ * args[ 3 ] -> evidenceValue
+ * ...
+ * args[ n   ] -> evidenceFragment
+ * args[ n+1 ] -> evidenceValue
+ *
+ * standard in -> XML Bayes File
  */
 public class SimpleBayes
 {
     public static void main( String[] args ) throws Exception
     {
-        // Set the hosts list
-        URI mainURI = null;
-        mainURI = new URI( "http://localhost:8091/pools" );
+        Integer bayesFileLength = Integer.parseInt( args[0] );
 
-        List<URI> hosts = Arrays.asList(
-            mainURI
-        );
-
-        // Connect to the cluster
-        CouchbaseClient client = new CouchbaseClient( hosts, "glasslab_assessment", "Administrator", "glasslab" );
-
-        // Retrieve the WEKA document by passing in the name of the couchbase document from the URL
-        String documentToRetrieve = args[ 0 ];
-        String dataFile = (String)client.get( documentToRetrieve );
-
-        // Shutdown the couchbase connection
-        client.shutdown();
-
-        // Parse the JSON object
-        JsonObject jObject = (JsonObject)new JsonParser().parse( dataFile );
+        // read xml from standard in
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String bayesFileData = "", line;
+ 
+        while( ((line = br.readLine()) != null) &&
+                bayesFileData.length() < bayesFileLength
+             ){
+                bayesFileData += line;
+        }
 
         // Process the XML bayes string
         BIFReader stringReader = new BIFReader();
-        stringReader.processString( jObject.get( "bayesFile" ).getAsString() );
-
+        stringReader.processString( bayesFileData );
 
         // Read the Bayes net from the file
         EditableBayesNet bayesNet = new EditableBayesNet( stringReader );
@@ -87,29 +70,24 @@ public class SimpleBayes
 
         // Read the evidence fragments that we need to capture
         // These evidence fragments should be parameters in the URL
-        JsonArray jArray = (JsonArray)jObject.get( "fragments" );
-        for( int i = 0; i < jArray.size(); i++ ) {
-            String evidenceFragment = jArray.get( i ).getAsString();
+        for( int i = 2; i < args.length; i += 2 ) {
+            String evidenceFragment = args[i];
             int evidenceValue = Integer.parseInt( args[ i + 1 ] );
             marginCalculator.setEvidence( marginCalculator.getNode( evidenceFragment ), evidenceValue );
         }
 
         // Once the evidence values have been set, get the probability distribution for the root node
-        String rootNode = jObject.get( "root" ).getAsString();
+        //String rootNode = jObject.get( "root" ).getAsString();
+        String rootNode = args[1];
         double[] margin = marginCalculator.getMargin( marginCalculator.getNode( rootNode ) );
 
-        // Setup the JSON object to return with probability information
-        JsonObject distJObject =  new JsonObject();
-        JsonPrimitive bayesKeyObject = new JsonPrimitive( documentToRetrieve );
-        distJObject.add( "bayesKey", bayesKeyObject );
-        JsonArray marginArray = new JsonArray();
-        for( int j = 0; j < margin.length; j++ ) {
-            marginArray.add( new JsonPrimitive( margin[j] ) );
+        System.out.println( "[" );
+        for( int i = 0; i < margin.length; i++ ) {
+            System.out.println( margin[i] );
+            if(i+1 < margin.length) {
+                System.out.println( "," );
+            }
         }
-        distJObject.add( "dist", marginArray );
-
-
-        // DEBUG: print the results
-        System.out.println( distJObject.toString() );
+        System.out.println( "]" );
     }
 }
