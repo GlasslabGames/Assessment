@@ -1,0 +1,35 @@
+{
+    "env": "dev",
+    "request": {
+        "httpTimeout": 60000, "//": "1 min in milliseconds"
+    },
+    "services": {
+        "port": 8003,
+        "session": {
+            "secret": "keyboard kitty",
+            "cookie": {
+                "path": "/",
+                "httpOnly": false
+            },
+            "store": {
+                "host":     "localhost:8091",
+                "bucket":   "glasslab_webapp",
+                "password": "glasslab",
+                "ttl": 86400, "//": "24 hours in seconds"
+            }
+        }
+    },
+    "telemetry": {
+        "host": "localhost",
+        "port": 8002
+    },
+    "assessment": {
+        "wekaPath": ".",
+        "queue": {
+            "host": "127.0.0.1",
+            "db": 0,
+            "port": 6379,
+            "sessionExpire" : 14400000, "//": "4 hours in milliseconds"
+        }
+    }
+}
