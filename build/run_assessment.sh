@@ -21,3 +21,8 @@ cd ../classes
 #
 # standard in -> XML Bayes File
 java -cp .:../lib/weka.jar $@
+
+# Test Run:
+#   ./run_assessment.sh SimpleBayes 3349 category_sys_mod category_end_state 4 category_remove_replace 0 < ../bayes/sierra_madre.xml
+# Output: 
+#   [ 0.31, 0.34, 0.28, 0.0699999999999999, 0.0]
