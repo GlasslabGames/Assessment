@@ -1,2 +1,2 @@
 call npm install
-call node app.js
+call node app-assessment.js

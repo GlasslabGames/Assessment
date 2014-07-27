@@ -7,7 +7,7 @@ module.exports = {
     LongName:    "Assessment-Engine",
     ServiceName: "aeng",
     Controller: {
-
+        queue: require('./controller/queue.js')
     },
     Service:     require('./assessment.service.js'),
     Const:      require('./assessment.const.js'),
@@ -17,9 +17,5 @@ module.exports = {
     },
     Queue: {
         Redis: require('./assessment.queue.redis.js')
-    },
-
-    DistillerFunc: {
-        sc: require('./distiller/SC.js')
     }
-}
+};
