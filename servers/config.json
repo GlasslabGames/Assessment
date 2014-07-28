@@ -4,20 +4,7 @@
         "httpTimeout": 60000, "//": "1 min in milliseconds"
     },
     "services": {
-        "port": 8003,
-        "session": {
-            "secret": "keyboard kitty",
-            "cookie": {
-                "path": "/",
-                "httpOnly": false
-            },
-            "store": {
-                "host":     "localhost:8091",
-                "bucket":   "glasslab_webapp",
-                "password": "glasslab",
-                "ttl": 86400, "//": "24 hours in seconds"
-            }
-        }
+        "port": 8003
     },
     "telemetry": {
         "host": "localhost",
