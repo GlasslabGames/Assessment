@@ -76,3 +76,11 @@ Running the app
   $ ./service.sh restart
   ```
 2. In a browser go to [http://localhost:8003](http://localhost:8003)
+
+
+Configs
+---------------
+* A default config is stored in **"config.json"**
+* If you place **"hydra.assessment.config.json"** in the home directory of the user running the assessment server process. 
+The server will load and override some or all configs in the default config file.
+
