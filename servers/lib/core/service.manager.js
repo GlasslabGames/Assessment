@@ -48,6 +48,13 @@ function ServiceManager(configFiles){
     configFiles.unshift("./config.json");
     this.options = config.loadSync(configFiles);
 
+    if(!this.options.services) {
+        this.options.services = {};
+    }
+    if(!this.options.services.session) {
+        this.options.services.session = {};
+    }
+
     global.ENV            = this.options.env || 'dev';
     process.env.HYDRA_ENV = global.ENV;
     this.stats            = new Util.Stats(this.options, "ServiceManager");
@@ -75,14 +82,19 @@ ServiceManager.prototype.initExpress = function() {
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
 
-    var CouchbaseStore = require('./sessionstore.couchbase.js')(express);
-    //var MemoryStore    = express.session.MemoryStore;
-
-    // express session store
-    this.exsStore = new CouchbaseStore(this.options.services.session.store);
+    var connectPromise;
+    if(this.options.services.session.store) {
+        var CouchbaseStore = require('./sessionstore.couchbase.js')(express);
+        this.exsStore      = new CouchbaseStore(this.options.services.session.store);
+        connectPromise = this.exsStore.glsConnect();
+    } else {
+        var MemoryStore = express.session.MemoryStore;
+        this.exsStore   = new MemoryStore();
+        connectPromise = Util.PromiseContinue();
+    }
 
     console.log('SessionStore Connecting...');
-    this.exsStore.glsConnect()
+    connectPromise
         .then(function(){
             console.log('SessionStore Connected');
 
@@ -101,14 +113,13 @@ return when.promise(function(resolve, reject) {
                 this.app.use(express.methodOverride());
 
                 this.app.use(express.session({
-                    secret: this.options.services.session.secret,
+                    secret: this.options.services.session.secret || "keyboard kitty",
                     cookie: _.merge({
                         path: '/'
                         , httpOnly : false
                         //, maxAge: 1000 * 60 * 24 // 24 hours
                     }, this.options.services.session.cookie),
                     store:  this.exsStore
-                    //store: new MemoryStore()
                 }));
 
                 resolve();
