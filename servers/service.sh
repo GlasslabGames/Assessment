@@ -6,15 +6,21 @@ mkdir -p $LOG_DIR
 start() {
     # install dependencies from package.json
     npm install
-    grunt
+    # compile
+    echo "Building Weka..."
+    CDIR=`pwd`
+    cd ./lib/aeng/engines/weka/build
+    ./compile_all.sh
+    cd $CDIR
+    echo "Done Building Weka"
 
     #./service_start.sh statsd "node_modules/statsd/stats.js config.statsd.json"
-    ./service_start.sh app "app.js"
+    ./service_start.sh app-assessment "app-assessment.js"
 }
 
 stop() {
     #forever stop node_modules/statsd/stats.js
-    forever stop app.js
+    forever stop app-assessment.js
 }
 
 case "$1" in

@@ -38,7 +38,7 @@ function AE_Queue(options){
     }
 }
 
-AE_Queue.prototype.pushJob = function(userId, gameSessionId, gameId){
+AE_Queue.prototype.pushJob = function(jobType, userId, gameSessionId, gameId){
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -46,12 +46,13 @@ AE_Queue.prototype.pushJob = function(userId, gameSessionId, gameId){
         // all ok, now add end to
         this.q.lpush(this.keyIn,
             JSON.stringify({
-                id: gameSessionId,
-                gameId: gameId || '',
-                userId: userId,
-                type: aeConst.queue.end
+                gameSessionId: gameSessionId,
+                gameId:  gameId,
+                userId:  userId,
+                jobType: jobType,
+                qType:   aeConst.queue.end
             }),
-            function(err){
+            function(err) {
                 if(err) {
                     console.error("Queue: End Error -", err);
                     reject(err);
@@ -64,6 +65,12 @@ AE_Queue.prototype.pushJob = function(userId, gameSessionId, gameId){
 // ------------------------------------------------
     }.bind(this));
 // end promise wrapper
+};
+
+AE_Queue.prototype.isEnded = function(data) {
+    if(!data) { return false; }
+
+    return (data.qType == aeConst.queue.end);
 };
 
 AE_Queue.prototype.getJobCount = function() {
