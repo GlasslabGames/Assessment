@@ -7,7 +7,15 @@ module.exports = {
             service: "aeng",
             controller: "queue",
             method: {
-                post: "index"
+                post: "addToQueue"
+            }
+        },
+        {
+            api: "/int/v1/aeng/activity",
+            service: "aeng",
+            controller: "queue",
+            method: {
+                post: "addActivity"
             }
         }
     ]

@@ -161,6 +161,8 @@ RequestUtil.prototype.sendRequest = function(options, data, resOut, done){
             }
         });
     }.bind(this));
+    // prevent max listeners error, this just increases the max number of listeners for the connection
+    sreq.setMaxListeners(0);
 
     if(data) {
         if(_.isObject(data)) {
