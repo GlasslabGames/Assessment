@@ -1,9 +1,7 @@
 /**
- * WebApp Consts
+ * Assessment Consts
  *
  */
-
-var api = "/api";
 
 module.exports = {
     queue: {
@@ -11,7 +9,9 @@ module.exports = {
         end:          'end'
     },
     keys: {
+        assessment:    'a',
         meta:          'm',
-        in:            'i'
+        qin:           'i',
+        activity:      'c'
     }
 };

@@ -11,6 +11,10 @@
         "port": 8002
     },
     "assessment": {
+        "getMaxFromQueue":      20,
+        "checkQueueInterval":   1000    ,"//": "1 second  in milliseconds",
+        "checkActiveInterval":  300000  ,"//": "5 minutes in milliseconds",
+        "cleanupQueueInterval": 3600000 ,"//": "1 hour    in milliseconds",
         "queue": {
             "host": "127.0.0.1",
             "db": 0,

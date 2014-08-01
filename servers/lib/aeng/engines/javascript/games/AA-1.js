@@ -19,7 +19,8 @@ function AA_SoWo(){
     // this is a list of function names that will be ran every time process is called
     this.rules = [
         'wo_rule1',
-        'wo_rule3'
+        'wo_rule3',
+        "so_rule1"
     ];
 }
 
@@ -58,7 +59,7 @@ return when.promise(function(resolve, reject) {
                 target \
             ) VALUES (?,?,?,?,?,?,?,?)";
 
-        var filterEventTypes = ["Fuse_core", "Launch_attack"];
+        var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
         var filterEventKeys = ["weakness", "success"];
 
         var totalNumEvents = 0;
@@ -203,15 +204,14 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
-
 AA_SoWo.prototype.wo_rule3 = function(db) {
 // add promise wrapper
-return when.promise(function(resolve, reject) {
+    return when.promise(function(resolve, reject) {
 // ------------------------------------------------
-    var sql;
-    var threshold = 2;
-    var max = 3;
-    sql = "SELECT * FROM events \
+        var sql;
+        var threshold = 2;
+        var max = 3;
+        sql = "SELECT * FROM events \
         WHERE \
         eventName=\"Launch_attack\" AND \
         eventData_Key=\"success\" \
@@ -219,50 +219,112 @@ return when.promise(function(resolve, reject) {
         serverTimeStamp DESC, gameSessionEventOrder DESC \
         LIMIT "+max;
 
-    db.all(sql, function(err, results) {
-        if(err) {
-            console.error("wo_rule3 DB Error:", err);
-            reject(err);
-            return;
-        }
-
-        // to few to count
-        if(results.length < max) {
-            // do nothing
-            resolve();
-            return;
-        }
-
-        //console.log("wo_rule3 - results:", results);
-        var total = _.reduce(results, function(total, row) {
-            if( row.eventData_Value == "false" ||
-                row.eventData_Value == "0"
-            ) {
-                return total + 1;
-            } else {
-                return total;
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("wo_rule3 DB Error:", err);
+                reject(err);
+                return;
             }
-        }, 0);
 
-        //console.log("total:", total);
-        if(total >= threshold) {
-            // over is 0 - 1 float percent of the amount past threshold over max
-            resolve(
-                {
-                    watchout: {
-                        id: "wo3",
-                        total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
-                    }
+            // to few to count
+            if(results.length < max) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            //console.log("wo_rule3 - results:", results);
+            var total = _.reduce(results, function(total, row) {
+                if( row.eventData_Value == "false" ||
+                    row.eventData_Value == "0"
+                    ) {
+                    return total + 1;
+                } else {
+                    return total;
                 }
-            );
-        } else {
-            // do nothing
-            resolve();
-        }
-    });
+            }, 0);
+
+            //console.log("total:", total);
+            if(total >= threshold) {
+                // over is 0 - 1 float percent of the amount past threshold over max
+                resolve(
+                    {
+                        watchout: {
+                            id: "wo3",
+                            total: total,
+                            overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        }
+                    }
+                );
+            } else {
+                // do nothing
+                resolve();
+            }
+        });
 // ------------------------------------------------
-}.bind(this));
+    }.bind(this));
 // end promise wrapper
 };
 
+AA_SoWo.prototype.so_rule1 = function(db) {
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+        var sql;
+        var threshold = 3;
+        var max = 3;
+        sql = "SELECT * FROM events \
+        WHERE \
+        eventName=\"Launch_attack\" AND \
+        eventData_Key=\"success\" AND \
+        (SELECT COUNT(*) FROM events WHERE eventName=\"Set_up_battle\") >= 2 \
+        ORDER BY \
+        serverTimeStamp DESC, gameSessionEventOrder DESC \
+        LIMIT "+max;
+
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("so_rule1 DB Error:", err);
+                reject(err);
+                return;
+            }
+
+            // to few to count
+            if(results.length < max) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            //console.log("so_rule1 - results:", results);
+            var total = _.reduce(results, function(total, row) {
+                if( row.eventData_Value == "true" ||
+                    row.eventData_Value == "1"
+                    ) {
+                    return total + 1;
+                } else {
+                    return total;
+                }
+            }, 0);
+
+            //console.log("total:", total);
+            if(total >= threshold) {
+                // over is 0 - 1 float percent of the amount past threshold over max
+                resolve(
+                    {
+                        shoutout: {
+                            id: "so1",
+                            total: total,
+                            overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        }
+                    }
+                );
+            } else {
+                // do nothing
+                resolve();
+            }
+        });
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};

@@ -1,5 +1,5 @@
 /**
- * Assessment DistillerService Module
+ * Assessment Engine Module
  *
  * Module dependencies:
  *  lodash     - https://github.com/lodash/lodash
@@ -12,13 +12,14 @@ var path    = require('path');
 // Third-party libs
 var _       = require('lodash');
 var when    = require('when');
+var guard   = require('when/guard');
 var child_process   = require('child_process');
 // Glasslab libs
 var Util;
 
-module.exports = DistillerService;
+module.exports = AssessmentEngine;
 
-function DistillerService(options){
+function AssessmentEngine(options){
     var Assessment;
 
     // Glasslab libs
@@ -27,10 +28,11 @@ function DistillerService(options){
 
     this.options = _.merge(
         {
-            distiller: {
-                getMax:    20,
-                pollDelay: 1000,          // (1 second) in milliseconds
-                cleanupPollDelay: 3600000 // (1 hour)   in milliseconds
+            assessment: {
+                getMaxFromQueue:      20,
+                checkQueueInterval:   1000,              // 1 second  in milliseconds
+                checkActiveInterval:  300000, // 5 minutes in milliseconds
+                cleanupQueueInterval: 3600000 // 1 hour    in milliseconds
             }
         },
         options
@@ -38,11 +40,13 @@ function DistillerService(options){
 
     this.requestUtil   = new Util.Request(this.options);
     this.queue         = new Assessment.Queue.Redis(this.options.assessment.queue);
-    this.stats         = new Util.Stats(this.options, "Assessment.DistillerService");
+    this.stats         = new Util.Stats(this.options, "AssessmentEngine");
 
     // TODO: move to DB
     this.engines = {};
     this.loadEngines();
+
+    //this.queue.clearJobs();
 
     /*
     // TODO: remove this after running test
@@ -51,20 +55,20 @@ function DistillerService(options){
             this.startTelemetryPoll();
         }.bind(this),
         function(err){
-            console.trace("DistillerService: Add All Old Session For Process Error -", err);
+            console.trace("AssessmentEngine: Add All Old Session For Process Error -", err);
             this.stats.increment("error", "Assessment.OldSessionProcess");
         }.bind(this));
     */
-    this.startTelemetryPoll();
+    this.startTimers();
 
     console.log('---------------------------------------------');
-    console.log('DistillerService: Waiting for messages...');
+    console.log('AssessmentEngine: Waiting for messages...');
     console.log('---------------------------------------------');
     this.stats.increment("info", "ServerStarted");
 }
 
 /*
-DistillerService.prototype.addAllOldSessionsForProcess = function() {
+ AssessmentEngine.prototype.addAllOldSessionsForProcess = function() {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -92,79 +96,140 @@ return when.promise(function(resolve, reject) {
 };
 */
 
-DistillerService.prototype.loadEngines = function() {
+AssessmentEngine.prototype.loadEngines = function() {
 
     // loop thought all the engines
     try{
-        //console.log("DistillerService - loadEngines cwd:", process.cwd());
+        //console.log("AssessmentEngine - loadEngines cwd:", process.cwd());
         var dir = path.resolve("./lib/aeng/engines");
         var files = fs.readdirSync(dir);
 
-        console.log("DistillerService: Loading Engines...");
-        files.forEach(function(file){
+        console.log("AssessmentEngine: Loading Engines...");
+        files.forEach(function(file) {
             // skip dot files
             if(file.charAt(0) != '.') {
                 var name = path.basename(file, path.extname(file));
                 var edir = dir + path.sep + name + path.sep;
 
                 try {
-                    console.log("DistillerService: Loading Engines", name);
+                    console.log("AssessmentEngine: Loading Engines", name);
 
                     var engine = require(edir + 'engine.js');
                     this.engines[name] = new engine(edir);
                 } catch(err) {
-                    console.error("DistillerService: Load Engines Error -", err);
+                    console.error("AssessmentEngine: Load Engines Error -", err);
                 }
             }
         }.bind(this));
-        console.log("DistillerService: Done Loading Engines");
+        console.log("AssessmentEngine: Done Loading Engines");
     } catch(err) {
-        console.error("DistillerService: Load Engines Error -", err);
+        console.error("AssessmentEngine: Load Engines Error -", err);
     }
 };
 
-DistillerService.prototype.startTelemetryPoll = function(){
+AssessmentEngine.prototype.startTimers = function(){
     // fetch assessment loop
-    setInterval(function() {
-        this.checkForJobs();
-    }.bind(this), this.options.distiller.pollDelay);
+    this.startTime(this.checkForJobs, this.options.assessment.checkQueueInterval);
+
+    // check if need to add items to jobs
+    this.startTime(this.checkActivity, this.options.assessment.checkQueueInterval);
 };
 
-DistillerService.prototype.checkForJobs = function() {
-    this.queue.getJobCount()
+AssessmentEngine.prototype.startTime = function(func, interval) {
+    setTimeout(function () {
+        func.call(this)
+            .then(function () {
+                this.startTime(func, interval);
+            }.bind(this));
+    }.bind(this), interval);
+};
+
+AssessmentEngine.prototype.checkActivity = function() {
+    return this.queue.getActivity()
+        .then(
+        function(activity) {
+
+            //console.log("activity:", activity);
+            if(activity && activity.length) {
+                console.log("activity Count:", activity.length);
+
+                // executes this "1" at a time
+                var guardedAsyncOperation = guard(guard.n(1), function(activity){
+                    return this.queue.pushJob("active", activity.userId, activity.gameId, activity.gameSessionId);
+                }.bind(this));
+
+                when.map(activity, guardedAsyncOperation)
+                    .then(function(){
+                        //console.log("All Done!");
+                        this.queue.clearActivity();
+                    }.bind(this))
+
+                    // catch all error
+                    .then(null, function(err){
+                        console.error("AssessmentEngine: checkActivity Error:", err);
+                    }.bind(this));
+
+            }
+
+        }.bind(this),
+        function(err) {
+            console.error("AssessmentEngine: checkActivity Error:", err);
+            this.stats.increment("error", "checkActivity");
+        }.bind(this)
+    );
+};
+
+AssessmentEngine.prototype.checkForJobs = function() {
+    return this.queue.getJobCount()
         .then(
             function(count) {
                 if(count > 0) {
-                    console.log("DistillerService: checkForJobs count:", count);
+                    console.log("AssessmentEngine: checkForJobs count:", count);
                     this.stats.increment("info", "GetIn.Count", count);
 
-                    for(var i = 0; i < Math.min(count, this.options.distiller.getMax); i++){
-                        this.getJob();
-                    }
+                    // creates zero filled array
+                    count = Math.min(count, this.options.assessment.getMaxFromQueue)
+                    var list = Array.apply(null, new Array(count)).map(Number.prototype.valueOf, 0);
+
+                    // executes this "1" at a time
+                    var guardedAsyncOperation = guard(guard.n(1), function(){
+                        return this.getJob();
+                    }.bind(this));
+
+                    when.map(list, guardedAsyncOperation)
+                        .then(function(){
+                            //console.log("All Done!");
+                        }.bind(this))
+
+                        // catch all error
+                        .then(null, function(err){
+                            console.error("AssessmentEngine: checkForJobs Error:", err);
+                        }.bind(this));
                 }
             }.bind(this),
             function(err) {
-                console.error("DistillerService: checkForJobs Error:", err);
+                console.error("AssessmentEngine: checkForJobs Error:", err);
                 this.stats.increment("error", "checkForJobs.GetInCount");
             }.bind(this)
         );
 };
 
-DistillerService.prototype.getJob = function() {
-
-    this.queue.popJob()
+AssessmentEngine.prototype.getJob = function() {
+    var jobData = {};
+    return this.queue.popJob()
         // cleanup session
         .then(function(data){
             // skip if no data
             if(!data) return;
 
+            jobData = data;
             if( this.queue.isEnded(data) ) {
-                console.log("DistillerService: getJob",
-                    "- userId:", data.userId,
-                    ", gameSessionId:", data.gameSessionId,
-                    ", gameId:", data.gameId,
-                    ", jobType:", data.jobType );
-                return this.runAssessment(data.userId, data.gameSessionId, data.gameId, data.jobType)
+                console.log("AssessmentEngine: Start Job",
+                    "- userId:", jobData.userId,
+                    ", gameSessionId:", jobData.gameSessionId,
+                    ", gameId:", jobData.gameId,
+                    ", jobType:", jobData.jobType );
+                return this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType)
                     .then( function(){
                         // TODO: use assessment DS for queue
                         return this._endQSession(data.gameSessionId)
@@ -177,18 +242,22 @@ DistillerService.prototype.getJob = function() {
 
         // catch all ok
         .then( function(){
-            //console.log("DistillerService: all done");
+            console.log("AssessmentEngine: Job Done",
+                "- userId:", jobData.userId,
+                ", gameSessionId:", jobData.gameSessionId,
+                ", gameId:", jobData.gameId,
+                ", jobType:", jobData.jobType );
         }.bind(this))
 
         // catch all errors
         .then(null, function(err) {
-            console.error("DistillerService: getJob - Error:", err);
+            console.error("AssessmentEngine: getJob - Error:", err);
             this.stats.increment("error", "getJob");
         }.bind(this));
 };
 
 // session, game, engine, message
-DistillerService.prototype.runAssessment = function(userId, gameSessionId, gameId, jobType){
+AssessmentEngine.prototype.runAssessment = function(userId, gameId, gameSessionId, jobType){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -248,7 +317,7 @@ return when.promise(function(resolve, reject) {
                     // run engines
                     enginePromise = dataPromise
                         .then(function(eventsData) {
-                            console.log("DistillerService: Starting Running - Engine:", engine);
+                            console.log("AssessmentEngine: Starting Running - Engine:", engine);
                             return this._engineRun(engine, gameSessionId, userId, gameId, eventsData, ai);
                         }.bind(this));
 
@@ -259,7 +328,7 @@ return when.promise(function(resolve, reject) {
 
             when.all(promiseList)
                 .then(function(){
-                    console.log("DistillerService: gameSessionId:", gameSessionId, ", All done!");
+                    //console.log("AssessmentEngine: gameSessionId:", gameSessionId, ", All done!");
                     resolve();
                 }.bind(this))
         }.bind(this));
@@ -270,7 +339,7 @@ return when.promise(function(resolve, reject) {
 };
 
 
-DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, gameId, eventsData, aInfo) {
+AssessmentEngine.prototype._engineRun = function(engine, gameSessionId, userId, gameId, eventsData, aInfo) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -278,7 +347,7 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
         // eventsData is an object or an array
         if( !eventsData ) {
             if(this.options.env == "dev") {
-                console.log("DistillerService: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
+                console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
             }
             // nothing to process
             resolve();
@@ -294,13 +363,13 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
             !( eventsData[0].events &&
                eventsData[0].events.length ) ) {
             if(this.options.env == "dev") {
-                console.log("DistillerService: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
+                console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
             }
             // nothing to process
             resolve();
             return;
         }
-        console.log("DistillerService: Processing - Engine:", engine, ", # Sessions:", eventsData.length);
+        console.log("AssessmentEngine: Processing - Engine:", engine, ", # Sessions:", eventsData.length);
 
         // saving current path to restore later
         var cDir = process.cwd();
@@ -309,7 +378,7 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
         // check if engine path exists
         var path = "./lib/aeng/engines/"+engine;
         if( !fs.existsSync(path) ) {
-            console.log("DistillerService: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
+            console.log("AssessmentEngine: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
             // nothing to process
             resolve();
             return;
@@ -319,7 +388,7 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
         //console.log("Current Directory Inside \""+engine+"\":", process.cwd());
 
         if(this.options.env == "dev") {
-            console.log("DistillerService: Execute Assessment Started - gameSessionId:", gameSessionId, ", gameId:", gameId);
+            console.log("AssessmentEngine: Execute Assessment Started - gameSessionId:", gameSessionId, ", gameId:", gameId);
         }
         this.stats.increment("info", "ExecuteAssessment.Started");
 
@@ -335,7 +404,7 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
             .then(function(results){
                 if(results) {
                     // get session info (userId, courseId)
-                    console.log( "DistillerService: Saving Assessment...");
+                    console.log( "AssessmentEngine: Saving Assessment...");
 
                     var out = {
                         timestamp: Util.GetTimeStamp(),
@@ -346,13 +415,13 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
                         userId:  userId,
                         results: results
                     };
-                    console.log( "DistillerService: Assessment results:", out);
+                    console.log( "AssessmentEngine: Assessment results:", out);
                     return this._saveAEResults(gameId, out);
                 }
             }.bind(this))
 
             .then(function(){
-                console.log("DistillerService: Done Running - Engine:", engine);
+                console.log("AssessmentEngine: Done Running - Engine:", engine);
 
                 process.chdir( cDir );
                 //console.log("Current Directory After \""+engine+"\":", process.cwd());
@@ -362,11 +431,11 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
 
             // catch all errors
             .then(null, function(err){
-                console.log("DistillerService: Assessment Execution - Error:", err);
+                console.log("AssessmentEngine: Assessment Execution - Error:", err);
 
                 // nothing to do
                 if(this.options.env == "dev") {
-                    console.log("DistillerService: Skipping Assessment Execution - gameSessionId:", gameSessionId, ", gameId:", gameId);
+                    console.log("AssessmentEngine: Skipping Assessment Execution - gameSessionId:", gameSessionId, ", gameId:", gameId);
                 }
                 this.stats.increment("info", "ExecuteAssessment.Skipping");
 
@@ -379,34 +448,34 @@ DistillerService.prototype._engineRun = function(engine, gameSessionId, userId, 
 };
 
 
-DistillerService.prototype._endQSession = function(id) {
+AssessmentEngine.prototype._endQSession = function(id) {
     return this._internalTelemetryRequest("/int/v1/data/qsession/end", { id: id });
 };
 
-DistillerService.prototype._cleanupQSession = function(id) {
+AssessmentEngine.prototype._cleanupQSession = function(id) {
     return this._internalTelemetryRequest("/int/v1/data/qsession/cleanup", { id: id });
 };
 
-DistillerService.prototype._getSessionEvents = function(gameSessionId) {
+AssessmentEngine.prototype._getSessionEvents = function(gameSessionId) {
     return this._internalTelemetryRequest("/int/v1/data/session/"+gameSessionId+"/events");
 };
 
-DistillerService.prototype._getUserEvents = function(gameId, userId) {
+AssessmentEngine.prototype._getUserEvents = function(gameId, userId) {
     return this._internalTelemetryRequest("/int/v1/data/game/"+gameId+"/user/"+userId+"/events");
 };
 
 
-DistillerService.prototype._getGameAssessmentDefinitions = function(gameId) {
+AssessmentEngine.prototype._getGameAssessmentDefinitions = function(gameId) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/definitions");
 };
 
-DistillerService.prototype._saveAEResults = function(gameId, data) {
+AssessmentEngine.prototype._saveAEResults = function(gameId, data) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/results", data);
 };
 
 
 // TODO: move this to core service routing
-DistillerService.prototype._internalTelemetryRequest = function(route, data) {
+AssessmentEngine.prototype._internalTelemetryRequest = function(route, data) {
     var protocal = this.options.telemetry.protocal || 'http:';
     var host = this.options.telemetry.host || 'localhost';
     var port = this.options.telemetry.port || 8002;
