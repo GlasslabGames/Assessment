@@ -13,8 +13,13 @@ var when    = require('when');
 
 module.exports = JavascriptEngine;
 
-function JavascriptEngine(engineDir){
+function JavascriptEngine(engineDir, options){
     this.engineDir = engineDir;
+
+    this.options = _.merge(
+        { },
+        options
+    );
 }
 
 
@@ -25,15 +30,15 @@ return when.promise(function(resolve, reject) {
 
     // load file and run
     try {
-        console.log("Javascript_Engine - getDistillerFunction cwd:", process.cwd());
+        //console.log("AssessmentEngine: Javascript_Engine - getDistillerFunction cwd:", process.cwd());
         var file = this.engineDir + "games"+path.sep + gameId+".js";
         var game = require(file);
 
-        var g = new game();
+        var g = new game(this.options);
         g.process(eventsData).then(resolve, reject);
 
     } catch(err) {
-        console.error("Javascript_Engine: Get Distiller Function Error -", err);
+        console.error("AssessmentEngine: Javascript_Engine - Get Distiller Function Error -", err);
         reject(err);
     }
 
