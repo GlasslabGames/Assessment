@@ -12,7 +12,7 @@ module.exports = {
 var exampleInput = {};
 
 exampleInput.addToQueue = {
-    jobType:  "sessionEnd",
+    jobType:  "endSession",
     userId: 25,
     gameId: "AA-1",
     gameSessionId:  "ASD-123-QWER"

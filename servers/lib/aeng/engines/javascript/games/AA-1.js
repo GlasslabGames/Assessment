@@ -13,7 +13,7 @@ var sqlite3 = require('sqlite3').verbose();
 
 module.exports = AA_SoWo;
 
-function AA_SoWo(){
+function AA_SoWo(options){
     this.version = 0.01;
 
     // this is a list of function names that will be ran every time process is called
@@ -22,6 +22,11 @@ function AA_SoWo(){
         'wo_rule3',
         "so_rule1"
     ];
+
+    this.options = _.merge(
+        { },
+        options
+    );
 }
 
 /*
@@ -93,7 +98,9 @@ return when.promise(function(resolve, reject) {
                 }
             }
         }
-        console.log("AA_SoWo: process - # of events:", totalNumEvents);
+        if(this.options.env == "dev") {
+            console.log("AssessmentEngine: Javascript_Engine - AA_SoWo: process - # of events:", totalNumEvents);
+        }
 
         var promiseList = [];
         for (var i = 0; i < this.rules.length; i++) {
@@ -161,7 +168,7 @@ return when.promise(function(resolve, reject) {
     //sql = "SELECT * FROM events";
     db.all(sql, function(err, results) {
         if(err) {
-            console.error("wo_rule1 DB Error:", err);
+            console.error("AssessmentEngine: Javascript_Engine - AA_SoWo wo_rule1 DB Error:", err);
             reject(err);
             return;
         }
@@ -221,7 +228,7 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("wo_rule3 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - AA_SoWo wo_rule3 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -284,7 +291,7 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("so_rule1 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - AA_SoWo so_rule1 DB Error:", err);
                 reject(err);
                 return;
             }

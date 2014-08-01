@@ -11,10 +11,15 @@ var path    = require('path');
 var _       = require('lodash');
 var when    = require('when');
 
-function WekaEngine(engineDir) {
+function WekaEngine(engineDir, options) {
     this.version = 0.01;
 
     this.engineDir = engineDir;
+
+    this.options = _.merge(
+        { },
+        options
+    );
 }
 
 WekaEngine.prototype.run = function(gameSessionId, gameId, eventsData){
@@ -37,7 +42,7 @@ return when.promise(function(resolve, reject) {
 
                 // If the distilled data has no WEKA key, don't save anything
                 if( !(distilledData && distilledData.bayes.key) ) {
-                    console.log( "Weka_Engine: No bayes key found in distilled data" );
+                    console.log( "AssessmentEngine: Weka_Engine - No bayes key found in distilled data" );
                     resolve();
                     return;
                 }
@@ -92,8 +97,8 @@ return when.promise(function(resolve, reject) {
             var runWekaPromise = when.promise( function(resolve2, reject2) {
                 // Use the distilled data to get the bayes key and evidence fragments to pass to the WEKA process
                 //console.log( "bayes file: ", distilledData.bayes.key );
-                console.log("Weka_Engine - cwd:", process.cwd());
-                console.log("Weka_Engine - execute:", scriptToExecute + commandString );
+                console.log("AssessmentEngine: Weka_Engine - cwd:", process.cwd());
+                console.log("AssessmentEngine: Weka_Engine - execute:", scriptToExecute + commandString );
 
                 var aeWeka = child_process.exec( scriptToExecute + commandString,
                     function( error, data, stderr ) {
@@ -131,7 +136,7 @@ return when.promise(function(resolve, reject) {
                 resolve(compData);
             } catch(err) {
                 // invalid json data
-                console.error("Weka_Engine: Invalid Competency JSON data - Error:", err);
+                console.error("AssessmentEngine: Weka_Engine - Invalid Competency JSON data - Error:", err);
                 reject(err);
             }
         }.bind(this))
@@ -150,7 +155,7 @@ WekaEngine.prototype.getBayesModel = function(gameId, modelName){
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
         try{
-            console.log("Weka_Engine - getBayesModel cwd:", process.cwd());
+            console.log("AssessmentEngine: Weka_Engine - getBayesModel cwd:", process.cwd());
             var file = this.engineDir + "games"+path.sep + gameId + path.sep+"bayes"+path.sep + modelName+".xml";
             fs.readFile(file, 'utf-8', function(err, fileData){
                 if(err) {
@@ -161,7 +166,7 @@ WekaEngine.prototype.getBayesModel = function(gameId, modelName){
                 resolve(fileData);
             }.bind(this));
         } catch(err) {
-            console.error("Weka_Engine: Load Weka Files Error -", err);
+            console.error("AssessmentEngine: Weka_Engine - Load Weka Files Error -", err);
             reject(err);
         }
 // ------------------------------------------------
@@ -174,13 +179,13 @@ WekaEngine.prototype.getDistillerFunction = function(gameId){
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
     try{
-        console.log("Weka_Engine - getDistillerFunction cwd:", process.cwd());
+        console.log("AssessmentEngine: Weka_Engine - getDistillerFunction cwd:", process.cwd());
         var file = this.engineDir + "games"+path.sep + gameId + path.sep+"distiller.js";
         var sc = require(file);
 
         resolve( new sc() );
     } catch(err) {
-        console.error("Weka_Engine: Get Distiller Function Error -", err);
+        console.error("AssessmentEngine: Weka_Engine - Get Distiller Function Error -", err);
         reject(err);
     }
 // ------------------------------------------------
