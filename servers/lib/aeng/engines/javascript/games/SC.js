@@ -1,5 +1,5 @@
 /**
- * Argubot Academy ShoutOut and WatchOut Module
+ * SimCity ShoutOut and WatchOut Module
  *
  * Module dependencies:
  *  lodash     - https://github.com/lodash/lodash
@@ -11,16 +11,14 @@ var _       = require('lodash');
 var when    = require('when');
 var sqlite3 = require('sqlite3').verbose();
 
-module.exports = AA_SoWo;
+module.exports = SC_SoWo;
 
-function AA_SoWo(options){
+function SC_SoWo(options){
     this.version = 0.01;
 
     // this is a list of function names that will be ran every time process is called
     this.rules = [
-        'wo_rule1',
-        'wo_rule3',
-        "so_rule1"
+        'wo_rule1'
     ];
 
     this.options = _.merge(
@@ -33,10 +31,11 @@ function AA_SoWo(options){
     Dump all the relivent events into an in memory SQLite DB
     Run some Q's and return results
  */
-AA_SoWo.prototype.process = function(eventsList) {
+SC_SoWo.prototype.process = function(eventsList) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
+    /*
     var db = new sqlite3.Database(':memory:');
     db.serialize(function() {
         var sql;
@@ -99,7 +98,7 @@ return when.promise(function(resolve, reject) {
             }
         }
         if(this.options.env == "dev") {
-            console.log("AssessmentEngine: Javascript_Engine - AA_SoWo: process - # of events:", totalNumEvents);
+            console.log("AssessmentEngine: Javascript_Engine - SC_SoWo: process - # of events:", totalNumEvents);
         }
 
         var promiseList = [];
@@ -145,12 +144,17 @@ return when.promise(function(resolve, reject) {
 
     }.bind(this));
     db.close();
+
+    */
+    resolve();
+
 // ------------------------------------------------
 }.bind(this));
 // end promise wrapper
 };
 
-AA_SoWo.prototype.wo_rule1 = function(db) {
+/*
+SC_SoWo.prototype.wo_rule1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -168,7 +172,7 @@ return when.promise(function(resolve, reject) {
     //sql = "SELECT * FROM events";
     db.all(sql, function(err, results) {
         if(err) {
-            console.error("AssessmentEngine: Javascript_Engine - AA_SoWo wo_rule1 DB Error:", err);
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo wo_rule1 DB Error:", err);
             reject(err);
             return;
         }
@@ -211,7 +215,7 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
-AA_SoWo.prototype.wo_rule3 = function(db) {
+SC_SoWo.prototype.wo_rule3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -228,7 +232,7 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - AA_SoWo wo_rule3 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - SC_SoWo wo_rule3 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -273,7 +277,7 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 // end promise wrapper
 };
 
-AA_SoWo.prototype.so_rule1 = function(db) {
+SC_SoWo.prototype.so_rule1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -291,7 +295,7 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - AA_SoWo so_rule1 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - SC_SoWo so_rule1 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -335,3 +339,4 @@ AA_SoWo.prototype.so_rule1 = function(db) {
     }.bind(this));
 // end promise wrapper
 };
+*/
