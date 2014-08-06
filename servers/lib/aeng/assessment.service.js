@@ -30,8 +30,8 @@ function AssessmentEngine(options){
         {
             assessment: {
                 getMaxFromQueue:      20,
-                checkQueueInterval:   1000,              // 1 second  in milliseconds
-                checkActiveInterval:  300000, // 5 minutes in milliseconds
+                checkQueueInterval:   1000,   // 1 second  in milliseconds
+                checkActiveInterval:  10000,  // 10 seconds in milliseconds
                 cleanupQueueInterval: 3600000 // 1 hour    in milliseconds
             }
         },
@@ -132,7 +132,7 @@ AssessmentEngine.prototype.startTimers = function(){
     this.startTime(this.checkForJobs, this.options.assessment.checkQueueInterval);
 
     // check if need to add items to jobs
-    this.startTime(this.checkActivity, this.options.assessment.checkQueueInterval);
+    this.startTime(this.checkActivity, this.options.assessment.checkActiveInterval);
 };
 
 AssessmentEngine.prototype.startTime = function(func, interval) {
@@ -192,13 +192,11 @@ AssessmentEngine.prototype.checkForJobs = function() {
                     this.stats.increment("info", "GetIn.Count", count);
 
                     // creates zero filled array
-                    count = Math.min(count, this.options.assessment.getMaxFromQueue)
+                    count = Math.min(count, this.options.assessment.getMaxFromQueue);
                     var list = Array.apply(null, new Array(count)).map(Number.prototype.valueOf, 0);
 
                     // executes this "1" at a time
-                    var guardedAsyncOperation = guard(guard.n(1), function(){
-                        return this.getJob();
-                    }.bind(this));
+                    var guardedAsyncOperation = guard(guard.n(1), this.getJob.bind(this));
 
                     when.map(list, guardedAsyncOperation)
                         .then(function(){
