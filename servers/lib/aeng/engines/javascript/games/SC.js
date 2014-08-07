@@ -13,193 +13,83 @@ var sqlite3 = require('sqlite3').verbose();
 
 module.exports = SC_SoWo;
 
-function SC_SoWo(options){
+function SC_SoWo(options, engine){
     this.version = 0.01;
-
-    // this is a list of function names that will be ran every time process is called
-    this.rules = [
-        'wo_rule1'
-    ];
 
     this.options = _.merge(
         { },
         options
     );
+
+    this.engine = engine;
 }
 
-/*
-    Dump all the relivent events into an in memory SQLite DB
-    Run some Q's and return results
- */
+// Name       -> gameLevel (ActivityId)
+// Parktown   -> MedusaA1School01
+// Alexandria -> MedusaA1Jobs01
+// Sierra     -> MedusaA1Power01
+// Jackson    -> MedusaA1Pollution01
+
 SC_SoWo.prototype.process = function(eventsList) {
-// add promise wrapper
-return when.promise(function(resolve, reject) {
-// ------------------------------------------------
-    /*
-    var db = new sqlite3.Database(':memory:');
-    db.serialize(function() {
-        var sql;
 
-        sql = "CREATE TABLE events (\
-                userId INT, \
-                clientTimeStamp DATETIME, \
-                serverTimeStamp DATETIME, \
-                eventName TEXT, \
-                gameSessionEventOrder INT, \
-                eventData_Key TEXT, \
-                eventData_Value TEXT,\
-                target TEXT)";
-        db.run(sql);
+    var filterEventTypes = ["GL_Scenario_Summary", "GL_Zone", "GL_Unit_Bulldoze" ];
+    var filterEventKeys = ["busStops", "type", "UGuid" ];
 
-        // insert
-        sql = "INSERT INTO events ( \
-                userId, \
-                clientTimeStamp, \
-                serverTimeStamp, \
-                eventName, \
-                gameSessionEventOrder, \
-                eventData_Key, \
-                eventData_Value, \
-                target \
-            ) VALUES (?,?,?,?,?,?,?,?)";
+    // this is a list of function names that will be ran every time process is called
+    return this.engine.processEventRules(filterEventTypes, filterEventKeys, [
+        this.park_wo1.bind(this),
+        this.park_so1.bind(this),
 
-        var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
-        var filterEventKeys = ["weakness", "success"];
+        this.alex_wo1.bind(this),
+        this.alex_so1.bind(this),
 
-        var totalNumEvents = 0;
-        for (var i = 0; i < eventsList.length; i++) {
-            // skip if not events
-            if(!eventsList[i].events) continue;
+        //this.sierra_wo1.bind(this),
+        //this.sierra_so1.bind(this),
 
-            totalNumEvents += eventsList[i].events.length;
-            for (var j = 0; j < eventsList[i].events.length; j++) {
-
-                // only add events if in filter list
-                if( !_.contains(filterEventTypes, eventsList[i].events[j].eventName) ) continue;
-
-                for( var key in eventsList[i].events[j].eventData) {
-
-                    // only add event data if in filter list
-                    if( !_.contains(filterEventKeys, key) ) continue;
-
-                    var value = eventsList[i].events[j].eventData[key];
-                    var row = [
-                        eventsList[i].userId,
-                        eventsList[i].events[j].clientTimeStamp,
-                        eventsList[i].events[j].serverTimeStamp,
-                        eventsList[i].events[j].eventName,
-                        eventsList[i].events[j].gameSessionEventOrder || i,
-                        key,
-                        value,
-                        eventsList[i].events[j].eventData['target'] || ""
-                    ];
-                    db.run(sql, row);
-                }
-            }
-        }
-        if(this.options.env == "dev") {
-            console.log("AssessmentEngine: Javascript_Engine - SC_SoWo: process - # of events:", totalNumEvents);
-        }
-
-        var promiseList = [];
-        for (var i = 0; i < this.rules.length; i++) {
-            // calling the function
-            if( this[ this.rules[i] ] ) {
-                promiseList.push( this[ this.rules[i] ](db) );
-            }
-        }
-
-        var results = {
-            watchout:[],
-            shoutout:[],
-            version: this.version
-        };
-
-        var rulesPromise = when.reduce(promiseList,
-            function (sum, value) {
-
-                if(_.isObject(value)) {
-                    if(value.watchout) {
-                        sum.watchout.push(value.watchout);
-                    }
-                    else if(value.shoutout) {
-                        sum.shoutout.push(value.shoutout);
-                    }
-                }
-
-                //console.log("rule - sum:", sum, ", value:", value);
-                return sum;
-            }, results);
-
-        rulesPromise
-            .then(function(sum){
-                //console.log("rulesPromise sum:", sum);
-                resolve(sum);
-            }.bind(this))
-
-        // catch all errors
-        .then(null, function(err){
-            reject(err);
-        }.bind(this));
-
-    }.bind(this));
-    db.close();
-
-    */
-    resolve();
-
-// ------------------------------------------------
-}.bind(this));
-// end promise wrapper
+        this.jack_wo1.bind(this),
+        //this.jack_so1.bind(this),
+    ]);
 };
 
-/*
-SC_SoWo.prototype.wo_rule1 = function(db) {
+// ===============================================
+// Parktown   -> MedusaA1School01
+// Crazy Plopper
+SC_SoWo.prototype.park_wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
     var sql;
-    var threshold = 3;
-    var max = 6;
-    sql = "SELECT * FROM events \
+    var total = 0;
+    var threshold = 10;
+    var max = 10;
+    sql = "SELECT CAST(eventData_Value as \"INTEGER\") as total FROM events \
             WHERE \
-            eventName=\"Fuse_core\" AND \
-            eventData_Key=\"weakness\" \
-            ORDER BY \
-            serverTimeStamp DESC, gameSessionEventOrder DESC \
-            LIMIT "+max;
+            gameLevel=\"MedusaA1School01\" AND \
+            eventName=\"GL_Scenario_Summary\" AND \
+            eventData_Key=\"busStops\"\
+            LIMIT 1";
 
-    //sql = "SELECT * FROM events";
     db.all(sql, function(err, results) {
         if(err) {
-            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo wo_rule1 DB Error:", err);
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo park_wo1 DB Error:", err);
             reject(err);
             return;
         }
 
-        // to few to count
-        if(results.length < max) {
+        // no results
+        if(!results.length) {
             // do nothing
             resolve();
             return;
         }
 
-        //console.log("wo_rule1 - results:", results);
-        var total = _.reduce(results, function(total, row) {
-            if(row.eventData_Value == "inconsistent") {
-                return total + 1;
-            } else {
-                return total;
-            }
-        }, 0);
-
-        //console.log("total:", total);
+        total = results[0].total;
         if(total >= threshold) {
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
                     watchout: {
-                        id: "wo1",
+                        id: "park_wo1",
                         total: total,
                         overPercent: (total - threshold + 1)/(max - threshold + 1)
                     }
@@ -215,128 +105,234 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
-SC_SoWo.prototype.wo_rule3 = function(db) {
+// Parktown   -> MedusaA1School01
+// Housing Mogul
+SC_SoWo.prototype.park_so1 = function(db) {
 // add promise wrapper
-    return when.promise(function(resolve, reject) {
+return when.promise(function(resolve, reject) {
 // ------------------------------------------------
-        var sql;
-        var threshold = 2;
-        var max = 3;
-        sql = "SELECT * FROM events \
-        WHERE \
-        eventName=\"Launch_attack\" AND \
-        eventData_Key=\"success\" \
-        ORDER BY \
-        serverTimeStamp DESC, gameSessionEventOrder DESC \
-        LIMIT "+max;
+    var sql;
+    var total = 0;
+    var threshold = 1;
+    var max = 1;
+    sql = "SELECT count(*) as total FROM events \
+            WHERE \
+            gameLevel=\"MedusaA1School01\" AND \
+            eventName=\"GL_Zone\" AND \
+            eventData_Key=\"type\" AND \
+            eventData_Value=\"residential\" \
+            ORDER BY \
+            serverTimeStamp DESC, gameSessionEventOrder DESC";
 
-        db.all(sql, function(err, results) {
-            if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - SC_SoWo wo_rule3 DB Error:", err);
-                reject(err);
-                return;
-            }
+    //sql = "SELECT * FROM events";
+    db.all(sql, function(err, results) {
+        if(err) {
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo park_so1 DB Error:", err);
+            reject(err);
+            return;
+        }
 
-            // to few to count
-            if(results.length < max) {
-                // do nothing
-                resolve();
-                return;
-            }
+        // no results
+        if(!results.length) {
+            // do nothing
+            resolve();
+            return;
+        }
 
-            //console.log("wo_rule3 - results:", results);
-            var total = _.reduce(results, function(total, row) {
-                if( row.eventData_Value == "false" ||
-                    row.eventData_Value == "0"
-                    ) {
-                    return total + 1;
-                } else {
-                    return total;
-                }
-            }, 0);
-
-            //console.log("total:", total);
-            if(total >= threshold) {
-                // over is 0 - 1 float percent of the amount past threshold over max
-                resolve(
-                    {
-                        watchout: {
-                            id: "wo3",
-                            total: total,
-                            overPercent: (total - threshold + 1)/(max - threshold + 1)
-                        }
+        total = results[0].total;
+        if(total >= threshold) {
+            // over is 0 - 1 float percent of the amount past threshold over max
+            resolve(
+                {
+                    shoutout: {
+                        id: "park_so1",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
                     }
-                );
-            } else {
-                // do nothing
-                resolve();
-            }
-        });
+                }
+            );
+        } else {
+            // do nothing
+            resolve();
+        }
+    });
 // ------------------------------------------------
-    }.bind(this));
+}.bind(this));
+// end promise wrapper
+};
+// ===============================================
+
+// ===============================================
+// Alexandria -> MedusaA1Jobs01
+// NoZoner
+SC_SoWo.prototype.alex_wo1 = function(db) {
+// add promise wrapper
+return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+    var sql;
+    var total = 0;
+    var max = 15;
+    sql = "SELECT COUNT(*) as total FROM events \
+                WHERE \
+                gameLevel=\"MedusaA1Jobs01\" AND \
+                eventName=\"GL_Zone\" AND \
+                eventData_Key=\"type\" AND \
+                (eventData_Value=\"industrial\" OR\
+                 eventData_Value=\"commercial\" )";
+
+    db.all(sql, function(err, results) {
+        if(err) {
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo alex_wo1 DB Error:", err);
+            reject(err);
+            return;
+        }
+
+        // no results
+        if(results.length) {
+            total = results[0].total;
+        }
+
+        if(total <= max) {
+            // over is 0 - 1 float percent of the amount past threshold over max
+            resolve(
+                {
+                    watchout: {
+                        id: "alex_wo1",
+                        total: total,
+                        underPercent: 1/(max - total + 1)
+                    }
+                }
+            );
+        } else {
+            // do nothing
+            resolve();
+        }
+    });
+// ------------------------------------------------
+}.bind(this));
 // end promise wrapper
 };
 
-SC_SoWo.prototype.so_rule1 = function(db) {
+// Alexandria -> MedusaA1Jobs01
+// Industrial Champion
+SC_SoWo.prototype.alex_so1 = function(db) {
 // add promise wrapper
-    return when.promise(function(resolve, reject) {
+return when.promise(function(resolve, reject) {
 // ------------------------------------------------
-        var sql;
-        var threshold = 3;
-        var max = 3;
-        sql = "SELECT * FROM events \
-        WHERE \
-        eventName=\"Launch_attack\" AND \
-        eventData_Key=\"success\" AND \
-        (SELECT COUNT(*) FROM events WHERE eventName=\"Set_up_battle\") >= 2 \
-        ORDER BY \
-        serverTimeStamp DESC, gameSessionEventOrder DESC \
-        LIMIT "+max;
+    var sql;
+    var total = 0;
+    var threshold = 1;
+    var max = 1;
+    sql = "SELECT com.total as comTotal, ind.total as indTotal, summary.jobs as jobs FROM \
+            (SELECT COUNT(*) as total FROM events \
+                WHERE \
+                gameLevel=\"MedusaA1Jobs01\" AND \
+                eventName=\"GL_Zone\" AND \
+                eventData_Key=\"type\" AND \
+                eventData_Value=\"commercial\") com, \
+            (SELECT COUNT(*) as total FROM events \
+                WHERE \
+                gameLevel=\"MedusaA1Jobs01\" AND \
+                eventName=\"GL_Zone\" AND \
+                eventData_Key=\"type\" AND \
+                eventData_Value=\"industrial\") ind,\
+            (SELECT eventData_Value as jobs FROM events \
+                WHERE \
+                gameLevel=\"MedusaA1Jobs01\" AND \
+                eventName=\"GL_Scenario_Summary\" AND \
+                eventData_Key=\"jobsScore\" ) summary \
+            WHERE \
+                com.total > ind.total AND\
+                summary.jobs > 900";
 
-        db.all(sql, function(err, results) {
-            if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - SC_SoWo so_rule1 DB Error:", err);
-                reject(err);
-                return;
-            }
+    db.all(sql, function(err, results) {
+        if(err) {
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo alex_so1 DB Error:", err);
+            reject(err);
+            return;
+        }
 
-            // to few to count
-            if(results.length < max) {
-                // do nothing
-                resolve();
-                return;
-            }
+        // no results
+        total = results.length;
 
-            //console.log("so_rule1 - results:", results);
-            var total = _.reduce(results, function(total, row) {
-                if( row.eventData_Value == "true" ||
-                    row.eventData_Value == "1"
-                    ) {
-                    return total + 1;
-                } else {
-                    return total;
-                }
-            }, 0);
-
-            //console.log("total:", total);
-            if(total >= threshold) {
-                // over is 0 - 1 float percent of the amount past threshold over max
-                resolve(
-                    {
-                        shoutout: {
-                            id: "so1",
-                            total: total,
-                            overPercent: (total - threshold + 1)/(max - threshold + 1)
-                        }
+        if(total >= threshold) {
+            // over is 0 - 1 float percent of the amount past threshold over max
+            resolve(
+                {
+                    shoutout: {
+                        id: "alex_so1",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1),
+                        data: results
                     }
-                );
-            } else {
-                // do nothing
-                resolve();
-            }
-        });
+                }
+            );
+        } else {
+            // do nothing
+            resolve();
+        }
+    });
 // ------------------------------------------------
-    }.bind(this));
+}.bind(this));
 // end promise wrapper
 };
-*/
+// ===============================================
+
+
+
+// ===============================================
+// Jackson    -> MedusaA1Pollution01
+// Home Builder
+SC_SoWo.prototype.jack_wo1 = function(db) {
+// add promise wrapper
+return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+    var sql;
+    var total = 0;
+    var threshold = 1;
+    var max = 1;
+    sql = "SELECT count(*) as total FROM events \
+        WHERE \
+        gameLevel=\"MedusaA1Pollution01\" AND \
+        eventName=\"GL_Zone\" AND \
+        eventData_Key=\"type\" AND \
+        eventData_Value=\"residential\"";
+
+    //sql = "SELECT * FROM events";
+    db.all(sql, function(err, results) {
+        if(err) {
+            console.error("AssessmentEngine: Javascript_Engine - SC_SoWo jack_wo1 DB Error:", err);
+            reject(err);
+            return;
+        }
+
+        // no results
+        if(!results.length) {
+            // do nothing
+            resolve();
+            return;
+        }
+
+        total = results[0].total;
+        if(total >= threshold) {
+            // over is 0 - 1 float percent of the amount past threshold over max
+            resolve(
+                {
+                    watchout: {
+                        id: "jack_wo1",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    }
+                }
+            );
+        } else {
+            // do nothing
+            resolve();
+        }
+    });
+// ------------------------------------------------
+}.bind(this));
+// end promise wrapper
+};
+
+// ===============================================
