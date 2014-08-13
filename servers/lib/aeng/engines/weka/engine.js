@@ -11,10 +11,11 @@ var path    = require('path');
 var _       = require('lodash');
 var when    = require('when');
 
-function WekaEngine(engineDir, options) {
+function WekaEngine(aeService, engineDir, options) {
     this.version = 0.01;
 
     this.engineDir = engineDir;
+    this.aeService = aeService;
 
     this.options = _.merge(
         { },
@@ -22,7 +23,7 @@ function WekaEngine(engineDir, options) {
     );
 }
 
-WekaEngine.prototype.run = function(gameSessionId, gameId, eventsData){
+WekaEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------

@@ -11,11 +11,15 @@ var _       = require('lodash');
 var when    = require('when');
 var sqlite3 = require('sqlite3').verbose();
 // Glasslab libs
+var Util;
 
 module.exports = JavascriptEngine;
 
-function JavascriptEngine(engineDir, options){
+function JavascriptEngine(aeService, engineDir, options){
     this.engineDir = engineDir;
+    this.aeService = aeService;
+
+    Util = require('../../../core/util.js');
 
     this.options = _.merge(
         { },
@@ -23,8 +27,7 @@ function JavascriptEngine(engineDir, options){
     );
 }
 
-
-JavascriptEngine.prototype.run = function(gameSessionId, gameId, eventsData){
+JavascriptEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -35,8 +38,8 @@ return when.promise(function(resolve, reject) {
         var file = this.engineDir + "games"+path.sep + gameId+".js";
         var game = require(file);
 
-        var g = new game(this.options, this);
-        g.process(eventsData).then(resolve, reject);
+        var g = new game(this, this.aeService, this.options);
+        g.process(userId, gameId, gameSessionId, eventsData).then(resolve, reject);
 
     } catch(err) {
         console.error("AssessmentEngine: Javascript_Engine - Get Distiller Function Error -", err);
@@ -51,8 +54,8 @@ return when.promise(function(resolve, reject) {
 /*
  Dump all the relivent events into an in memory SQLite DB
  Run some Q's and return results
- */
-JavascriptEngine.prototype.processEventRules = function(filterEventTypes, filterEventKeys, ruleFuncs) {
+*/
+JavascriptEngine.prototype.processEventRules = function(gameSessionId, eventsList, filterEventTypes, filterEventKeys, ruleFuncs) {
 // add promise wrapper
 return when.promise(function (resolve, reject) {
 // ------------------------------------------------
@@ -84,7 +87,7 @@ return when.promise(function (resolve, reject) {
             eventData_Key, \
             eventData_Value, \
             target \
-        ) VALUES (?,?,?,?,?,?,?,?)";
+        ) VALUES (?,?,?, ?,?,?, ?,?,?)";
 
         var totalNumEvents = 0;
         for (var i = 0; i < eventsList.length; i++) {
@@ -126,26 +129,36 @@ return when.promise(function (resolve, reject) {
         for (var i = 0; i < ruleFuncs.length; i++) {
             // calling the function
             if (_.isFunction(ruleFuncs[i])) {
-                promiseList.push(ruleFuncs[i](db));
+                promiseList.push(ruleFuncs[i](db, userId, gameId, gameSessionId, eventsData));
             }
         }
 
         var results = {
-            watchout: [],
-            shoutout: [],
             version: this.version
         };
 
         var rulesPromise = when.reduce(promiseList,
             function (sum, value) {
 
-                if (_.isObject(value)) {
-                    if (value.watchout) {
-                        sum.watchout.push(value.watchout);
+                if ( _.isObject(value) &&
+                     value.type &&
+                     value.id ) {
+                    // temp save type and id
+                    var type = value.type;
+                    var id = value.id;
+                    // remove type and id, as they will be in the tree
+                    delete value.type;
+                    delete value.id;
+                    // add time stamp and gameSessionId
+                    value.timestamp = Util.GetTimeStamp();
+                    value.gameSessionId = gameSessionId;
+
+                    // if type not object make it one
+                    if(!_.isObject(sum[type]) ) {
+                        sum[type] = {};
                     }
-                    else if (value.shoutout) {
-                        sum.shoutout.push(value.shoutout);
-                    }
+
+                    sum[type][ id ] = value;
                 }
 
                 //console.log("rule - sum:", sum, ", value:", value);
@@ -169,4 +182,4 @@ return when.promise(function (resolve, reject) {
 // ------------------------------------------------
 }.bind(this));
 // end promise wrapper
-}
+};

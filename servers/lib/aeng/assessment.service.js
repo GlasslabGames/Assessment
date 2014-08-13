@@ -31,7 +31,7 @@ function AssessmentEngine(options){
             assessment: {
                 getMaxFromQueue:      20,
                 checkQueueInterval:   1000,   // 1 second  in milliseconds
-                checkActiveInterval:  10000,  // 10 seconds in milliseconds
+                checkActiveInterval:  300000, // 5 min in milliseconds
                 cleanupQueueInterval: 3600000 // 1 hour    in milliseconds
             }
         },
@@ -115,7 +115,7 @@ AssessmentEngine.prototype.loadEngines = function() {
                     console.log("AssessmentEngine: Loading Engines", name);
 
                     var engine = require(edir + 'engine.js');
-                    this.engines[name] = new engine(edir, this.options);
+                    this.engines[name] = new engine(this, edir, this.options);
                 } catch(err) {
                     console.error("AssessmentEngine: Load Engines Error -", err);
                 }
@@ -236,11 +236,11 @@ AssessmentEngine.prototype.getJob = function() {
                 return this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType)
                     .then( function(){
                         // TODO: use assessment DS for queue
-                        return this._endQSession(data.gameSessionId)
+                        return this.endQSession(data.gameSessionId)
                     }.bind(this) );
             } else {
                 // TODO: use assessment DS for queue
-                return this._cleanupQSession(data.gameSessionId);
+                return this.cleanupQSession(data.gameSessionId);
             }
         }.bind(this))
 
@@ -274,7 +274,7 @@ return when.promise(function(resolve, reject) {
     }
     gameId = gameId.toUpperCase(); // gameId is not case sensitive
 
-    this._getGameAssessmentDefinitions(gameId)
+    this.getGameAssessmentDefinitions(gameId)
         .then(function(aInfo){
             //console.log("aInfo:", aInfo);
 
@@ -295,7 +295,7 @@ return when.promise(function(resolve, reject) {
                     // return cached data or get data and pass it to the enginePromise
                     if( ai.dataProcessScope ) {
                         if( ai.dataProcessScope == "all" && !allEvents) {
-                            dataPromise = this._getUserEvents(gameId, userId)
+                            dataPromise = this.getUserEvents(gameId, userId)
                                 .then(function(data) {
                                     allEvents = data;
                                     return allEvents;
@@ -308,7 +308,7 @@ return when.promise(function(resolve, reject) {
                             });
                         }
                         else if( ai.dataProcessScope == "gameSession" && !gameSessionEvents) {
-                            dataPromise = this._getSessionEvents(gameSessionId)
+                            dataPromise = this.getGameSessionEvents(gameSessionId)
                                 .then(function(data){
                                     gameSessionEvents = data;
                                     return gameSessionEvents;
@@ -406,17 +406,17 @@ AssessmentEngine.prototype._engineRun = function(engine, gameSessionId, userId, 
 
         var enginePromise;
         if(this.engines[engine]) {
-            enginePromise = this.engines[engine].run(gameSessionId, gameId, eventsData);
+            enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData);
         }
         else {
             enginePromise = Util.PromiseContinue();
         }
 
         enginePromise
-            .then(function(results){
-                if(results) {
+            .then(function(assessmentResults){
+                if(assessmentResults) {
                     // get session info (userId, courseId)
-                    if(this.options.env == "dev") {
+                    if (this.options.env == "dev") {
                         console.log("AssessmentEngine: Saving Assessment...",
                             "- userId:", userId,
                             ", gameSessionId:", gameSessionId,
@@ -426,16 +426,12 @@ AssessmentEngine.prototype._engineRun = function(engine, gameSessionId, userId, 
                     }
 
                     var out = {
-                        timestamp: Util.GetTimeStamp(),
-                        assessmentId:  aInfo.id,
                         engine:        engine,
                         gameSessionId: gameSessionId,
-                        gameId:  gameId,
-                        userId:  userId,
-                        results: results
+                        results:       assessmentResults
                     };
                     //console.log( "AssessmentEngine: Assessment results:", out);
-                    return this._saveAEResults(gameId, out);
+                    return this.saveAEResults(userId, gameId, aInfo.id, out);
                 }
             }.bind(this))
 
@@ -477,30 +473,36 @@ AssessmentEngine.prototype._engineRun = function(engine, gameSessionId, userId, 
 };
 
 
-AssessmentEngine.prototype._endQSession = function(id) {
+AssessmentEngine.prototype.endQSession = function(id) {
     return this._internalTelemetryRequest("/int/v1/data/qsession/end", { id: id });
 };
 
-AssessmentEngine.prototype._cleanupQSession = function(id) {
+AssessmentEngine.prototype.cleanupQSession = function(id) {
     return this._internalTelemetryRequest("/int/v1/data/qsession/cleanup", { id: id });
 };
 
-AssessmentEngine.prototype._getSessionEvents = function(gameSessionId) {
+AssessmentEngine.prototype.getGameSessionEvents = function(gameSessionId) {
     return this._internalTelemetryRequest("/int/v1/data/session/"+gameSessionId+"/events");
 };
 
-AssessmentEngine.prototype._getUserEvents = function(gameId, userId) {
+AssessmentEngine.prototype.getGameSessionInfo = function(userId, gameId) {
+    return this._internalTelemetryRequest("/int/v1/data/session/game/"+gameId+"/user/"+userId+"/info");
+};
+
+
+AssessmentEngine.prototype.getUserEvents = function(gameId, userId) {
     return this._internalTelemetryRequest("/int/v1/data/game/"+gameId+"/user/"+userId+"/events");
 };
 
 
-AssessmentEngine.prototype._getGameAssessmentDefinitions = function(gameId) {
+AssessmentEngine.prototype.getGameAssessmentDefinitions = function(gameId) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/definitions");
 };
 
-AssessmentEngine.prototype._saveAEResults = function(gameId, data) {
-    return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/results", data);
+AssessmentEngine.prototype.saveAEResults = function(userId, gameId, assessmentId, data) {
+    return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/user/"+userId+"/assessment/"+assessmentId+"/results", data);
 };
+
 
 
 // TODO: move this to core service routing

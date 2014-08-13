@@ -74,7 +74,7 @@ function getTimeStamp(dt){
         dt = moment.utc(dt);
     }
 
-    return dt.unix();
+    return dt.valueOf();
 }
 
 function getExpressLogger(options, express, stats){
