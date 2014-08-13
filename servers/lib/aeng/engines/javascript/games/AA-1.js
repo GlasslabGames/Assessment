@@ -9,145 +9,39 @@
 // Third-party libs
 var _       = require('lodash');
 var when    = require('when');
-var sqlite3 = require('sqlite3').verbose();
+var sqlite3 = require('sqlite3').verbose();;
 
 module.exports = AA_SoWo;
 
-function AA_SoWo(options){
+function AA_SoWo(engine, aeService, options) {
     this.version = 0.01;
-
-    // this is a list of function names that will be ran every time process is called
-    this.rules = [
-        'wo_rule1',
-        'wo_rule3',
-        "so_rule1"
-    ];
+    this.aeService = aeService;
 
     this.options = _.merge(
         { },
         options
     );
+
+    this.engine = engine;
 }
 
 /*
     Dump all the relivent events into an in memory SQLite DB
     Run some Q's and return results
  */
-AA_SoWo.prototype.process = function(eventsList) {
-// add promise wrapper
-return when.promise(function(resolve, reject) {
-// ------------------------------------------------
-    var db = new sqlite3.Database(':memory:');
-    db.serialize(function() {
-        var sql;
+AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
-        sql = "CREATE TABLE events (\
-                userId INT, \
-                clientTimeStamp DATETIME, \
-                serverTimeStamp DATETIME, \
-                eventName TEXT, \
-                gameSessionEventOrder INT, \
-                eventData_Key TEXT, \
-                eventData_Value TEXT,\
-                target TEXT)";
-        db.run(sql);
+    var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
+    var filterEventKeys = ["weakness", "success"];
 
-        // insert
-        sql = "INSERT INTO events ( \
-                userId, \
-                clientTimeStamp, \
-                serverTimeStamp, \
-                eventName, \
-                gameSessionEventOrder, \
-                eventData_Key, \
-                eventData_Value, \
-                target \
-            ) VALUES (?,?,?,?,?,?,?,?)";
+    // this is a list of function names that will be ran every time process is called
+    return this.engine.processEventRules(gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
+        this.wo_rule1.bind(this),
+        this.wo_rule3.bind(this),
 
-        var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
-        var filterEventKeys = ["weakness", "success"];
+        this.so_rule1.bind(this)
+    ]);
 
-        var totalNumEvents = 0;
-        for (var i = 0; i < eventsList.length; i++) {
-            // skip if not events
-            if(!eventsList[i].events) continue;
-
-            totalNumEvents += eventsList[i].events.length;
-            for (var j = 0; j < eventsList[i].events.length; j++) {
-
-                // only add events if in filter list
-                if( !_.contains(filterEventTypes, eventsList[i].events[j].eventName) ) continue;
-
-                for( var key in eventsList[i].events[j].eventData) {
-
-                    // only add event data if in filter list
-                    if( !_.contains(filterEventKeys, key) ) continue;
-
-                    var value = eventsList[i].events[j].eventData[key];
-                    var row = [
-                        eventsList[i].userId,
-                        eventsList[i].events[j].clientTimeStamp,
-                        eventsList[i].events[j].serverTimeStamp,
-                        eventsList[i].events[j].eventName,
-                        eventsList[i].events[j].gameSessionEventOrder || i,
-                        key,
-                        value,
-                        eventsList[i].events[j].eventData['target'] || ""
-                    ];
-                    db.run(sql, row);
-                }
-            }
-        }
-        if(this.options.env == "dev") {
-            console.log("AssessmentEngine: Javascript_Engine - AA_SoWo: process - # of events:", totalNumEvents);
-        }
-
-        var promiseList = [];
-        for (var i = 0; i < this.rules.length; i++) {
-            // calling the function
-            if( this[ this.rules[i] ] ) {
-                promiseList.push( this[ this.rules[i] ](db) );
-            }
-        }
-
-        var results = {
-            watchout:[],
-            shoutout:[],
-            version: this.version
-        };
-
-        var rulesPromise = when.reduce(promiseList,
-            function (sum, value) {
-
-                if(_.isObject(value)) {
-                    if(value.watchout) {
-                        sum.watchout.push(value.watchout);
-                    }
-                    else if(value.shoutout) {
-                        sum.shoutout.push(value.shoutout);
-                    }
-                }
-
-                //console.log("rule - sum:", sum, ", value:", value);
-                return sum;
-            }, results);
-
-        rulesPromise
-            .then(function(sum){
-                //console.log("rulesPromise sum:", sum);
-                resolve(sum);
-            }.bind(this))
-
-        // catch all errors
-        .then(null, function(err){
-            reject(err);
-        }.bind(this));
-
-    }.bind(this));
-    db.close();
-// ------------------------------------------------
-}.bind(this));
-// end promise wrapper
 };
 
 AA_SoWo.prototype.wo_rule1 = function(db) {
@@ -194,11 +88,10 @@ return when.promise(function(resolve, reject) {
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
-                    watchout: {
-                        id: "wo1",
-                        total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
-                    }
+                    id:   "wo1",
+                    type: "watchout",
+                    total: total,
+                    overPercent: (total - threshold + 1)/(max - threshold + 1)
                 }
             );
         } else {
@@ -256,11 +149,10 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
-                        watchout: {
-                            id: "wo3",
-                            total: total,
-                            overPercent: (total - threshold + 1)/(max - threshold + 1)
-                        }
+                        id:   "wo3",
+                        type: "watchout",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
                     }
                 );
             } else {
@@ -319,11 +211,10 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
-                        shoutout: {
-                            id: "so1",
-                            total: total,
-                            overPercent: (total - threshold + 1)/(max - threshold + 1)
-                        }
+                        id:   "so1",
+                        type: "shoutout",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
                     }
                 );
             } else {
