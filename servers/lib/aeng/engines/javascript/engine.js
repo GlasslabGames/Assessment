@@ -19,7 +19,7 @@ function JavascriptEngine(aeService, engineDir, options){
     this.engineDir = engineDir;
     this.aeService = aeService;
 
-    Util = require('../../../core/util.js');
+    Util = require( path.resolve(engineDir, '../../../core/util.js') );
 
     this.options = _.merge(
         { },

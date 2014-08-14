@@ -96,6 +96,7 @@ return when.promise(function(resolve, reject) {
 };
 */
 
+// TODO: make this async and possible get engines from DB
 AssessmentEngine.prototype.loadEngines = function() {
 
     // loop thought all the engines
@@ -325,7 +326,7 @@ return when.promise(function(resolve, reject) {
                     // run engines
                     enginePromise = dataPromise
                         .then(function(eventsData) {
-                            //console.log("AssessmentEngine: Starting Running... - Engine:", engine);
+                            console.log("AssessmentEngine: Starting Running... - Engine:", engine);
                             return this._engineRun(engine, gameSessionId, userId, gameId, eventsData, jobType, ai);
                         }.bind(this));
 
@@ -378,22 +379,14 @@ return when.promise(function(resolve, reject) {
         return;
     }
 
-    // saving current path to restore later
-    var cDir = process.cwd();
-    //console.log("Current Directory Before \""+engine+"\":", process.cwd());
-
     // check if engine path exists
-    var path = "./lib/aeng/engines/"+engine;
-    if( !fs.existsSync(path) ) {
+    var p = path.resolve("lib/aeng/engines/"+engine);
+    if( !fs.existsSync(p) ) {
         console.log("AssessmentEngine: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
         // nothing to process
         resolve();
         return;
     }
-    // change current dir to engine dir
-    process.chdir( path );
-    //console.log("Current Directory Inside \""+engine+"\":", process.cwd());
-
 
     console.log("AssessmentEngine: Execute Assessment Started",
         "- userId:", userId,
@@ -444,9 +437,6 @@ return when.promise(function(resolve, reject) {
                 ", jobType:", jobType,
                 ", Engine:", engine);
 
-            // change dir back to root
-            process.chdir( cDir );
-            //console.log("Current Directory After \""+engine+"\":", process.cwd());
 
             resolve();
         }.bind(this))
@@ -454,8 +444,6 @@ return when.promise(function(resolve, reject) {
         // catch all errors
         .then(null, function(err){
             console.error("AssessmentEngine: Assessment Execution - Error:", err);
-            // change dir back to root
-            process.chdir( cDir );
 
             // nothing to do
             if(this.options.env == "dev") {
