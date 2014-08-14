@@ -349,126 +349,130 @@ return when.promise(function(resolve, reject) {
 
 AssessmentEngine.prototype._engineRun = function(engine, gameSessionId, userId, gameId, eventsData, jobType, aInfo) {
 // add promise wrapper
-    return when.promise(function(resolve, reject) {
+return when.promise(function(resolve, reject) {
 // ------------------------------------------------
 
-        // eventsData is an object or an array
-        if( !eventsData ) {
-            if(this.options.env == "dev") {
-                console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
-            }
-            // nothing to process
-            resolve();
-            return;
+    // eventsData is an object or an array
+    if( !eventsData ) {
+        if(this.options.env == "dev") {
+            console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
         }
+        // nothing to process
+        resolve();
+        return;
+    }
 
-        // turn eventsData into array if not one
-        if( !_.isArray(eventsData) ) {
-            eventsData = [ eventsData ];
+    // turn eventsData into array if not one
+    if( !_.isArray(eventsData) ) {
+        eventsData = [ eventsData ];
+    }
+
+    if( !eventsData.length ||
+        !( eventsData[0].events &&
+           eventsData[0].events.length ) ) {
+        if(this.options.env == "dev") {
+            console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
         }
+        // nothing to process
+        resolve();
+        return;
+    }
 
-        if( !eventsData.length ||
-            !( eventsData[0].events &&
-               eventsData[0].events.length ) ) {
-            if(this.options.env == "dev") {
-                console.log("AssessmentEngine: Execute Assessment - No Events - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
-            }
-            // nothing to process
-            resolve();
-            return;
-        }
+    // saving current path to restore later
+    var cDir = process.cwd();
+    //console.log("Current Directory Before \""+engine+"\":", process.cwd());
 
-        // saving current path to restore later
-        var cDir = process.cwd();
-        //console.log("Current Directory Before \""+engine+"\":", process.cwd());
-
-        // check if engine path exists
-        var path = "./lib/aeng/engines/"+engine;
-        if( !fs.existsSync(path) ) {
-            console.log("AssessmentEngine: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
-            // nothing to process
-            resolve();
-            return;
-        }
-        // change current dir to engine dir
-        process.chdir( path );
-        //console.log("Current Directory Inside \""+engine+"\":", process.cwd());
+    // check if engine path exists
+    var path = "./lib/aeng/engines/"+engine;
+    if( !fs.existsSync(path) ) {
+        console.log("AssessmentEngine: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
+        // nothing to process
+        resolve();
+        return;
+    }
+    // change current dir to engine dir
+    process.chdir( path );
+    //console.log("Current Directory Inside \""+engine+"\":", process.cwd());
 
 
-        console.log("AssessmentEngine: Execute Assessment Started",
-            "- userId:", userId,
-            ", gameSessionId:", gameSessionId,
-            ", gameId:", gameId,
-            ", jobType:", jobType,
-            ", Engine:", engine,
-            ", # Sessions:", eventsData.length);
-        this.stats.increment("info", "ExecuteAssessment.Started");
+    console.log("AssessmentEngine: Execute Assessment Started",
+        "- userId:", userId,
+        ", gameSessionId:", gameSessionId,
+        ", gameId:", gameId,
+        ", jobType:", jobType,
+        ", Engine:", engine,
+        ", # Sessions:", eventsData.length);
+    this.stats.increment("info", "ExecuteAssessment.Started");
 
-        var enginePromise;
-        if(this.engines[engine]) {
-            enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData);
-        }
-        else {
-            enginePromise = Util.PromiseContinue();
-        }
+    var enginePromise;
+    if(this.engines[engine]) {
+        enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData);
+    }
+    else {
+        enginePromise = Util.PromiseContinue();
+    }
 
-        enginePromise
-            .then(function(assessmentResults){
-                if(assessmentResults) {
-                    // get session info (userId, courseId)
-                    if (this.options.env == "dev") {
-                        console.log("AssessmentEngine: Saving Assessment...",
-                            "- userId:", userId,
-                            ", gameSessionId:", gameSessionId,
-                            ", gameId:", gameId,
-                            ", jobType:", jobType,
-                            ", Engine:", engine);
-                    }
-
-                    var out = {
-                        engine:        engine,
-                        gameSessionId: gameSessionId,
-                        results:       assessmentResults
-                    };
-                    //console.log( "AssessmentEngine: Assessment results:", out);
-                    return this.saveAEResults(userId, gameId, aInfo.id, out);
-                }
-            }.bind(this))
-
-            .then(function(){
-                console.log("AssessmentEngine: Done Running",
-                    "- userId:", userId,
-                    ", gameSessionId:", gameSessionId,
-                    ", gameId:", gameId,
-                    ", jobType:", jobType,
-                    ", Engine:", engine);
-
-                process.chdir( cDir );
-                //console.log("Current Directory After \""+engine+"\":", process.cwd());
-
-                resolve();
-            }.bind(this))
-
-            // catch all errors
-            .then(null, function(err){
-                console.log("AssessmentEngine: Assessment Execution - Error:", err);
-
-                // nothing to do
-                if(this.options.env == "dev") {
-                    console.log("AssessmentEngine: Skipping Assessment Execution",
+    enginePromise
+        .then(function(assessmentResults){
+            if(assessmentResults) {
+                // get session info (userId, courseId)
+                if (this.options.env == "dev") {
+                    console.log("AssessmentEngine: Saving Assessment...",
                         "- userId:", userId,
                         ", gameSessionId:", gameSessionId,
                         ", gameId:", gameId,
                         ", jobType:", jobType,
                         ", Engine:", engine);
                 }
-                this.stats.increment("info", "ExecuteAssessment.Skipping");
 
-                reject(err);
-            }.bind(this));
+                var out = {
+                    engine:        engine,
+                    gameSessionId: gameSessionId,
+                    results:       assessmentResults
+                };
+                console.log( "AssessmentEngine: Assessment results:", out);
+
+                return this.saveAEResults(userId, gameId, aInfo.id, out);
+            }
+        }.bind(this))
+
+        .then(function(){
+            console.log("AssessmentEngine: Done Running",
+                "- userId:", userId,
+                ", gameSessionId:", gameSessionId,
+                ", gameId:", gameId,
+                ", jobType:", jobType,
+                ", Engine:", engine);
+
+            // change dir back to root
+            process.chdir( cDir );
+            //console.log("Current Directory After \""+engine+"\":", process.cwd());
+
+            resolve();
+        }.bind(this))
+
+        // catch all errors
+        .then(null, function(err){
+            console.error("AssessmentEngine: Assessment Execution - Error:", err);
+            // change dir back to root
+            process.chdir( cDir );
+
+            // nothing to do
+            if(this.options.env == "dev") {
+                console.log("AssessmentEngine: Skipping Assessment Execution",
+                    "- userId:", userId,
+                    ", gameSessionId:", gameSessionId,
+                    ", gameId:", gameId,
+                    ", jobType:", jobType,
+                    ", Engine:", engine);
+            }
+            this.stats.increment("info", "ExecuteAssessment.Skipping");
+
+            reject(err);
+        }.bind(this));
 
 // ------------------------------------------------
-    }.bind(this));
+}.bind(this));
 // end promise wrapper
 };
 
