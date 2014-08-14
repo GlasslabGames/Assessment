@@ -13,6 +13,12 @@ var sqlite3 = require('sqlite3').verbose();;
 
 module.exports = AA_SoWo;
 
+/*
+ ** Source Document **
+ MGO - Watch Out, Shout Out (SOWO) - Tab[ mj_seth revisions ]
+ https://docs.google.com/a/glasslabgames.org/spreadsheet/ccc?key=0AlWvbmmsDBgQdElyU0RZZUgtdklQcmwyMk1rX01VNlE&usp=drive_web#gid=4
+*/
+
 function AA_SoWo(engine, aeService, options) {
     this.version = 0.01;
     this.aeService = aeService;
@@ -35,7 +41,7 @@ AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
     var filterEventKeys = ["weakness", "success"];
 
     // this is a list of function names that will be ran every time process is called
-    return this.engine.processEventRules(gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
+    return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
         this.wo_rule1.bind(this),
         this.wo_rule3.bind(this),
 

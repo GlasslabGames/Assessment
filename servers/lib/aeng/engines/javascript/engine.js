@@ -55,16 +55,17 @@ return when.promise(function(resolve, reject) {
  Dump all the relivent events into an in memory SQLite DB
  Run some Q's and return results
 */
-JavascriptEngine.prototype.processEventRules = function(gameSessionId, eventsList, filterEventTypes, filterEventKeys, ruleFuncs) {
+JavascriptEngine.prototype.processEventRules = function(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, ruleFuncs) {
 // add promise wrapper
 return when.promise(function (resolve, reject) {
 // ------------------------------------------------
 
+    // '/Users/josephsutton/Documents/temp.db'
     var db = new sqlite3.Database(':memory:');
     db.serialize(function () {
         var sql;
 
-        sql = "CREATE TABLE events (\
+        sql = "CREATE TABLE IF NOT EXISTS events (\
             userId INT, \
             clientTimeStamp DATETIME, \
             serverTimeStamp DATETIME, \
@@ -90,32 +91,32 @@ return when.promise(function (resolve, reject) {
         ) VALUES (?,?,?, ?,?,?, ?,?,?)";
 
         var totalNumEvents = 0;
-        for (var i = 0; i < eventsList.length; i++) {
+        for (var i = 0; i < eventsData.length; i++) {
             // skip if not events
-            if (!eventsList[i].events) continue;
+            if (!eventsData[i].events) continue;
 
-            totalNumEvents += eventsList[i].events.length;
-            for (var j = 0; j < eventsList[i].events.length; j++) {
+            totalNumEvents += eventsData[i].events.length;
+            for (var j = 0; j < eventsData[i].events.length; j++) {
 
                 // only add events if in filter list
-                if (!_.contains(filterEventTypes, eventsList[i].events[j].eventName)) continue;
+                if (!_.contains(filterEventTypes, eventsData[i].events[j].eventName)) continue;
 
-                for (var key in eventsList[i].events[j].eventData) {
+                for (var key in eventsData[i].events[j].eventData) {
 
                     // only add event data if in filter list
                     if (!_.contains(filterEventKeys, key)) continue;
 
-                    var value = eventsList[i].events[j].eventData[key];
+                    var value = eventsData[i].events[j].eventData[key];
                     var row = [
-                        eventsList[i].userId,
-                        eventsList[i].events[j].clientTimeStamp,
-                        eventsList[i].events[j].serverTimeStamp,
-                        eventsList[i].events[j].eventName,
-                        eventsList[i].events[j].gameLevel || "",
-                        eventsList[i].events[j].gameSessionEventOrder || i,
+                        eventsData[i].userId,
+                        eventsData[i].events[j].clientTimeStamp,
+                        eventsData[i].events[j].serverTimeStamp,
+                        eventsData[i].events[j].eventName,
+                        eventsData[i].events[j].gameLevel || "",
+                        eventsData[i].events[j].gameSessionEventOrder || i,
                         key,
                         value,
-                        eventsList[i].events[j].eventData['target'] || ""
+                        eventsData[i].events[j].eventData['target'] || ""
                     ];
                     db.run(sql, row);
                 }
@@ -133,9 +134,7 @@ return when.promise(function (resolve, reject) {
             }
         }
 
-        var results = {
-            version: this.version
-        };
+        var results = {};
 
         var rulesPromise = when.reduce(promiseList,
             function (sum, value) {
