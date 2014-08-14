@@ -65,7 +65,7 @@ return when.promise(function(resolve, reject) {
 SC_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
     var filterEventTypes = ["GL_Scenario_Summary", "GL_Zone", "GL_Unit_Bulldoze", "GL_Power_Warning", "GL_Failure" ];
-    var filterEventKeys = ["busStops", "type", "UGuid", "info" ];
+    var filterEventKeys = ["busStops", "jobsScore", "type", "UGuid", "info" ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -162,9 +162,7 @@ return when.promise(function(resolve, reject) {
             gameLevel=\"MedusaA1School01\" AND \
             eventName=\"GL_Zone\" AND \
             eventData_Key=\"type\" AND \
-            eventData_Value=\"residential\" \
-            ORDER BY \
-            serverTimeStamp DESC, gameSessionEventOrder DESC";
+            eventData_Value=\"residential\"";
 
     //sql = "SELECT * FROM events";
     db.all(sql, function(err, results) {
@@ -274,7 +272,8 @@ return when.promise(function(resolve, reject) {
     var total = 0;
     var threshold = 1;
     var max = 1;
-    sql = "SELECT com.total as comTotal, ind.total as indTotal, summary.jobs as jobs FROM \
+    sql = "SELECT com.total as comTotal, ind.total as indTotal, summary.jobs as jobs\
+            FROM \
             (SELECT COUNT(*) as total FROM events \
                 WHERE \
                 gameLevel=\"MedusaA1Jobs01\" AND \
@@ -286,16 +285,17 @@ return when.promise(function(resolve, reject) {
                 gameLevel=\"MedusaA1Jobs01\" AND \
                 eventName=\"GL_Zone\" AND \
                 eventData_Key=\"type\" AND \
-                eventData_Value=\"industrial\") ind,\
-            (SELECT eventData_Value as jobs FROM events \
+                eventData_Value=\"industrial\") ind, \
+            (SELECT CAST(eventData_Value as integer) as jobs FROM events \
                 WHERE \
                 gameLevel=\"MedusaA1Jobs01\" AND \
                 eventName=\"GL_Scenario_Summary\" AND \
-                eventData_Key=\"jobsScore\" ) summary \
+                eventData_Key=\"jobsScore\" ) summary\
             WHERE \
                 com.total > ind.total AND\
                 summary.jobs > 900";
 
+    //console.log("alex_so1 sql:", sql);
     db.all(sql, function(err, results) {
         if(err) {
             console.error("AssessmentEngine: Javascript_Engine - SC_SoWo alex_so1 DB Error:", err);
