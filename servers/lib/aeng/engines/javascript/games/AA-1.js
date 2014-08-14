@@ -50,6 +50,11 @@ AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
 
 };
 
+/*
+ In Bot Equip: cores fused with inconsistent claim/evidence pair >=3 times (within last recent 6 tries)
+
+ action variable is 'Fuse_core'' ; data variable is 'weakness: inconsistent"; 3-6 cases of inconsistent then watch out
+*/
 AA_SoWo.prototype.wo_rule1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
@@ -110,6 +115,12 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
+/*
+ "In all/any battles: Completed core attacks >=3
+ In last 3 core attacks, success <=33%"
+
+ action variable = "Launch_attack"; data variable = success: true (looking for 0 or 1 'true's)
+ */
 AA_SoWo.prototype.wo_rule3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
@@ -171,6 +182,12 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 // end promise wrapper
 };
 
+/*
+ "Completed battle count >= 2;
+ Last 3 Core Attacks successful "
+
+ Action = "Set_up_battle" >=2; and action = "Launch_attack" (last three of these events are 'true')
+ */
 AA_SoWo.prototype.so_rule1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {

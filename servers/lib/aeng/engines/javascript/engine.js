@@ -60,8 +60,9 @@ JavascriptEngine.prototype.processEventRules = function(userId, gameId, gameSess
 return when.promise(function (resolve, reject) {
 // ------------------------------------------------
 
-    // '/Users/josephsutton/Documents/temp.db'
-    var db = new sqlite3.Database(':memory:');
+    //var dbFile = '/Users/josephsutton/Documents/temp.db';
+    var dbFile = ':memory:';
+    var db = new sqlite3.Database(dbFile);
     db.serialize(function () {
         var sql;
 
@@ -107,6 +108,14 @@ return when.promise(function (resolve, reject) {
                     if (!_.contains(filterEventKeys, key)) continue;
 
                     var value = eventsData[i].events[j].eventData[key];
+                    // convert to string
+                    if(_.isObject(value)) {
+                        value = JSON.stringify(value);
+                    }
+                    if(!_.isString(value)) {
+                        value = value.toString();
+                    }
+
                     var row = [
                         eventsData[i].userId,
                         eventsData[i].events[j].clientTimeStamp,
