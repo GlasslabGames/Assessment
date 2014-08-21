@@ -411,7 +411,11 @@ return when.promise(function(resolve, reject) {
                         id:   "sierra_wo1",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold + 1)/(max - threshold + 1),
+                        data: {
+                            warnTotal: warnTotal,
+                            failTotal: failTotal
+                        }
                     }
                 );
             } else {
@@ -429,11 +433,11 @@ return when.promise(function(resolve, reject) {
 // Sierra     -> MedusaA1Power01
 // Smog Destroyer
 /*
- Bulldoze one or more coal plants && no power outage/failure
+ (Bulldoze one or more coal plants) && (no power outage or failure)
 
  GL_Unit_Bulldoze [ 'UGuid':"0x0f03c3ca", 'UGuid':"0xbfe4d762", 'UGuid':"Coal Power Plant", 'UGuid':"Dirty Coal Generator" ],
- GL_Power_Warning[ 'type': 'Low Power' ],
- GL_Failure [ 'info': "Power Failure" ]
+ AND
+ GL_Power_Warning[ 'type': 'Low Power' ], GL_Failure [ 'info': "Power Failure" ]
  */
 SC_SoWo.prototype.sierra_so1 = function(db) {
 // add promise wrapper
@@ -444,7 +448,7 @@ return when.promise(function(resolve, reject) {
     var total = 0;
     var threshold = 1;
     var max = 1;
-    sql = "SELECT bull.total as total FROM \
+    sql = "SELECT bull.total as bullTotal, pow.total as powTotal FROM \
             (SELECT count(*) as total FROM events \
                 WHERE \
                 gameLevel=\"MedusaA1Power01\" AND \
@@ -466,10 +470,10 @@ return when.promise(function(resolve, reject) {
                     eventData_Key=\"info\" AND \
                     eventData_Value=\"Power Failure\" ) \
                 ) \
-            ) pow \
+            ) pow  \
             WHERE \
-            bull.total > 0 AND \
-            pow.total = 0";
+                bull.total > 0 AND \
+                pow.total = 0";
 
     //sql = "SELECT * FROM events";
     db.all(sql, function(err, results) {
@@ -478,6 +482,7 @@ return when.promise(function(resolve, reject) {
             reject(err);
             return;
         }
+        console.log("sierra_so1 results:", results);
 
         // no results
         if(!results.length) {
@@ -486,7 +491,7 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-        total = results[0].total;
+        total = results[0].bullTotal;
         if(total >= threshold) {
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
@@ -575,8 +580,8 @@ return when.promise(function(resolve, reject) {
  Bulldoze one or more coal plants && no power outage/failure
 
  GL_Unit_Bulldoze [ 'UGuid':"0x0f03c3ca", 'UGuid':"0xbfe4d762", 'UGuid':"Coal Power Plant", 'UGuid':"Dirty Coal Generator" ],
- GL_Power_Warning[ 'type': 'Low Power' ],
- GL_Failure [ 'info': "Power Failure" ]
+
+ GL_Power_Warning[ 'type': 'Low Power' ],GL_Failure [ 'info': "Power Failure" ]
  */
 SC_SoWo.prototype.jack_so1 = function(db) {
 // add promise wrapper

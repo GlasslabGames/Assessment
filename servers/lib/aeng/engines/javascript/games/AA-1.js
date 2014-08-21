@@ -38,7 +38,7 @@ function AA_SoWo(engine, aeService, options) {
 AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
     var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
-    var filterEventKeys = ["weakness", "success"];
+    var filterEventKeys = ["weakness", "success", "playerTurn"];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -87,7 +87,7 @@ return when.promise(function(resolve, reject) {
 
         //console.log("wo_rule1 - results:", results);
         var total = _.reduce(results, function(total, row) {
-            if(row.eventData_Value == "inconsistent") {
+            if(row.eventData_Value != "none") {
                 return total + 1;
             } else {
                 return total;
@@ -184,9 +184,10 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 
 /*
  "Completed battle count >= 2;
- Last 3 Core Attacks successful "
+ Last 3 Core Attacks successful by player
 
- Action = "Set_up_battle" >=2; and action = "Launch_attack" (last three of these events are 'true')
+ Action = "Set_up_battle" >=2; AND action = "Launch_attack" (last three of these events are 'true') AND
+ playerTurn = "true"
  */
 AA_SoWo.prototype.so_rule1 = function(db) {
 // add promise wrapper
@@ -194,15 +195,24 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 3;
-        var max = 3;
-        sql = "SELECT * FROM events \
-        WHERE \
-        eventName=\"Launch_attack\" AND \
-        eventData_Key=\"success\" AND \
-        (SELECT COUNT(*) FROM events WHERE eventName=\"Set_up_battle\") >= 2 \
-        ORDER BY \
-        serverTimeStamp DESC, gameSessionEventOrder DESC \
-        LIMIT "+max;
+        var max = 10;
+
+        sql = "SELECT e.eventData_Value as attackSuccess \
+                FROM events as e \
+                JOIN (SELECT eventId, eventData_Value as turn FROM events \
+                    WHERE \
+                        eventName=\"Launch_attack\" AND \
+                        eventData_Key=\"playerTurn\" \
+                    ) player \
+                    ON player.eventId = e.eventId \
+                WHERE \
+                    e.eventName=\"Launch_attack\" AND \
+                    e.eventData_Key=\"success\" AND \
+                    (player.turn=\"true\" OR player.turn=\"1\") AND \
+                    (SELECT COUNT(*) FROM events WHERE eventName=\"Set_up_battle\") >= 2 \
+                ORDER BY \
+                    e.serverTimeStamp DESC, e.gameSessionEventOrder DESC \
+                LIMIT "+max;
 
         db.all(sql, function(err, results) {
             if(err) {
@@ -218,10 +228,11 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                 return;
             }
 
+            // manuely count success because we want to show failed
             //console.log("so_rule1 - results:", results);
             var total = _.reduce(results, function(total, row) {
-                if( row.eventData_Value == "true" ||
-                    row.eventData_Value == "1"
+                if( row.attackSuccess == "true" ||
+                    row.attackSuccess == "1"
                     ) {
                     return total + 1;
                 } else {
@@ -237,7 +248,7 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                         id:   "so1",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold + 1)/threshold
                     }
                 );
             } else {
