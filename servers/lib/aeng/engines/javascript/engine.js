@@ -67,6 +67,7 @@ return when.promise(function (resolve, reject) {
         var sql;
 
         sql = "CREATE TABLE IF NOT EXISTS events (\
+            eventId INT, \
             userId INT, \
             clientTimeStamp DATETIME, \
             serverTimeStamp DATETIME, \
@@ -80,6 +81,7 @@ return when.promise(function (resolve, reject) {
 
         // insert
         sql = "INSERT INTO events ( \
+            eventId, \
             userId, \
             clientTimeStamp, \
             serverTimeStamp, \
@@ -89,8 +91,9 @@ return when.promise(function (resolve, reject) {
             eventData_Key, \
             eventData_Value, \
             target \
-        ) VALUES (?,?,?, ?,?,?, ?,?,?)";
+        ) VALUES (?, ?,?,?, ?,?,?, ?,?,?)";
 
+        var eventId = 0;
         var totalNumEvents = 0;
         for (var i = 0; i < eventsData.length; i++) {
             // skip if not events
@@ -102,6 +105,7 @@ return when.promise(function (resolve, reject) {
                 // only add events if in filter list
                 if (!_.contains(filterEventTypes, eventsData[i].events[j].eventName)) continue;
 
+                // for all eventData
                 for (var key in eventsData[i].events[j].eventData) {
 
                     // only add event data if in filter list
@@ -117,6 +121,7 @@ return when.promise(function (resolve, reject) {
                     }
 
                     var row = [
+                        eventId,
                         eventsData[i].userId,
                         eventsData[i].events[j].clientTimeStamp,
                         eventsData[i].events[j].serverTimeStamp,
@@ -129,6 +134,8 @@ return when.promise(function (resolve, reject) {
                     ];
                     db.run(sql, row);
                 }
+
+                eventId++;
             }
         }
         if (this.options.env == "dev") {
