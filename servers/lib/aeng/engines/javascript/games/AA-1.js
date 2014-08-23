@@ -195,7 +195,7 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 3;
-        var max = 10;
+        var max = 3;
 
         sql = "SELECT e.eventData_Value as attackSuccess \
                 FROM events as e \
@@ -215,6 +215,7 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                 LIMIT "+max;
 
         db.all(sql, function(err, results) {
+            console.log("so_rule1 results:", results);
             if(err) {
                 console.error("AssessmentEngine: Javascript_Engine - AA_SoWo so_rule1 DB Error:", err);
                 reject(err);
