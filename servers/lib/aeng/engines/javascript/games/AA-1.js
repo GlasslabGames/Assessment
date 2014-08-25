@@ -183,7 +183,7 @@ AA_SoWo.prototype.wo_rule3 = function(db) {
 };
 
 /*
- "Completed battle count >= 2;
+ Completed battle count >= 2;
  Last 3 Core Attacks successful by player
 
  Action = "Set_up_battle" >=2; AND action = "Launch_attack" (last three of these events are 'true') AND
@@ -195,10 +195,11 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 3;
-        var max = 3;
-
-        sql = "SELECT e.eventData_Value as attackSuccess \
-                FROM events as e \
+        var max = 10;
+    /*
+        sql = "SELECT e.eventData_Value as attackSuccess, battle.num as battleCount \
+                FROM events as e,\
+                 (SELECT COUNT(*) as num FROM events WHERE eventName=\"Set_up_battle\") battle \
                 JOIN (SELECT eventId, eventData_Value as turn FROM events \
                     WHERE \
                         eventName=\"Launch_attack\" AND \
@@ -209,7 +210,24 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                     e.eventName=\"Launch_attack\" AND \
                     e.eventData_Key=\"success\" AND \
                     (player.turn=\"true\" OR player.turn=\"1\") AND \
-                    (SELECT COUNT(*) FROM events WHERE eventName=\"Set_up_battle\") >= 2 \
+                    battle.num >= 2 \
+                ORDER BY \
+                    e.serverTimeStamp DESC, e.gameSessionEventOrder DESC \
+                LIMIT "+max;
+*/
+
+        sql = "SELECT e.eventData_Value as attackSuccess, battle.num as battleCount, player.turn as playerTurn \
+                FROM events as e,\
+                 (SELECT COUNT(*) as num FROM events WHERE eventName=\"Set_up_battle\") battle \
+                JOIN (SELECT eventId, eventData_Value as turn FROM events \
+                    WHERE \
+                        eventName=\"Launch_attack\" AND \
+                        eventData_Key=\"playerTurn\" \
+                    ) player \
+                    ON player.eventId = e.eventId \
+                WHERE \
+                    e.eventName=\"Launch_attack\" AND \
+                    e.eventData_Key=\"success\" \
                 ORDER BY \
                     e.serverTimeStamp DESC, e.gameSessionEventOrder DESC \
                 LIMIT "+max;
