@@ -38,7 +38,8 @@ function AA_SoWo(engine, aeService, options) {
 AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
     var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
-    var filterEventKeys = ["weakness", "success", "playerTurn"];
+    // always include one or more keys for a give type above
+    var filterEventKeys = ["weakness", "success", "playerTurn", "attempt"];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -195,8 +196,8 @@ AA_SoWo.prototype.so_rule1 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 3;
-        var max = 10;
-    /*
+        var max = 3;
+
         sql = "SELECT e.eventData_Value as attackSuccess, battle.num as battleCount \
                 FROM events as e,\
                  (SELECT COUNT(*) as num FROM events WHERE eventName=\"Set_up_battle\") battle \
@@ -214,26 +215,9 @@ AA_SoWo.prototype.so_rule1 = function(db) {
                 ORDER BY \
                     e.serverTimeStamp DESC, e.gameSessionEventOrder DESC \
                 LIMIT "+max;
-*/
-
-        sql = "SELECT e.eventData_Value as attackSuccess, battle.num as battleCount, player.turn as playerTurn \
-                FROM events as e,\
-                 (SELECT COUNT(*) as num FROM events WHERE eventName=\"Set_up_battle\") battle \
-                JOIN (SELECT eventId, eventData_Value as turn FROM events \
-                    WHERE \
-                        eventName=\"Launch_attack\" AND \
-                        eventData_Key=\"playerTurn\" \
-                    ) player \
-                    ON player.eventId = e.eventId \
-                WHERE \
-                    e.eventName=\"Launch_attack\" AND \
-                    e.eventData_Key=\"success\" \
-                ORDER BY \
-                    e.serverTimeStamp DESC, e.gameSessionEventOrder DESC \
-                LIMIT "+max;
 
         db.all(sql, function(err, results) {
-            console.log("so_rule1 results:", results);
+            //console.log("so_rule1 results:", results);
             if(err) {
                 console.error("AssessmentEngine: Javascript_Engine - AA_SoWo so_rule1 DB Error:", err);
                 reject(err);
