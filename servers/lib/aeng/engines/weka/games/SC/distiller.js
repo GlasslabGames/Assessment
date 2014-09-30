@@ -153,6 +153,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
     for( var i = 0; i < eventsList.length; i++ ) {
         // Get the event name
         var eventName = eventsList[i].name;//.getElementById( "name" );
+        //console.log("i:", i, ", eventName:", eventName);
 
         //--- Identify the event ---//
         // A scenario accepted event identifies which scenario is being played
@@ -221,7 +222,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
 
             //--- Identify sequences with remaining event types ---//
             // Look for sequences with power events
-            if( powerSequenceEvents.indexOf( eventName ) > -1 ) {
+            if( powerSequenceEvents &&
+                powerSequenceEvents.indexOf( eventName ) > -1 ) {
                 // Store catalyst states so we know when certain events occur
                 var eCCatalystIdentified = false;
                 var eDCatalystIdentified = false;
@@ -236,7 +238,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
                     var guid = eventData.UGuid;
 
                     // Check for green power plants in this plop
-                    if( powerPlantGuidsGreen.indexOf( guid ) > -1 ) {
+                    if( powerPlantGuidsGreen &&
+                        powerPlantGuidsGreen.indexOf( guid ) > -1 ) {
                         // Catalyst identified
                         eDCatalystIdentified = true;
 
@@ -250,7 +253,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
                     var guid = eventData.UGuid;
 
                     // Check for green power plants in this plop
-                    if( powerPlantGuidsCoal.indexOf( guid ) > -1 ) {
+                    if( powerPlantGuidsCoal &&
+                        powerPlantGuidsCoal.indexOf( guid ) > -1 ) {
                         // Catalyst identified
                         eCCatalystIdentified = true;
 
@@ -265,13 +269,17 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
                     var buildingAction = eventData.action;
 
                     // Only check for the "turnedOff" action for the appropriate buildings
-                    if( buildingAction == "turnedOff" && powerPlantNamesCoal.indexOf( buildingName ) > -1 ) {
+                    if( buildingAction == "turnedOff" &&
+                        powerPlantNamesCoal &&
+                        powerPlantNamesCoal.indexOf( buildingName ) > -1 ) {
                         // Catalyst identified
                         eCCatalystIdentified = true;
 
                         // Update Element A
                         powerElementAIdentified++;
                     }
+
+                    //console.log("i:", i, ", eventName:", eventName, ", buildingName:", buildingName, ", buildingAction:", buildingAction, ", eCCatalystIdentified:", eCCatalystIdentified, ", powerElementAIdentified:", powerElementAIdentified);
                 }
 
                 // Proceed with identifying sequences from the elements captured in the above code
@@ -316,7 +324,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents){
                 }
             }
             // Look for sequences with RCI events
-            if( rciSequenceEvents.indexOf( eventName ) > -1 ) {
+            if( rciSequenceEvents &&
+                rciSequenceEvents.indexOf( eventName ) > -1 ) {
                 // Store catalyst states so we know when certain events occur
                 var eCCatalystIdentified = false;
                 var eDCatalystIdentified = false;
@@ -630,6 +639,11 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
 };
 
 function convertFormattedTimeToSeconds( timeAsString ) {
+    if( !timeAsString ||
+        !_.isString(timeAsString) ) {
+      return 0;
+    }
+
     var indexOfSeparator = timeAsString.indexOf( ":" );
     var scenarioTimeMinutes = parseInt( timeAsString.substring( 0, indexOfSeparator ) );
     var scenarioTimeSeconds = parseInt( timeAsString.substring( indexOfSeparator + 1 ) );
