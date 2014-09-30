@@ -423,7 +423,9 @@ return when.promise(function(resolve, reject) {
                     gameSessionId: gameSessionId,
                     results:       assessmentResults
                 };
-                console.log( "AssessmentEngine: Assessment results:", out);
+                if (this.options.env == "dev") {
+                  console.log("AssessmentEngine: Assessment results:", out);
+                }
 
                 return this.saveAEResults(userId, gameId, aInfo.id, out);
             }

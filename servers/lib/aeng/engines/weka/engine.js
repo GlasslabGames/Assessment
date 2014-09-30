@@ -1,21 +1,23 @@
 /**
  * Assessment SimCity Distiller Module
  *
- * Module dependencies:
- *  lodash     - https://github.com/lodash/lodash
- *
  */
-var fs      = require('fs');
-var path    = require('path');
+var fs            = require('fs');
+var path          = require('path');
+var child_process = require('child_process');
 // Third-party libs
 var _       = require('lodash');
 var when    = require('when');
+// Glasslab libs
+var Util;
 
 function WekaEngine(aeService, engineDir, options) {
     this.version = 0.01;
 
     this.engineDir = engineDir;
     this.aeService = aeService;
+
+    Util = require( path.resolve(engineDir, '../../../core/util.js') );
 
     this.options = _.merge(
         { },
@@ -31,9 +33,10 @@ return when.promise(function(resolve, reject) {
     var distiller;
     var distilledData;
     this.getDistillerFunction(gameId)
-        .then(function(distiller) {
+        .then(function(_distiller) {
             // skip if no data
-            if(!distiller) return;
+            if(!_distiller) return;
+            distiller = _distiller; // save for later
 
             try {
                 // TODO: maybe run in thread
@@ -48,15 +51,8 @@ return when.promise(function(resolve, reject) {
                     return;
                 }
             } catch(err) {
+                console.trace(err);
                 reject(err);
-                return;
-            }
-
-            //console.log("distilledData:", distilledData);
-            // If the bayes key is empty, there is no WEKA to perform, resolve
-            if( !distilledData || !distilledData.bayes.key ) {
-                //console.log( "no bayes key found in weka data" );
-                resolve();
                 return;
             }
 
@@ -87,6 +83,7 @@ return when.promise(function(resolve, reject) {
             // Before we trigger the WEKA process, we need to make sure we set the current working directory
             // and execute the batch file or shell script, depending on the platform
             var scriptToExecute = '';
+            var scriptCwd = this.engineDir + path.sep + "build";
             //console.log( "Executing bayes on " + process.platform + " at " + process.cwd() );
             if( process.platform === "win32" ) {
                 scriptToExecute += 'run_assessment.bat';
@@ -98,10 +95,13 @@ return when.promise(function(resolve, reject) {
             var runWekaPromise = when.promise( function(resolve2, reject2) {
                 // Use the distilled data to get the bayes key and evidence fragments to pass to the WEKA process
                 //console.log( "bayes file: ", distilledData.bayes.key );
-                console.log("AssessmentEngine: Weka_Engine - cwd:", process.cwd());
-                console.log("AssessmentEngine: Weka_Engine - execute:", scriptToExecute + commandString );
+                console.log( "AssessmentEngine: Weka_Engine - cwd:", scriptCwd );
+                console.log( "AssessmentEngine: Weka_Engine - execute:", scriptToExecute + commandString );
 
                 var aeWeka = child_process.exec( scriptToExecute + commandString,
+                    {
+                      cwd: scriptCwd
+                    },
                     function( error, data, stderr ) {
                         //console.log( "weka data: ", data );
                         //console.log( "stderr: ", stderr );
@@ -114,7 +114,7 @@ return when.promise(function(resolve, reject) {
                     }.bind(this)
                 );
 
-                aeWeka.stdin.write(this.wekaFileData[distilledData.bayes.key]);
+                aeWeka.stdin.write(modelData);
                 aeWeka.stdin.end();
             }.bind(this));
 
@@ -129,6 +129,8 @@ return when.promise(function(resolve, reject) {
                 data.weka = JSON.parse(data.weka);
                 // process wekaResults and distilled Data
                 var compData = distiller.postProcess(data.distilled, data.weka);
+
+                compData.timestamp = Util.GetTimeStamp();
 
                 // TODO: add model version and distiller version
                 // compData.version = this.version;
@@ -156,7 +158,7 @@ WekaEngine.prototype.getBayesModel = function(gameId, modelName){
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
         try{
-            console.log("AssessmentEngine: Weka_Engine - getBayesModel cwd:", process.cwd());
+            //console.log("AssessmentEngine: Weka_Engine - getBayesModel cwd:", process.cwd());
             var file = this.engineDir + "games"+path.sep + gameId + path.sep+"bayes"+path.sep + modelName+".xml";
             fs.readFile(file, 'utf-8', function(err, fileData){
                 if(err) {
@@ -180,7 +182,7 @@ WekaEngine.prototype.getDistillerFunction = function(gameId){
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
     try{
-        console.log("AssessmentEngine: Weka_Engine - getDistillerFunction cwd:", process.cwd());
+        //console.log("AssessmentEngine: Weka_Engine - getDistillerFunction cwd:", process.cwd());
         var file = this.engineDir + "games"+path.sep + gameId + path.sep+"distiller.js";
         var sc = require(file);
 
