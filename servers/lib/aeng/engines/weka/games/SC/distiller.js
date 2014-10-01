@@ -12,7 +12,6 @@ var _       = require('lodash');
 var when    = require('when');
 var redis   = require('redis');
 // Glasslab libs
-var tConst;
 
 module.exports = SC_Distiller;
 
@@ -621,7 +620,7 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
     }
 
     // competency type
-    compData.competencyType = distilled.competencyType;
+    compData.id = distilled.competencyType;
     compData.level = competencyLevel;
     compData.teacherFeedbackCode = distilled.teacherFeedbackCode;
     compData.studentFeedbackCode = distilled.teacherFeedbackCode;
@@ -634,6 +633,9 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
 
     compData.timeSpentSec = 0;
     compData.numAttempts = 1;
+
+    // TODO: add model version and distiller version
+    // compData.version = this.version;
 
     return compData;
 };
