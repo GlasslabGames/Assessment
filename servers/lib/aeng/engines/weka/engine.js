@@ -129,14 +129,13 @@ return when.promise(function(resolve, reject) {
                 data.weka = JSON.parse(data.weka);
                 // process wekaResults and distilled Data
                 var compData = distiller.postProcess(data.distilled, data.weka);
-
                 compData.timestamp = Util.GetTimeStamp();
 
-                // TODO: add model version and distiller version
-                // compData.version = this.version;
+                var out = {};
+                out[compData.id] = compData;
 
                 // done
-                resolve(compData);
+                resolve(out);
             } catch(err) {
                 // invalid json data
                 console.error("AssessmentEngine: Weka_Engine - Invalid Competency JSON data - Error:", err);
