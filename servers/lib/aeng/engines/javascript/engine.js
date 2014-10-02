@@ -144,7 +144,7 @@ return when.promise(function (resolve, reject) {
             }
         }
         if (this.options.env == "dev") {
-            console.log("AssessmentEngine: Javascript_Engine - SC_SoWo: process - # of events:", totalNumEvents);
+            console.log("AssessmentEngine: Javascript_Engine - processEventRules: process - # of events:", totalNumEvents);
         }
 
         var promiseList = [];

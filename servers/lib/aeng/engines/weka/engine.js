@@ -83,7 +83,7 @@ return when.promise(function(resolve, reject) {
             // Before we trigger the WEKA process, we need to make sure we set the current working directory
             // and execute the batch file or shell script, depending on the platform
             var scriptToExecute = '';
-            var scriptCwd = this.engineDir + path.sep + "build";
+            var scriptCwd = this.engineDir + "build";
             //console.log( "Executing bayes on " + process.platform + " at " + process.cwd() );
             if( process.platform === "win32" ) {
                 scriptToExecute += 'run_assessment.bat';
