@@ -1,5 +1,5 @@
 /**
- * Assessment SimCity Distiller Module
+ * Assessment WEKA Engine Module
  *
  */
 var fs            = require('fs');
