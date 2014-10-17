@@ -15,11 +15,14 @@ var redis   = require('redis');
 
 module.exports = PVZ_Distiller;
 
-function PVZ_Distiller(){
+function PVZ_Distiller()
+{
     // Glasslab libs
 }
 
-PVZ_Distiller.prototype.preProcess = function(sessionsEvents){
+PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
+{
+    var events = sessionsEvents[0];
 
     /*
     var bayesInfo = {
@@ -30,6 +33,29 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents){
         ]
     };
     */
+
+    var distilledData = {};
+
+    console.log("=========TEST=========");
+    // Process data through distiller function
+    var eventsList = events.events;
+    for( var i = 0; i < eventsList.length; i++ ) {
+        // Get the event name
+        var eventName = eventsList[i].name;
+        var eventData = eventsList[i].eventData;
+        // TODO: Test, not sure if this is correct way to identify data
+        if( eventName == "Indicator_percent_successful_potato_mines" ) {
+            distilledData.SuccessfulMinesRatio = eventData.Indicator_percent_successful_potato_mines;
+        }
+        else if (eventName == "Indicator_percent_sun_collected")
+        {
+            distilledData.SunCollectedRatio = eventData.Indicator_percent_sun_collected;
+        }
+        else if (eventName == "Indicator_percent_sunflowers_in_back")
+        {
+            distilledData.RearSunflowersRatio = eventData.Indicator_percent_sunflowers_in_back;
+        }
+    }
 
     var distillInfo = {
         /*competencyType : cType,
