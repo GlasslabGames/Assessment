@@ -43,17 +43,51 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         // Get the event name
         var eventName = eventsList[i].name;
         var eventData = eventsList[i].eventData;
+
         // TODO: Test, not sure if this is correct way to identify data
         if( eventName == "Indicator_percent_successful_potato_mines" ) {
-            distilledData.SuccessfulMinesRatio = eventData.Indicator_percent_successful_potato_mines;
+            distilledData.SuccessfulMinesRatio = eventData.value;
         }
-        else if (eventName == "Indicator_percent_sun_collected")
-        {
-            distilledData.SunCollectedRatio = eventData.Indicator_percent_sun_collected;
+        else if (eventName == "Indicator_percent_sun_collected") {
+            distilledData.SunCollectedRatio = eventData.value;
         }
-        else if (eventName == "Indicator_percent_sunflowers_in_back")
-        {
-            distilledData.RearSunflowersRatio = eventData.Indicator_percent_sunflowers_in_back;
+        else if (eventName == "Indicator_percent_sunflowers_in_back") {
+            distilledData.RearSunflowersRatio = eventData.value;
+        }
+
+        /***** Following indicators are owned by Rose *****/
+        // #21 = sun x < offensive x < defensive x
+        // #45 = improvement on 21
+        else if (eventName == "Indicator_plant_layout") {
+            var value = parseFloat(eventData.value);
+            distilledData.PlantLayout = value;
+
+            // if they're replaying a failed level, figure out if they improved on this indicator since last time
+            if (eventData.isReplayingFailedLevel) {
+                var prevValue = parseFloat(eventData.prevValue);
+                value -= prevValue; // new value - old value. Result is between -1 and 1.
+                distilledData.PlantLayoutImprovement = value;
+            }
+        }
+        // #8 = plant 3 sunflowers before 2nd wave
+        // #46 = improvement on 8
+        else if (eventName == "Indicator_sunflowers_at_wave") {
+            var wave = parseInt(eventData.wave);
+            if (wave == 2) {
+                var result = parseInt(eventData.numSunflowers) >= 3;
+                distilledData.PlantSunflowersBeforeWave = numSunflowers;
+
+                // if they're replaying a failed level, figure out if they improved on this indicator since last time
+                if (eventData.isReplayingFailedLevel) {
+                    var prevResult = parseInt(eventData.prevNumSunflowers) >= 3;
+                    result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
+                    distilledData.PlantSunflowersBeforeWaveImprovement = result;
+                }
+            }
+        }
+        // #43 = replaced plants / destroyed plants
+        else if (eventName == "Indicator_replaced_plants_to_destroyed_plants") {
+            distilledData.ReplacedPlantsToDestroyedPlants = parseFloat(eventData.value);
         }
     }
 
