@@ -74,14 +74,23 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         else if (eventName == "Indicator_sunflowers_at_wave") {
             var wave = parseInt(eventData.wave);
             if (wave == 2) {
-                var result = parseInt(eventData.numSunflowers) >= 3;
-                distilledData.PlantSunflowersBeforeWave = numSunflowers;
+                if (eventData.hasOwnProperty("numSunflowers") &&
+                    eventData.hasOwnProperty("prevNumSunflowers"))
+                {
+                    // TODO numSunFlowers is not defined?
+                    var result = parseInt(eventData.numSunflowers) >= 3;
+                    distilledData.PlantSunflowersBeforeWave = result;
 
-                // if they're replaying a failed level, figure out if they improved on this indicator since last time
-                if (eventData.isReplayingFailedLevel) {
-                    var prevResult = parseInt(eventData.prevNumSunflowers) >= 3;
-                    result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
-                    distilledData.PlantSunflowersBeforeWaveImprovement = result;
+                    // if they're replaying a failed level, figure out if they improved on this indicator since last time
+                    if (eventData.isReplayingFailedLevel) {
+                        var prevResult = parseInt(eventData.prevNumSunflowers) >= 3;
+                        result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
+                        distilledData.PlantSunflowersBeforeWaveImprovement = result;
+                    }
+                }
+                else
+                {
+                    console.error("Indicator for sunflowers was found, but could not find numSunflowers and/or prevNumSunflowers.");
                 }
             }
         }
