@@ -1,5 +1,5 @@
 /**
- * Assessment SimCity Distiller Module
+ * Assessment Engine Module for Javascript
  *
  * Module dependencies:
  *  lodash     - https://github.com/lodash/lodash
