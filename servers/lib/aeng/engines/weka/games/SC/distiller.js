@@ -1,5 +1,5 @@
 /**
- * Assessment SimCity Distiller Module
+ * Assessment SimCityEDU Distiller Module
  *
  * Module dependencies:
  *  lodash     - https://github.com/lodash/lodash
