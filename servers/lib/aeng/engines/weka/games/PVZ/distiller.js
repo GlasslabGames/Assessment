@@ -69,8 +69,8 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                 if (eventData.hasOwnProperty("numSunflowers") &&
                     eventData.hasOwnProperty("prevNumSunflowers"))
                 {
-                    // TODO numSunFlowers is not defined?
-                    var result = parseInt(eventData.numSunflowers) >= 3;
+                    // TODO numSunFlowers is not defined? I don't know why since it's added as a value to the telemetry.
+                    var result = eventData.numSunflowers >= 3;
                     distilledData.PlantSunflowersBeforeWave = result;
 
                 // if they're replaying a failed level, figure out if they improved on this indicator since last time
@@ -114,7 +114,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             }
         }
 
-        // Reversed events
+        // Reversed indicators
 
         // #11 = amount of time that the conveyor is full out of the whole level time
         else if (eventName == "Indicator_percent_time_conveyor_is_full") {
@@ -132,17 +132,20 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         else if (eventName == "Indicator_planted_iceburg_in_snapdragon_range") {
             distilledData.PlantedIceburgInSnapdragonRange = 1 - eventData.floatValue;
         }
+           
         // Fallback for indicators
         else if (eventName.indexOf("Indicator_") == 0)
         {
             var eventNamePieces = eventName.split("_");
             eventNAmePieces[0] = ""; // Get rid of "Indicator"
+            // Convert to CamelCase
             for (var i=1; i < eventNamePieces.length; i++)
             {
                 var piece = eventNamePieces[i];
                 piece = piece.charAt(0).toUpperCase() + piece.slice(1);
             }
             var distilledEventName = eventNamePieces.join();
+
             var distilledValue;
             console.log("Distilled event name: "+distilledEventName);
             if (eventData.hasOwnProperty("value"))
@@ -165,27 +168,6 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             }
 
             distilledData[distilledEventName] = distilledValue;
-            /*
-            // #33
-            if( eventName == "Indicator_percent_successful_potato_mines" ) {
-                distilledData.SuccessfulMinesRatio = eventData.value;
-            }
-            // #7
-            else if (eventName == "Indicator_percent_sun_collected") {
-                distilledData.SunCollectedRatio = eventData.value;
-            }
-            // #3
-            else if (eventName == "Indicator_percent_sunflowers_in_back") {
-                distilledData.RearSunflowersRatio = eventData.value;
-            }
-            // #2
-            else if (eventName == "Indicator_percent_invalid_planting_attempts") {
-                distilledData.InvalidPlantingAttemptRatio = eventData.value;
-            }
-            // #13
-            else if (eventName == "") {
-                distilledData.InvalidPlantingAttemptRatio = eventData.value;
-            }*/
         }
     }
 
