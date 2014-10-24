@@ -35,6 +35,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     */
 
     var distilledData = {};
+    var computationData = {}; // use this to track counts, etc as we look through the events
 
     console.log("=========TEST=========");
     // Process data through distiller function
@@ -44,50 +45,85 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         var eventName = eventsList[i].name;
         var eventData = eventsList[i].eventData;
 
-        // TODO: Test, not sure if this is correct way to identify data
-        if( eventName == "Indicator_percent_successful_potato_mines" ) {
-            distilledData.SuccessfulMinesRatio = eventData.value;
-        }
-        else if (eventName == "Indicator_percent_sun_collected") {
-            distilledData.SunCollectedRatio = eventData.value;
-        }
-        else if (eventName == "Indicator_percent_sunflowers_in_back") {
-            distilledData.RearSunflowersRatio = eventData.value;
-        }
 
-        /***** Following indicators are owned by Rose *****/
+        // Special cases where we're doing some checks in the distiller for the sake of flexibility
+
         // #21 = sun x < offensive x < defensive x
         // #45 = improvement on 21
-        else if (eventName == "Indicator_plant_layout") {
-            var value = parseFloat(eventData.value);
-            distilledData.PlantLayout = value;
+        if (eventName == "Indicator_plant_layout_mistakes") {
+            var value = eventData.floatValue;
+            distilledData.PlantLayout = 1 - value; // reverse
 
             // if they're replaying a failed level, figure out if they improved on this indicator since last time
             if (eventData.isReplayingFailedLevel) {
-                var prevValue = parseFloat(eventData.prevValue);
-                value -= prevValue; // new value - old value. Result is between -1 and 1.
+                var prevValue = eventData.prevValue;
+                value = prevValue - value; // old value - new value.
+                    // Result is -1 if they went from 0 mistakes to 3 and 1 if they went from 3 mistakes to 0.
                 distilledData.PlantLayoutImprovement = value;
             }
         }
         // #8 = plant 3 sunflowers before 2nd wave
         // #46 = improvement on 8
         else if (eventName == "Indicator_sunflowers_at_wave") {
-            var wave = parseInt(eventData.wave);
+            var wave = eventData.wave;
             if (wave == 2) {
-                var result = parseInt(eventData.numSunflowers) >= 3;
+                var result = eventData.numSunflowers >= 3;
                 distilledData.PlantSunflowersBeforeWave = numSunflowers;
 
                 // if they're replaying a failed level, figure out if they improved on this indicator since last time
                 if (eventData.isReplayingFailedLevel) {
-                    var prevResult = parseInt(eventData.prevNumSunflowers) >= 3;
+                    var prevResult = eventData.prevNumSunflowers >= 3;
                     result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
                     distilledData.PlantSunflowersBeforeWaveImprovement = result;
                 }
             }
         }
-        // #43 = replaced plants / destroyed plants
-        else if (eventName == "Indicator_replaced_plants_to_destroyed_plants") {
-            distilledData.ReplacedPlantsToDestroyedPlants = parseFloat(eventData.value);
+        // #29 = true if they replace at least 2 non-upgraded plants with upgraded ones
+        // #44 = true if they replace resource plants with offensive plants during an intense fight
+        else if (eventName == "Action_replace_plant") {
+            if (parseFloat(eventData.time) <= 3) { // if they replaced it within 3 secs
+                if (eventData.isUpgrade) {
+                    if (!computationData.numReplaceUpgrades) computationData.numReplaceUpgrades = 1;
+                    else computationData.numReplaceUpgrades++;
+                    if (computationData.numReplaceUpgrades >= 2) {
+                        distilledData.ReplacedPlantsWithUpgrades = true;
+                        // TODO: do we need to explicitly set this to false in other cases?
+                    }
+                }
+                if (eventData.replacingResourceWithOffensiveDuringIntenseFight) {
+                    if (!computationData.numReplaceResourceWithOffensive) computationData.numReplaceResourceWithOffensive = 1;
+                    else computationData.numReplaceResourceWithOffensive++;
+                    if (computationData.numReplaceResourceWithOffensive >= 2) {
+                        distilledData.ReplacedResourceWithOffensiveDuringIntenseFight = true;
+                        // TODO: do we need to explicitly set this to false in other cases?
+                    }
+                }
+            }
+        }
+        // #42a = true if they use plantfood on a sunflower once
+        else if (eventName == "Action_use_plant_food") {
+            if (eventData.type == "sunflower" || eventData.type == "twinsunflower") {
+                distilledData.UsedPlantFoodOnSunflower = true;
+            }
+        }
+
+        // Reversed events
+
+        // #11 = amount of time that the conveyor is full out of the whole level time
+        else if (eventName == "Indicator_percent_time_conveyor_is_full") {
+            distilledData.PercentTimeConveyorIsFull = 1 - parseFloat(eventData.value); // reversed
+        }
+        // #12 = ratio of plant food used in low danger / all plant food used
+        else if (eventName == "Indicator_percent_low_danger_plant_food_usage") {
+            distilledData.PercentLowDangerPlantFoodUsage = 1 - eventData.floatValue;
+        }
+        // #14 = ratio of powers used in low danger / all powers used
+        else if (eventName == "Indicator_percent_low_danger_power_usage") {
+            distilledData.PercentLowDangerPowerUsage = 1 - eventData.floatValue;
+        }
+        // #37 = number of icebergs near snapdragon / all icebergs
+        else if (eventName == "Indicator_planted_iceburg_in_snapdragon_range") {
+            distilledData.PlantedIceburgInSnapdragonRange = 1 - eventData.floatValue;
         }
     }
 
