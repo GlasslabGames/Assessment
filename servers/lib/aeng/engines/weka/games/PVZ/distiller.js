@@ -36,7 +36,6 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
     var distilledData = {};
 
-    console.log("=========TEST=========");
     // Process data through distiller function
     var eventsList = events.events;
     for( var i = 0; i < eventsList.length; i++ ) {
@@ -44,21 +43,10 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         var eventName = eventsList[i].name;
         var eventData = eventsList[i].eventData;
 
-        // TODO: Test, not sure if this is correct way to identify data
-        if( eventName == "Indicator_percent_successful_potato_mines" ) {
-            distilledData.SuccessfulMinesRatio = eventData.value;
-        }
-        else if (eventName == "Indicator_percent_sun_collected") {
-            distilledData.SunCollectedRatio = eventData.value;
-        }
-        else if (eventName == "Indicator_percent_sunflowers_in_back") {
-            distilledData.RearSunflowersRatio = eventData.value;
-        }
-
         /***** Following indicators are owned by Rose *****/
         // #21 = sun x < offensive x < defensive x
         // #45 = improvement on 21
-        else if (eventName == "Indicator_plant_layout") {
+        if (eventName == "Indicator_plant_layout") {
             var value = parseFloat(eventData.value);
             distilledData.PlantLayout = value;
 
@@ -97,6 +85,61 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         // #43 = replaced plants / destroyed plants
         else if (eventName == "Indicator_replaced_plants_to_destroyed_plants") {
             distilledData.ReplacedPlantsToDestroyedPlants = parseFloat(eventData.value);
+        }
+        // Fallback for indicators
+        else if (eventName.indexOf("Indicator_") == 0)
+        {
+            var eventNamePieces = eventName.split("_");
+            eventNAmePieces[0] = ""; // Get rid of "Indicator"
+            for (var i=1; i < eventNamePieces.length; i++)
+            {
+                var piece = eventNamePieces[i];
+                piece = piece.charAt(0).toUpperCase() + piece.slice(1);
+            }
+            var distilledEventName = eventNamePieces.join();
+            var distilledValue;
+            console.log("Distilled event name: "+distilledEventName);
+            if (eventData.hasOwnProperty("value"))
+            {
+                distilledValue = eventData.value;
+            }
+            else if (eventData.hasOwnProperty("floatValue"))
+            {
+                distilledValue = eventData.floatValue;
+                console.log("Float value is: "+typeof(eventData.floatValue));
+            }
+            else if (eventData.hasOwnProperty("boolValue"))
+            {
+                distilledValue = eventData.boolValue;
+                console.log("Bool value is: "+typeof(eventData.boolValue));
+            }
+            else if (eventData.hasOwnProperty("intValue"))
+            {
+                distilledValue = eventData.intValue;
+            }
+
+            distilledData[distilledEventName] = distilledValue;
+            /*
+            // #33
+            if( eventName == "Indicator_percent_successful_potato_mines" ) {
+                distilledData.SuccessfulMinesRatio = eventData.value;
+            }
+            // #7
+            else if (eventName == "Indicator_percent_sun_collected") {
+                distilledData.SunCollectedRatio = eventData.value;
+            }
+            // #3
+            else if (eventName == "Indicator_percent_sunflowers_in_back") {
+                distilledData.RearSunflowersRatio = eventData.value;
+            }
+            // #2
+            else if (eventName == "Indicator_percent_invalid_planting_attempts") {
+                distilledData.InvalidPlantingAttemptRatio = eventData.value;
+            }
+            // #13
+            else if (eventName == "") {
+                distilledData.InvalidPlantingAttemptRatio = eventData.value;
+            }*/
         }
     }
 
