@@ -37,7 +37,6 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     var distilledData = {};
     var computationData = {}; // use this to track counts, etc as we look through the events
 
-    console.log("=========TEST=========");
     // Process data through distiller function
     var eventsList = events.events;
     for( var i = 0; i < eventsList.length; i++ ) {
@@ -67,14 +66,22 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         else if (eventName == "Indicator_sunflowers_at_wave") {
             var wave = eventData.wave;
             if (wave == 2) {
-                var result = eventData.numSunflowers >= 3;
-                distilledData.PlantSunflowersBeforeWave = numSunflowers;
+                if (eventData.hasOwnProperty("numSunflowers") &&
+                    eventData.hasOwnProperty("prevNumSunflowers"))
+                {
+                    // TODO numSunFlowers is not defined?
+                    var result = parseInt(eventData.numSunflowers) >= 3;
+                    distilledData.PlantSunflowersBeforeWave = result;
 
                 // if they're replaying a failed level, figure out if they improved on this indicator since last time
                 if (eventData.isReplayingFailedLevel) {
                     var prevResult = eventData.prevNumSunflowers >= 3;
                     result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
                     distilledData.PlantSunflowersBeforeWaveImprovement = result;
+                }
+                else
+                {
+                    console.error("Indicator for sunflowers was found, but could not find numSunflowers and/or prevNumSunflowers.");
                 }
             }
         }
@@ -124,6 +131,61 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         // #37 = number of icebergs near snapdragon / all icebergs
         else if (eventName == "Indicator_planted_iceburg_in_snapdragon_range") {
             distilledData.PlantedIceburgInSnapdragonRange = 1 - eventData.floatValue;
+        }
+        // Fallback for indicators
+        else if (eventName.indexOf("Indicator_") == 0)
+        {
+            var eventNamePieces = eventName.split("_");
+            eventNAmePieces[0] = ""; // Get rid of "Indicator"
+            for (var i=1; i < eventNamePieces.length; i++)
+            {
+                var piece = eventNamePieces[i];
+                piece = piece.charAt(0).toUpperCase() + piece.slice(1);
+            }
+            var distilledEventName = eventNamePieces.join();
+            var distilledValue;
+            console.log("Distilled event name: "+distilledEventName);
+            if (eventData.hasOwnProperty("value"))
+            {
+                distilledValue = eventData.value;
+            }
+            else if (eventData.hasOwnProperty("floatValue"))
+            {
+                distilledValue = eventData.floatValue;
+                console.log("Float value is: "+typeof(eventData.floatValue));
+            }
+            else if (eventData.hasOwnProperty("boolValue"))
+            {
+                distilledValue = eventData.boolValue;
+                console.log("Bool value is: "+typeof(eventData.boolValue));
+            }
+            else if (eventData.hasOwnProperty("intValue"))
+            {
+                distilledValue = eventData.intValue;
+            }
+
+            distilledData[distilledEventName] = distilledValue;
+            /*
+            // #33
+            if( eventName == "Indicator_percent_successful_potato_mines" ) {
+                distilledData.SuccessfulMinesRatio = eventData.value;
+            }
+            // #7
+            else if (eventName == "Indicator_percent_sun_collected") {
+                distilledData.SunCollectedRatio = eventData.value;
+            }
+            // #3
+            else if (eventName == "Indicator_percent_sunflowers_in_back") {
+                distilledData.RearSunflowersRatio = eventData.value;
+            }
+            // #2
+            else if (eventName == "Indicator_percent_invalid_planting_attempts") {
+                distilledData.InvalidPlantingAttemptRatio = eventData.value;
+            }
+            // #13
+            else if (eventName == "") {
+                distilledData.InvalidPlantingAttemptRatio = eventData.value;
+            }*/
         }
     }
 
