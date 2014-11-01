@@ -23,6 +23,7 @@ function PVZ_Distiller()
 PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 {
     var events = sessionsEvents[0];
+    console.log("Starting preProcess");
 
     /*
     var bayesInfo = {
@@ -37,13 +38,17 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     var distilledData = {};
     var computationData = {}; // use this to track counts, etc as we look through the events
 
+    // default to false if we don't count enough of these events
+    distilledData.ReplacedPlantsWithUpgrades = false;
+    distilledData.ReplacedResourceWithOffensiveDuringIntenseFight = true;
+
     // Process data through distiller function
     var eventsList = events.events;
     for( var i = 0; i < eventsList.length; i++ ) {
         // Get the event name
         var eventName = eventsList[i].name;
         var eventData = eventsList[i].eventData;
-
+        //console.log("\neventName:", eventName, "eventData:",eventData);
 
         // Special cases where we're doing some checks in the distiller for the sake of flexibility
 
@@ -56,8 +61,8 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             // if they're replaying a failed level, figure out if they improved on this indicator since last time
             if (eventData.isReplayingFailedLevel) {
                 var prevValue = eventData.prevValue;
-                value = prevValue - value; // old value - new value.
-                    // Result is -1 if they went from 0 mistakes to 3 and 1 if they went from 3 mistakes to 0.
+                value = ((prevValue - value) + 1) / 2; // old value - new value.
+                    // Result is 0 if they went from 0 mistakes to 3 and 1 if they went from 3 mistakes to 0.
                 distilledData.PlantLayoutImprovement = value;
             }
         }
@@ -67,20 +72,19 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             var wave = eventData.wave;
             if (wave == 2) {
                 if (eventData.hasOwnProperty("numSunflowers") &&
-                    eventData.hasOwnProperty("prevNumSunflowers"))
-                {
+                    eventData.hasOwnProperty("prevNumSunflowers")) {
                     // TODO numSunFlowers is not defined? I don't know why since it's added as a value to the telemetry.
                     var result = eventData.numSunflowers >= 3;
-                    distilledData.PlantSunflowersBeforeWave = result;
+                    distilledData.PlantedSunflowersBeforeWave = result;
 
-                // if they're replaying a failed level, figure out if they improved on this indicator since last time
-                if (eventData.isReplayingFailedLevel) {
-                    var prevResult = eventData.prevNumSunflowers >= 3;
-                    result -= prevResult; // new value - old value. -1: decline, 0: no change, 1: improvement
-                    distilledData.PlantSunflowersBeforeWaveImprovement = result;
+                    // if they're replaying a failed level, figure out if they improved on this indicator since last time
+                    if (eventData.isReplayingFailedLevel) {
+                        var prevResult = eventData.prevNumSunflowers >= 3;
+                        result = ((result - prevResult) + 1) / 2; // new value - old value. 0: decline, 0.5: no change, 1: improvement
+                        distilledData.PlantedSunflowersBeforeWaveImprovement = result;
+                    }
                 }
-                else
-                {
+                else {
                     console.error("Indicator for sunflowers was found, but could not find numSunflowers and/or prevNumSunflowers.");
                 }
             }
@@ -94,7 +98,6 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                     else computationData.numReplaceUpgrades++;
                     if (computationData.numReplaceUpgrades >= 2) {
                         distilledData.ReplacedPlantsWithUpgrades = true;
-                        // TODO: do we need to explicitly set this to false in other cases?
                     }
                 }
                 if (eventData.replacingResourceWithOffensiveDuringIntenseFight) {
@@ -102,7 +105,6 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                     else computationData.numReplaceResourceWithOffensive++;
                     if (computationData.numReplaceResourceWithOffensive >= 2) {
                         distilledData.ReplacedResourceWithOffensiveDuringIntenseFight = true;
-                        // TODO: do we need to explicitly set this to false in other cases?
                     }
                 }
             }
@@ -118,7 +120,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
         // #11 = amount of time that the conveyor is full out of the whole level time
         else if (eventName == "Indicator_percent_time_conveyor_is_full") {
-            distilledData.PercentTimeConveyorIsFull = 1 - parseFloat(eventData.value); // reversed
+            distilledData.PercentTimeConveyorIsFull = 1 - eventData.floatValue; // reversed
         }
         // #12 = ratio of plant food used in low danger / all plant food used
         else if (eventName == "Indicator_percent_low_danger_plant_food_usage") {
@@ -132,19 +134,20 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         else if (eventName == "Indicator_planted_iceburg_in_snapdragon_range") {
             distilledData.PlantedIceburgInSnapdragonRange = 1 - eventData.floatValue;
         }
-           
+
         // Fallback for indicators
         else if (eventName.indexOf("Indicator_") == 0)
         {
             var eventNamePieces = eventName.split("_");
-            eventNAmePieces[0] = ""; // Get rid of "Indicator"
+            eventNamePieces[0] = ""; // Get rid of "Indicator"
             // Convert to CamelCase
-            for (var i=1; i < eventNamePieces.length; i++)
+            for (var j=0; j < eventNamePieces.length; j++)
             {
-                var piece = eventNamePieces[i];
+                var piece = eventNamePieces[j];
                 piece = piece.charAt(0).toUpperCase() + piece.slice(1);
+                eventNamePieces[j] = piece;
             }
-            var distilledEventName = eventNamePieces.join();
+            var distilledEventName = eventNamePieces.join("");
 
             var distilledValue;
             console.log("Distilled event name: "+distilledEventName);
@@ -155,12 +158,10 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             else if (eventData.hasOwnProperty("floatValue"))
             {
                 distilledValue = eventData.floatValue;
-                console.log("Float value is: "+typeof(eventData.floatValue));
             }
             else if (eventData.hasOwnProperty("boolValue"))
             {
                 distilledValue = eventData.boolValue;
-                console.log("Bool value is: "+typeof(eventData.boolValue));
             }
             else if (eventData.hasOwnProperty("intValue"))
             {
@@ -169,6 +170,24 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
             distilledData[distilledEventName] = distilledValue;
         }
+    }
+
+    // convert to fragments to send distiller TODO: filter based on level
+    var fragments = {};
+    var value, intValue;
+    for (var key in distilledData) {
+        value = distilledData[key];
+        if (typeof value == "boolean") {
+            intValue = (value)? 1 : 0; // true -> 1, false -> 0
+        } else { // assume it's a float btw 0 and 1
+            if (value <= 0.25) intValue = 0;
+            else if (value <= 0.5) intValue = 1;
+            else if (value <= 0.75) intValue = 2;
+            else intValue = 3;
+            // spelling out the cases in order to conform exactly to the spec and handle edge cases gracefully
+        }
+        fragments[key] = intValue;
+        console.log("\nAdding fragment",key,":",value,"->",intValue);
     }
 
     var distillInfo = {
