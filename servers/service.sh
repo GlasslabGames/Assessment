@@ -14,6 +14,12 @@ start() {
     cd $CDIR
     echo "Done Building Weka"
 
+    echo "Building Netica..."
+    cd ./lib/aeng/engines/netica/build
+    ./compile.sh
+    cd $CDIR
+    echo "Done Building Netica"
+
     #./service_start.sh statsd "node_modules/statsd/stats.js config.statsd.json"
     ./service_start.sh app-assessment "app-assessment.js"
 }

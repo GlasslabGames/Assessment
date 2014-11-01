@@ -493,6 +493,10 @@ AssessmentEngine.prototype.getGameAssessmentDefinitions = function(gameId) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/definitions");
 };
 
+AssessmentEngine.prototype.getAssessmentResults = function(userId, gameId, assessmentId) {
+    return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/user/"+userId+"/assessment/"+assessmentId+"/results");
+};
+
 AssessmentEngine.prototype.saveAEResults = function(userId, gameId, assessmentId, data) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/user/"+userId+"/assessment/"+assessmentId+"/results", data);
 };

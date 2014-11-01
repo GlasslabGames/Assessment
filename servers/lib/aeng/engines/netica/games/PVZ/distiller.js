@@ -26,7 +26,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
     /*
     var bayesInfo = {
-        bayesFile: wekaFile,
+        bayesFile: bayesFile,
         evidenceFragments: [
             endStateCategory,
             combinedRRCategory
@@ -176,7 +176,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         teacherFeedbackCode: teacherFeedbackCode,
         note : ratingText,
         bayes: {
-            key: wekaFile,
+            key: bayesFile,
             root: "category_sys_mod",
             fragments: {
                 "category_end_state": endStateCategory,
@@ -189,7 +189,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     return distillInfo;
 };
 
-PVZ_Distiller.prototype.postProcess = function(distilled, wekaResults) {
+PVZ_Distiller.prototype.postProcess = function(distilled, bayesResults) {
     var compData = {};
     //console.log("postProcess distilled:", distilled);
     //console.log("postProcess wekaResults:", wekaResults);

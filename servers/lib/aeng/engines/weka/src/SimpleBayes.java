@@ -21,6 +21,10 @@ import java.io.InputStreamReader;
 import weka.classifiers.bayes.net.BIFReader;
 import weka.classifiers.bayes.net.EditableBayesNet;
 import weka.classifiers.bayes.net.MarginCalculator;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.core.Instances;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
 
 
 /**
@@ -63,6 +67,7 @@ public class SimpleBayes
 
         // Read the Bayes net from the file
         EditableBayesNet bayesNet = new EditableBayesNet( stringReader );
+        
 
         // Instantiate the margin calculator (this will compute the distribution of each node)
         MarginCalculator  marginCalculator = new MarginCalculator();
@@ -76,18 +81,33 @@ public class SimpleBayes
             marginCalculator.setEvidence( marginCalculator.getNode( evidenceFragment ), evidenceValue );
         }
 
+        //System.out.println( "----------" );
+        
+
         // Once the evidence values have been set, get the probability distribution for the root node
         //String rootNode = jObject.get( "root" ).getAsString();
         String rootNode = args[1];
         double[] margin = marginCalculator.getMargin( marginCalculator.getNode( rootNode ) );
 
-        System.out.println( "[" );
+        // Read the evidence fragments that we need to capture
+        // These evidence fragments should be parameters in the URL
+        for( int i = 0; i < bayesNet.getNrOfNodes(); i++ ) {
+            printMargin( bayesNet.getNodeName( i ), marginCalculator.getMargin( i ) );
+        }
+
+
+        //System.out.println( "----------" );
+    }
+
+    public static void printMargin( String node, double[] margin )
+    {
+        System.out.print( node + ": [ " );
         for( int i = 0; i < margin.length; i++ ) {
-            System.out.println( margin[i] );
+            System.out.print( margin[i] );
             if(i+1 < margin.length) {
-                System.out.println( "," );
+                System.out.print( ", " );
             }
         }
-        System.out.println( "]" );
+        System.out.println( " ]" );
     }
 }
