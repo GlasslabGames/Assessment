@@ -8,7 +8,7 @@ cd ../classes
 # Parameter 2: name of the bayes file to interpret
 # Parameter 3: evidence fragment
 # Parameter 4: evidence fragment
-# java -cp .:../lib/NeticaJ.jar -Djava.library.path=../lib $@
+# java -cp .:../lib/linux/32/NeticaJ.jar -Djava.library.path=../lib/linux/32 $@
 
 # Run the program with the necessary jar files
 # Parameter 1: XML Bayes File Length
@@ -20,7 +20,7 @@ cd ../classes
 # Parameter n+1: -> evidenceValue
 #
 # standard in -> XML Bayes File
-java -cp .:../lib/NeticaJ.jar -Djava.library.path=../lib $@
+java -cp .:../lib/old/NeticaJ.jar -Djava.library.path=../lib/old $@
 
 # Test Run:
 #   ./run.sh AdvancedBayes ../games/SC/bayes/sierra_madre.xml category_systems_thinking category_end_state 0 category_process 0
