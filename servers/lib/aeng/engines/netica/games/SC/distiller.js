@@ -417,8 +417,6 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             key: scenarioInfo.bayesFile,
             root: "category_systems_thinking",
             posteriors: {
-                "category_end_state": -1,
-                "category_process": -1
             },
             fragments: {
                 "category_end_state": endStateValue,
