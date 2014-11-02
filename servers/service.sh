@@ -15,7 +15,13 @@ start() {
     echo "Done Building Weka"
 
     echo "Building Netica..."
-    cd ./lib/aeng/engines/netica/build
+    if [[ "$OSTYPE" == "linux"* ]]; then
+        echo "... for linux-gnu"
+        cd ./lib/aeng/engines/netica/build/linux_64
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "... for darwin"
+        cd ./lib/aeng/engines/netica/build/osx
+    fi
     ./compile.sh
     cd $CDIR
     echo "Done Building Netica"

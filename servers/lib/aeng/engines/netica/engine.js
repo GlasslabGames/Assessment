@@ -148,7 +148,11 @@ return when.promise(function(resolve, reject) {
             console.log( "Executing bayes on " + process.platform + " at " + process.cwd() );
             if( process.platform === "win32" ) {
                 scriptToExecute += 'run.bat';
+            } else if( process.platform === "linux" ) {
+                scriptCwd += "/linux_64";
+                scriptToExecute += './run.sh';
             } else {
+                scriptCwd += "/osx";
                 scriptToExecute += './run.sh';
             }
 
