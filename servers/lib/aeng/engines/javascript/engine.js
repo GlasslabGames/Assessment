@@ -60,6 +60,11 @@ JavascriptEngine.prototype.processEventRules = function(userId, gameId, gameSess
 return when.promise(function (resolve, reject) {
 // ------------------------------------------------
 
+    //var fs = require('fs');
+    //var file = "./"+gameId+"-"+eventsData[0].events[0].gameLevel+"-"+gameSessionId.substring(0,4)+".json";
+    //fs.writeFileSync(file, JSON.stringify(eventsData, null, 2));
+    //console.log("eventsData:", );
+
     //var dbFile = '/Users/josephsutton/Documents/temp.db';
     var dbFile = ':memory:';
     var db = new sqlite3.Database(dbFile);
@@ -139,7 +144,7 @@ return when.promise(function (resolve, reject) {
             }
         }
         if (this.options.env == "dev") {
-            console.log("AssessmentEngine: Javascript_Engine - SC_SoWo: process - # of events:", totalNumEvents);
+            console.log("AssessmentEngine: Javascript_Engine - processEventRules: process - # of events:", totalNumEvents);
         }
 
         var promiseList = [];
