@@ -88,12 +88,13 @@ public class SimpleBayes
         //String rootNode = jObject.get( "root" ).getAsString();
         String rootNode = args[1];
         double[] margin = marginCalculator.getMargin( marginCalculator.getNode( rootNode ) );
+        printMargin( rootNode, margin );
 
         // Read the evidence fragments that we need to capture
         // These evidence fragments should be parameters in the URL
-        for( int i = 0; i < bayesNet.getNrOfNodes(); i++ ) {
-            printMargin( bayesNet.getNodeName( i ), marginCalculator.getMargin( i ) );
-        }
+        //for( int i = 0; i < bayesNet.getNrOfNodes(); i++ ) {
+            //printMargin( bayesNet.getNodeName( i ), marginCalculator.getMargin( i ) );
+        //}
 
 
         //System.out.println( "----------" );
@@ -101,13 +102,13 @@ public class SimpleBayes
 
     public static void printMargin( String node, double[] margin )
     {
-        System.out.print( node + ": [ " );
+        System.out.print( "[" );
         for( int i = 0; i < margin.length; i++ ) {
             System.out.print( margin[i] );
             if(i+1 < margin.length) {
-                System.out.print( ", " );
+                System.out.print( "," );
             }
         }
-        System.out.println( " ]" );
+        System.out.println( "]" );
     }
 }
