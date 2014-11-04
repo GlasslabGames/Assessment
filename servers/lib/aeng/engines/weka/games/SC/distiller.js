@@ -50,6 +50,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     var scenarioInfo = {};
     var scoreInfo = {};
     var endStateInfo = {};
+    var finalScenarioTime = 0;          // in seconds
+    var finalScenarioTimeSet = false;   // make sure this only happens once
 
     // Zoning info
     var zoningInfo = {
@@ -101,6 +103,9 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             // Get the scenario name in the event data
             scenarioInfo.scenarioName = eventsList[i].eventData.name;
 
+            // Get the start time
+            finalScenarioTime = parseInt( eventsList[i].timestamp );
+
             // Check which scenario was played and set the info
             if( scenarioInfo.scenarioName == "Medusa A2 - Worker Shortage.txt" ) {
                 isScenarioSet = true;
@@ -137,6 +142,13 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             if( eventName == "GL_Scenario_Summary" ) {
                 // Get the summary data
                 var summaryData = eventsList[i].eventData;
+
+                // Get the end time
+                if( !finalScenarioTimeSet ) {
+                    finalScenarioTime = parseInt( eventsList[i].timestamp ) - finalScenarioTime;
+                    finalScenarioTime /= 1000;
+                    finalScenarioTimeSet = true;
+                }
 
                 // Set thermometer scores for WORKER_SHORTAGE
                 if( scenarioInfo.scenarioName == "WORKER_SHORTAGE" ) {
@@ -275,10 +287,10 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
         var zoneDezoneLower = ( zoneDezoneRes > 0 ) ? 0 : 1;
 
         // Get the process value
-        if( zoneDezoneUpper == 1 ) {
+        if( zoneDezoneUpper == 1 && ( zoningInfo.zoneCom > 0 || zoningInfo.zoneInd > 0 ) ) {
             processValue = 2;
         }
-        else if( zoneDezoneLower == 1 ) {
+        else if( zoneDezoneLower == 1 && ( zoningInfo.zoneCom > 0 || zoningInfo.zoneInd > 0 ) ) {
             processValue = 1;
         }
         else {
@@ -389,6 +401,12 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
         else {
             endStateValue = 0;
         }
+    }
+
+    // Finally, make sure the time played is greather than 60 seconds, otherwise reset the fragments
+    if( finalScenarioTime < 60 ) {
+        processValue = 0;
+        endStateValue = 0;
     }
 
     /*

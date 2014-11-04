@@ -63,7 +63,10 @@ public class AdvancedBayes {
 			// Create the Net using the .dne file and compile it
 			//Net net = new Net( new Streamer( sbis, "../games/SC/bayes/worker_shortage.neta", env ) );
 			Net net = new Net( new Streamer( args[ 0 ] ) );
+			net.setAutoUpdate( 0 );
+			System.out.println( "auto update: " + net.getAutoUpdate() );
 			net.compile();
+			System.out.println( "auto update: " + net.getAutoUpdate() );
 
 			// Get the root node
 			Node rootNode = net.getNode( args[ 1 ] );
