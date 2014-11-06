@@ -32,9 +32,7 @@ var cTypeConst = {
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT: "lewt",
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT_M3: "lewt_m3",
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT_M5: "lewt_m5",
-    TYPE_COMPLEX_PROBLEM_SOLVING_SYSTEMS_MAP: "cpssm",
-    TYPE_UNIVARIATE: "univariate",
-    TYPE_MULTIVARIATE: "multivariate"
+    TYPE_COMPLEX_PROBLEM_SOLVING_SYSTEMS_MAP: "cpssm"
 };
 
 SC_Distiller.prototype.preProcess = function(sessionsEvents) {
@@ -120,21 +118,18 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
                 scenarioInfo.scenarioName = "WORKER_SHORTAGE";
                 scenarioInfo.wekaFile = "worker_shortage";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M2;
-                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE ];
             }
             else if( scenarioInfo.scenarioName == "Medusa A4 - PowerPollution.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "SIERRA_MADRE";
                 scenarioInfo.wekaFile = "sierra_madre";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M3;
-                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE, cTypeConst.TYPE_MULTIVARIATE ];
             }
             else if( scenarioInfo.scenarioName == "Medusa A3 - Large City.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "JACKSON_CITY";
                 scenarioInfo.wekaFile = "jackson_city";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M5;
-                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE, cTypeConst.TYPE_MULTIVARIATE ];
             }
         }
         // A score event informs the star rating, rating text, and teacher feedback code
@@ -440,7 +435,6 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
 
     var distillInfo = {
         competencyType : scenarioInfo.cType,
-        competencyCategories: scenarioInfo.cCategories,
         teacherFeedbackCode: scoreInfo.teacherFeedbackCode,
         note : scoreInfo.ratingText,
         bayes: {
@@ -477,7 +471,7 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
     compData.level = competencyLevel;
     compData.teacherFeedbackCode = distilled.teacherFeedbackCode;
     compData.studentFeedbackCode = distilled.teacherFeedbackCode;
-    compData.data = { competencyLevel : competencyLevel, competencyType : distilled.competencyType, competencyCategories: distilled.competencyCategories };
+    compData.data = { competencyLevel : competencyLevel, competencyType : distilled.competencyType };
     compData.note = distilled.note;
 
     var info =_.cloneDeep(distilled);
