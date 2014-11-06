@@ -32,7 +32,9 @@ var cTypeConst = {
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT: "lewt",
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT_M3: "lewt_m3",
     TYPE_LOCATING_EVIDENCE_WITHIN_TEXT_M5: "lewt_m5",
-    TYPE_COMPLEX_PROBLEM_SOLVING_SYSTEMS_MAP: "cpssm"
+    TYPE_COMPLEX_PROBLEM_SOLVING_SYSTEMS_MAP: "cpssm",
+    TYPE_UNIVARIATE: "univariate",
+    TYPE_MULTIVARIATE: "multivariate"
 };
 
 SC_Distiller.prototype.preProcess = function(sessionsEvents) {
@@ -51,6 +53,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     var scoreInfo = {};
     var endStateInfo = {};
     var finalScenarioTime = 0;          // in seconds
+    var startScenarioTime = -1;
+    var endScenarioTime = -1;
     var finalScenarioTimeSet = false;   // make sure this only happens once
 
     // Zoning info
@@ -104,7 +108,11 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             scenarioInfo.scenarioName = eventsList[i].eventData.name;
 
             // Get the start time
-            finalScenarioTime = parseInt( eventsList[i].timestamp );
+            startScenarioTime = parseInt( eventsList[i].timestamp );
+            if( !finalScenarioTimeSet && endScenarioTime != -1 ) {
+                finalScenarioTime = ( endScenarioTime - startScenarioTime ) / 1000;
+                finalScenarioTimeSet = true;
+            }
 
             // Check which scenario was played and set the info
             if( scenarioInfo.scenarioName == "Medusa A2 - Worker Shortage.txt" ) {
@@ -112,18 +120,21 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
                 scenarioInfo.scenarioName = "WORKER_SHORTAGE";
                 scenarioInfo.wekaFile = "worker_shortage";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M2;
+                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE ];
             }
             else if( scenarioInfo.scenarioName == "Medusa A4 - PowerPollution.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "SIERRA_MADRE";
                 scenarioInfo.wekaFile = "sierra_madre";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M3;
+                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE, cTypeConst.TYPE_MULTIVARIATE ];
             }
             else if( scenarioInfo.scenarioName == "Medusa A3 - Large City.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "JACKSON_CITY";
                 scenarioInfo.wekaFile = "jackson_city";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M5;
+                scenarioInfo.cCategories = [ cTypeConst.TYPE_UNIVARIATE, cTypeConst.TYPE_MULTIVARIATE ];
             }
         }
         // A score event informs the star rating, rating text, and teacher feedback code
@@ -144,9 +155,9 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
                 var summaryData = eventsList[i].eventData;
 
                 // Get the end time
-                if( !finalScenarioTimeSet ) {
-                    finalScenarioTime = parseInt( eventsList[i].timestamp ) - finalScenarioTime;
-                    finalScenarioTime /= 1000;
+                endScenarioTime = parseInt( eventsList[i].timestamp );
+                if( !finalScenarioTimeSet && startScenarioTime != -1 ) {
+                    finalScenarioTime = ( endScenarioTime - startScenarioTime ) / 1000;
                     finalScenarioTimeSet = true;
                 }
 
@@ -404,7 +415,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     }
 
     // Finally, make sure the time played is greather than 60 seconds, otherwise reset the fragments
-    if( finalScenarioTime < 60 ) {
+    if( !finalScenarioTimeSet || finalScenarioTime < 60 ) {
         processValue = 0;
         endStateValue = 0;
     }
@@ -429,6 +440,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
 
     var distillInfo = {
         competencyType : scenarioInfo.cType,
+        competencyCategories: scenarioInfo.cCategories,
         teacherFeedbackCode: scoreInfo.teacherFeedbackCode,
         note : scoreInfo.ratingText,
         bayes: {
@@ -465,7 +477,7 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
     compData.level = competencyLevel;
     compData.teacherFeedbackCode = distilled.teacherFeedbackCode;
     compData.studentFeedbackCode = distilled.teacherFeedbackCode;
-    compData.data = { competencyLevel : competencyLevel, competencyType : distilled.competencyType };
+    compData.data = { competencyLevel : competencyLevel, competencyType : distilled.competencyType, competencyCategories: distilled.competencyCategories };
     compData.note = distilled.note;
 
     var info =_.cloneDeep(distilled);
