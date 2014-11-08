@@ -51,6 +51,8 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     var scoreInfo = {};
     var endStateInfo = {};
     var finalScenarioTime = 0;          // in seconds
+    var startScenarioTime = -1;
+    var endScenarioTime = -1;
     var finalScenarioTimeSet = false;   // make sure this only happens once
 
     // Zoning info
@@ -104,7 +106,11 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             scenarioInfo.scenarioName = eventsList[i].eventData.name;
 
             // Get the start time
-            finalScenarioTime = parseInt( eventsList[i].timestamp );
+            startScenarioTime = parseInt( eventsList[i].timestamp );
+            if( !finalScenarioTimeSet && endScenarioTime != -1 ) {
+                finalScenarioTime = ( endScenarioTime - startScenarioTime ) / 1000;
+                finalScenarioTimeSet = true;
+            }
 
             // Check which scenario was played and set the info
             if( scenarioInfo.scenarioName == "Medusa A2 - Worker Shortage.txt" ) {
@@ -144,9 +150,9 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
                 var summaryData = eventsList[i].eventData;
 
                 // Get the end time
-                if( !finalScenarioTimeSet ) {
-                    finalScenarioTime = parseInt( eventsList[i].timestamp ) - finalScenarioTime;
-                    finalScenarioTime /= 1000;
+                endScenarioTime = parseInt( eventsList[i].timestamp );
+                if( !finalScenarioTimeSet && startScenarioTime != -1 ) {
+                    finalScenarioTime = ( endScenarioTime - startScenarioTime ) / 1000;
                     finalScenarioTimeSet = true;
                 }
 
@@ -404,7 +410,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     }
 
     // Finally, make sure the time played is greather than 60 seconds, otherwise reset the fragments
-    if( finalScenarioTime < 60 ) {
+    if( !finalScenarioTimeSet || finalScenarioTime < 60 ) {
         processValue = 0;
         endStateValue = 0;
     }
