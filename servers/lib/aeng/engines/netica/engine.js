@@ -79,7 +79,7 @@ return when.promise(function(resolve, reject) {
             if(!modelData) return;
 
             // Set the command line string for the Netica processor
-            var commandString = " AdvancedBayes";
+            var commandString = " ProgressBayes";
 
             // add netica file length
             //commandString += " " + modelData.length;
@@ -88,52 +88,23 @@ return when.promise(function(resolve, reject) {
             // add root node
             commandString += " " + distilledData.bayes.root;
 
-            // Add the posterior information
-            var posteriorCount = 0;
-            var posteriorCommand = "";
-
-            // Get current posteriors, if they exist
-            var posteriors = {};
+            // add the flag for previous level
             if( currentResults &&
                 currentResults.results &&
                 currentResults.results[ distilledData.competencyType ] &&
                 currentResults.results[ distilledData.competencyType ].info ) {
                 var resultsInfo = JSON.parse( currentResults.results[ distilledData.competencyType ].info );
                 if( resultsInfo.bayes &&
-                    resultsInfo.bayes.posteriors ) {
-                    posteriors = resultsInfo.bayes.posteriors;
-                    //console.log( "Results posteriors: " + JSON.stringify( posteriors ) );
+                    resultsInfo.bayes.bin ) {
+                    commandString += " true " + resultsInfo.bayes.bin;
+                }
+                else {
+                    commandString += " false 0";
                 }
             }
-
-            // Get the posteriors to check for
-            var posteriorsToCheck = distilledData.bayes.posteriors;
-            if( posteriorsToCheck ) {
-                // Check each posterior set from the distiller
-                for( var i in posteriorsToCheck ) {
-                    posteriorCount++;
-                    posteriorCommand += " " + i;
-
-                    // See if this posterior exists in the current results
-                    if( posteriors[ i ] ) {
-                        // Add each posterior value to the command
-                        for( var j = 0; j < posteriors[ i ].length; j++ ) {
-                            posteriorCommand += " " + posteriors[ i ][ j ];
-                        }
-                    }
-                    // It doesn't exist, set -1 as the value, which will be ignored on bayes calculations
-                    else {
-                        posteriorCommand += " -1";
-                    }
-                }
+            else {
+                commandString += " false 0";
             }
-
-            // Append the posteriors to the command string
-            commandString += " " + posteriorCount + posteriorCommand;
-            //console.log( "Command to run: ", commandString );
-
-            // Delete the current posteriors from the distilled data
-            delete distilledData.bayes.posteriors;
 
             // Use the distilled data to get the bayes key and evidence fragments to pass to the Netica server
             var evidenceFragments = distilledData.bayes.fragments;
