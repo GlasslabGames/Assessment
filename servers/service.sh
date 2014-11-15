@@ -14,6 +14,18 @@ start() {
     cd $CDIR
     echo "Done Building Weka"
 
+    echo "Building Netica..."
+    if [[ "$OSTYPE" == "linux"* ]]; then
+        echo "... for linux-gnu"
+        cd ./lib/aeng/engines/netica/build/linux_64
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "... for darwin"
+        cd ./lib/aeng/engines/netica/build/osx
+    fi
+    ./compile.sh
+    cd $CDIR
+    echo "Done Building Netica"
+
     #./service_start.sh statsd "node_modules/statsd/stats.js config.statsd.json"
     ./service_start.sh app-assessment "app-assessment.js"
 }
