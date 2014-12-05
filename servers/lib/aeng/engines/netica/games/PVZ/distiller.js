@@ -115,6 +115,16 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                 distilledData.UsedPlantFoodOnSunflower = true;
             }
         }
+        // #42 = ratio of collected sun to spawned sun
+        else if (eventName == "Action_pick_gen_sun" || eventName == "Action_pick_fallen_sun") {
+            if (!computationData.numSunCollected) computationData.numSunCollected = 1;
+            else computationData.numSunCollected ++;
+        }
+        else if (eventName == "Event_fallen_sun" || eventName == "Event_gen_sun") {
+            if (!computationData.numSunGenerated) computationData.numSunGenerated = 1;
+            else computationData.numSunGenerated ++;
+        }
+
 
         // Reversed indicators
 
@@ -170,6 +180,15 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
             distilledData[distilledEventName] = distilledValue;
         }
+    }
+
+    // Parse collected info
+    // #42 = ratio of collected sun to spawned sun. Note that this may have been set incorrectly by
+    //      Indicator_percent_sun_collected (which used to be broken), but in that case we'll just overwrite it
+    if (computationData.numSunGenerated) {
+        distilledData.PercentSunCollected = (computationData.numSunCollected + 0) / (computationData.numSunGenerated + 0);
+    } else {
+        distilledData.PercentSunCollected = 1; // if no sun fell for some reason, they technically collected all of it
     }
 
     // convert to fragments to send distiller TODO: filter based on level
