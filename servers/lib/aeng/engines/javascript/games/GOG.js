@@ -33,8 +33,8 @@ function GOG_SoWo(engine, aeService, options){
 
 GOG_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
-    var filterEventTypes = [];
-    var filterEventKeys = [];
+    var filterEventTypes = [ "FAILED_LEVEL", "COMPLETED_LEVEL", "PLACEMENT_DATA", "COMPLETED_BONUS_LEVEL" ];
+    var filterEventKeys = [ "level", "attempts", "cornSilosPlaced", "iceLettuceCorrect", "melonsCorrect", "drillsCorrect", "wheatgrassPlaced", "carrotLaunchersPlaced", "beetTrapsPlaced", "garlicRaysPlaced", "crannonsPlaced" ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -139,7 +139,7 @@ GOG_SoWo.prototype.wo2 = function(db) {
                     LIMIT 1) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
-                eventName=\"PLACEMENT_DATA\" \
+                eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"cornSilosPlaced\" AND \
                 eventData_Value=0 \
                 ORDER BY \
@@ -212,7 +212,7 @@ GOG_SoWo.prototype.wo3 = function(db) {
                     LIMIT 1) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
-                eventName=\"PLACEMENT_DATA\" \
+                eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"iceLettuceCorrect\" AND \
                 eventData_Value=0 \
                 ORDER BY \
@@ -285,7 +285,7 @@ GOG_SoWo.prototype.wo4 = function(db) {
                     LIMIT 1) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
-                eventName=\"PLACEMENT_DATA\" \
+                eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"melonsCorrect\" AND \
                 eventData_Value=0 \
                 ORDER BY \
@@ -358,7 +358,7 @@ GOG_SoWo.prototype.wo5 = function(db) {
                     LIMIT 1) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
-                eventName=\"PLACEMENT_DATA\" \
+                eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"wheatgrassPlaced\" AND \
                 eventData_Value=0 \
                 ORDER BY \
@@ -535,8 +535,8 @@ GOG_SoWo.prototype.so2 = function(db) {
 // ------------------------------------------------
         var sql;
         var total = 0;
-        var threshold = 1;
-        var max = 1;
+        var threshold = 9;
+        var max = 9;
         sql = "SELECT COUNT(*) as total FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
