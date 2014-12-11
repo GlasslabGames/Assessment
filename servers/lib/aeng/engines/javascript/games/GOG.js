@@ -133,7 +133,7 @@ GOG_SoWo.prototype.wo2 = function(db) {
                     gameLevel=\"Regular_Level_5\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    eventData_Value=5 \
+                    CAST(eventData_Value as integer)=5 \
                     ORDER BY \
                     serverTimeStamp DESC \
                     LIMIT 1) AS gsid \
@@ -141,7 +141,7 @@ GOG_SoWo.prototype.wo2 = function(db) {
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"cornSilosPlaced\" AND \
-                eventData_Value=0 \
+                CAST(eventData_Value as integer)=0 \
                 ORDER BY \
                 serverTimeStamp DESC \
                 LIMIT 1";
@@ -206,7 +206,7 @@ GOG_SoWo.prototype.wo3 = function(db) {
                     gameLevel=\"Regular_Level_6\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    eventData_Value=6 \
+                    CAST(eventData_Value as integer)=6 \
                     ORDER BY \
                     serverTimeStamp DESC \
                     LIMIT 1) AS gsid \
@@ -214,7 +214,7 @@ GOG_SoWo.prototype.wo3 = function(db) {
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"iceLettuceCorrect\" AND \
-                eventData_Value=0 \
+                CAST(eventData_Value as integer)=0 \
                 ORDER BY \
                 serverTimeStamp DESC \
                 LIMIT 1";
@@ -279,7 +279,7 @@ GOG_SoWo.prototype.wo4 = function(db) {
                     gameLevel=\"Regular_Level_8\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    eventData_Value=8 \
+                    CAST(eventData_Value as integer)=8 \
                     ORDER BY \
                     serverTimeStamp DESC \
                     LIMIT 1) AS gsid \
@@ -287,7 +287,7 @@ GOG_SoWo.prototype.wo4 = function(db) {
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"melonsCorrect\" AND \
-                eventData_Value=0 \
+                CAST(eventData_Value as integer)=0 \
                 ORDER BY \
                 serverTimeStamp DESC \
                 LIMIT 1";
@@ -352,7 +352,7 @@ GOG_SoWo.prototype.wo5 = function(db) {
                     gameLevel=\"Regular_Level_9\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    eventData_Value=9 \
+                    CAST(eventData_Value as integer)=9 \
                     ORDER BY \
                     serverTimeStamp DESC \
                     LIMIT 1) AS gsid \
@@ -360,7 +360,7 @@ GOG_SoWo.prototype.wo5 = function(db) {
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key=\"wheatgrassPlaced\" AND \
-                eventData_Value=0 \
+                CAST(eventData_Value as integer)=0 \
                 ORDER BY \
                 serverTimeStamp DESC \
                 LIMIT 1";
@@ -421,7 +421,7 @@ GOG_SoWo.prototype.wo6 = function(db) {
                 WHERE \
                 eventName=\"COMPLETED_BONUS_LEVEL\" AND \
                 eventData_Key=\"attempts\" AND \
-                eventData_Value>=10 \
+                CAST(eventData_Value as integer)>=10 \
                 LIMIT 1";
 
         //console.log("wo6 sql:", sql);
@@ -480,7 +480,7 @@ GOG_SoWo.prototype.so1 = function(db) {
                 WHERE \
                 eventName=\"COMPLETED_BONUS_LEVEL\" AND \
                 eventData_Key=\"attempts\" AND \
-                eventData_Value<=4 \
+                CAST(eventData_Value as integer)<=4 \
                 LIMIT 1";
 
         //console.log("so1 sql:", sql);
@@ -547,7 +547,7 @@ GOG_SoWo.prototype.so2 = function(db) {
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
                 eventData_Key IN (\"iceLettuceCorrect\",\"melonsCorrect\",\"drillsCorrect\",\"wheatgrassPlaced\",\"carrotLaunchersPlaced\",\"beetTrapsPlaced\",\"garlicRaysPlaced\",\"crannonsPlaced\",\"cornSilosPlaced\") AND \
-                eventData_Value>=1 \
+                CAST(eventData_Value as integer)>=1 \
                 ORDER BY \
                 serverTimeStamp DESC";
 
@@ -607,7 +607,7 @@ GOG_SoWo.prototype.so3 = function(db) {
                 WHERE \
                 eventName=\"COMPLETED_BONUS_LEVEL\" AND \
                 eventData_Key=\"level\" AND \
-                eventData_Value>=4";
+                CAST(eventData_Value as integer)>=4";
 
         //console.log("so3 sql:", sql);
         db.all(sql, function(err, results) {
@@ -649,7 +649,7 @@ GOG_SoWo.prototype.so3 = function(db) {
 // ===============================================
 // Game Over Gopher Expert
 /*
- >= 14 completed bonus level
+ >= 14 completed level
 
  COMPLETED_LEVEL [ 'level' ]
  */
@@ -665,7 +665,7 @@ GOG_SoWo.prototype.so4 = function(db) {
                 WHERE \
                 eventName=\"COMPLETED_LEVEL\" AND \
                 eventData_Key=\"level\" AND \
-                eventData_Value>=14";
+                CAST(eventData_Value as integer)>=14";
 
         //console.log("so4 sql:", sql);
         db.all(sql, function(err, results) {
