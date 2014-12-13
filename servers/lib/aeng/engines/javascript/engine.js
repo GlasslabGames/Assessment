@@ -74,6 +74,7 @@ return when.promise(function (resolve, reject) {
         sql = "CREATE TABLE IF NOT EXISTS events (\
             eventId INT, \
             userId INT, \
+            gameSessionId TEXT, \
             clientTimeStamp DATETIME, \
             serverTimeStamp DATETIME, \
             eventName TEXT, \
@@ -88,6 +89,7 @@ return when.promise(function (resolve, reject) {
         sql = "INSERT INTO events ( \
             eventId, \
             userId, \
+            gameSessionId, \
             clientTimeStamp, \
             serverTimeStamp, \
             eventName, \
@@ -96,7 +98,7 @@ return when.promise(function (resolve, reject) {
             eventData_Key, \
             eventData_Value, \
             target \
-        ) VALUES (?, ?,?,?, ?,?,?, ?,?,?)";
+        ) VALUES (?, ?,?,?,?, ?,?,?, ?,?,?)";
 
         var eventId = 0;
         var totalNumEvents = 0;
@@ -128,6 +130,7 @@ return when.promise(function (resolve, reject) {
                     var row = [
                         eventId,
                         eventsData[i].userId,
+                        eventsData[i].gameSessionId,
                         eventsData[i].events[j].clientTimeStamp,
                         eventsData[i].events[j].serverTimeStamp,
                         eventsData[i].events[j].eventName,

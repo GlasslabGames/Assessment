@@ -236,8 +236,7 @@ return when.promise(function(resolve, reject) {
             total = results[0].total;
         }
 
-        if( total >= threshold &&
-            total <= max) {
+        if( total <= max) {
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
