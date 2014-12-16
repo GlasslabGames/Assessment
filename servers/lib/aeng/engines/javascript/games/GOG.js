@@ -130,7 +130,6 @@ GOG_SoWo.prototype.wo2 = function(db) {
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_5\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
                     CAST(eventData_Value as integer)=5 \
@@ -203,7 +202,6 @@ GOG_SoWo.prototype.wo3 = function(db) {
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_6\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
                     CAST(eventData_Value as integer)=6 \
@@ -276,7 +274,6 @@ GOG_SoWo.prototype.wo4 = function(db) {
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_8\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
                     CAST(eventData_Value as integer)=8 \
@@ -349,7 +346,6 @@ GOG_SoWo.prototype.wo5 = function(db) {
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_9\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
                     CAST(eventData_Value as integer)=9 \
