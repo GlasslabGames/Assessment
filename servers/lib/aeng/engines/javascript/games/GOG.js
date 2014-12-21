@@ -126,25 +126,22 @@ GOG_SoWo.prototype.wo2 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT eventData_Value as total FROM events AS ev \
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_5\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    CAST(eventData_Value as integer)=5 \
+                    CAST(eventData_Value as integer)<=5 \
                     ORDER BY \
-                    serverTimeStamp DESC \
-                    LIMIT 1) AS gsid \
+                    serverTimeStamp DESC) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
-                eventData_Key=\"cornSilosPlaced\" AND \
-                CAST(eventData_Value as integer)=0 \
+                (eventData_Key=\"cornSilosPlaced\" OR \
+                eventData_Key=\"level\") \
                 ORDER BY \
-                serverTimeStamp DESC \
-                LIMIT 1";
+                serverTimeStamp DESC";
 
         //console.log("wo2 sql:", sql);
         db.all(sql, function(err, results) {
@@ -161,8 +158,21 @@ GOG_SoWo.prototype.wo2 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 5
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "5" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -199,25 +209,22 @@ GOG_SoWo.prototype.wo3 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT eventData_Value as total FROM events AS ev \
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_6\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    CAST(eventData_Value as integer)=6 \
+                    CAST(eventData_Value as integer)<=6 \
                     ORDER BY \
-                    serverTimeStamp DESC \
-                    LIMIT 1) AS gsid \
+                    serverTimeStamp DESC) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
-                eventData_Key=\"iceLettuceCorrect\" AND \
-                CAST(eventData_Value as integer)=0 \
+                (eventData_Key=\"iceLettuceCorrect\" OR \
+                eventData_Key=\"level\") \
                 ORDER BY \
-                serverTimeStamp DESC \
-                LIMIT 1";
+                serverTimeStamp DESC";
 
         //console.log("wo3 sql:", sql);
         db.all(sql, function(err, results) {
@@ -234,8 +241,21 @@ GOG_SoWo.prototype.wo3 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 6
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "6" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -272,25 +292,22 @@ GOG_SoWo.prototype.wo4 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT eventData_Value as total FROM events AS ev \
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_8\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    CAST(eventData_Value as integer)=8 \
+                    CAST(eventData_Value as integer)<=8 \
                     ORDER BY \
-                    serverTimeStamp DESC \
-                    LIMIT 1) AS gsid \
+                    serverTimeStamp DESC) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
-                eventData_Key=\"melonsCorrect\" AND \
-                CAST(eventData_Value as integer)=0 \
+                (eventData_Key=\"melonsCorrect\" OR \
+                eventData_Key=\"level\") \
                 ORDER BY \
-                serverTimeStamp DESC \
-                LIMIT 1";
+                serverTimeStamp DESC";
 
         //console.log("wo4 sql:", sql);
         db.all(sql, function(err, results) {
@@ -307,8 +324,21 @@ GOG_SoWo.prototype.wo4 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 8
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "8" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -345,25 +375,22 @@ GOG_SoWo.prototype.wo5 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT eventData_Value as total FROM events AS ev \
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     WHERE \
-                    gameLevel=\"Regular_Level_9\" AND \
                     eventName=\"COMPLETED_LEVEL\" AND \
                     eventData_Key=\"level\" AND \
-                    CAST(eventData_Value as integer)=9 \
+                    CAST(eventData_Value as integer)<=9 \
                     ORDER BY \
-                    serverTimeStamp DESC \
-                    LIMIT 1) AS gsid \
+                    serverTimeStamp DESC) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
-                eventData_Key=\"wheatgrassPlaced\" AND \
-                CAST(eventData_Value as integer)=0 \
+                (eventData_Key=\"wheatgrassPlaced\" OR \
+                eventData_Key=\"level\") \
                 ORDER BY \
-                serverTimeStamp DESC \
-                LIMIT 1";
+                serverTimeStamp DESC";
 
         //console.log("wo5 sql:", sql);
         db.all(sql, function(err, results) {
@@ -380,8 +407,21 @@ GOG_SoWo.prototype.wo5 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 9
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "9" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -537,12 +577,11 @@ GOG_SoWo.prototype.so2 = function(db) {
         var total = 0;
         var threshold = 9;
         var max = 9;
-        sql = "SELECT COUNT(*) as total FROM events AS ev \
+        sql = "SELECT DISTINCT eventData_Key FROM events AS ev \
                 INNER JOIN \
                 (SELECT gameSessionId FROM events \
                     ORDER BY \
-                    serverTimeStamp DESC \
-                    LIMIT 1) AS gsid \
+                    serverTimeStamp DESC ) AS gsid \
                 ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
                 eventName=\"PLACEMENT_DATA\" AND \
@@ -566,7 +605,7 @@ GOG_SoWo.prototype.so2 = function(db) {
                 return;
             }
 
-            total = results[0].total;
+            total = results.length;
             if(total >= threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
