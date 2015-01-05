@@ -86,6 +86,11 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         else if (eventName == "Indicator_replaced_plants_to_destroyed_plants") {
             distilledData.ReplacedPlantsToDestroyedPlants = parseFloat(eventData.value);
         }
+        // #2
+        else if (eventName == "Indicator_percent_invalid_planting_attempts")
+        {
+            distilledData.InvalidPlantingAttemptRatio = 1-eventData.value;
+        }
         // Fallback for indicators
         else if (eventName.indexOf("Indicator_") == 0)
         {
@@ -132,14 +137,11 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             else if (eventName == "Indicator_percent_sunflowers_in_back") {
                 distilledData.RearSunflowersRatio = eventData.value;
             }
+             // #13
+             else if (eventName == "") {
+             distilledData.InvalidPlantingAttemptRatio = eventData.value;
+             }*/
             // #2
-            else if (eventName == "Indicator_percent_invalid_planting_attempts") {
-                distilledData.InvalidPlantingAttemptRatio = eventData.value;
-            }
-            // #13
-            else if (eventName == "") {
-                distilledData.InvalidPlantingAttemptRatio = eventData.value;
-            }*/
         }
     }
 
