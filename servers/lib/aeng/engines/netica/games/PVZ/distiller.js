@@ -66,6 +66,12 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                 distilledData.PlantLayoutImprovement = value;
             }
         }
+        // #2
+        if (eventName == "Indicator_percent_invalid_planting_attempts")
+        {
+            // Invert for bayes net calculation
+            distilledData.InvalidPlantingAttemptRatio = 1-eventData.value;
+        }
         // #8 = plant 3 sunflowers before 2nd wave
         // #46 = improvement on 8
         else if (eventName == "Indicator_sunflowers_at_wave") {
