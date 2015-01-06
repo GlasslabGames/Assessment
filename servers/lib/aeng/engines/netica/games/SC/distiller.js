@@ -116,19 +116,19 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
             if( scenarioInfo.scenarioName == "Medusa A2 - Worker Shortage.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "WORKER_SHORTAGE";
-                scenarioInfo.wekaFile = "worker_shortage";
+                scenarioInfo.bayesFile = "worker_shortage";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M2;
             }
             else if( scenarioInfo.scenarioName == "Medusa A4 - PowerPollution.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "SIERRA_MADRE";
-                scenarioInfo.wekaFile = "sierra_madre";
+                scenarioInfo.bayesFile = "sierra_madre";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M3;
             }
             else if( scenarioInfo.scenarioName == "Medusa A3 - Large City.txt" ) {
                 isScenarioSet = true;
                 scenarioInfo.scenarioName = "JACKSON_CITY";
-                scenarioInfo.wekaFile = "jackson_city";
+                scenarioInfo.bayesFile = "jackson_city";
                 scenarioInfo.cType = cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING_M5;
             }
         }
@@ -290,7 +290,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
         var zoneDezoneComInd = ( zoningInfo.zoneCom + zoningInfo.zoneInd ) - (zoningInfo.dezoneCom + zoningInfo.dezoneInd );
         var zoneDezoneUpper = ( zoneDezoneComInd < 42 ) ? 0 : 1;
         var zoneDezoneRes = zoningInfo.dezoneRes - zoningInfo.zoneRes;
-        var zoneDezoneLower = ( zoneDezoneRes > 0 ) ? 0 : 1;
+        var zoneDezoneLower = ( zoneDezoneRes >= 0 ) ? 0 : 1;
 
         // Get the process value
         if( zoneDezoneUpper == 1 && ( zoningInfo.zoneCom > 0 || zoningInfo.zoneInd > 0 ) ) {
@@ -425,7 +425,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
 
     /*
         var bayesInfo = {
-            bayesFile: wekaFile,
+            bayesFile: bayesFile,
             evidenceFragments: [
                 endStateCategory,
                 processCategory
@@ -438,7 +438,7 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
         teacherFeedbackCode: scoreInfo.teacherFeedbackCode,
         note : scoreInfo.ratingText,
         bayes: {
-            key: scenarioInfo.wekaFile,
+            key: scenarioInfo.bayesFile,
             root: "category_systems_thinking",
             fragments: {
                 "category_end_state": endStateValue,
@@ -451,17 +451,17 @@ SC_Distiller.prototype.preProcess = function(sessionsEvents) {
     return distillInfo;
 };
 
-SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
+SC_Distiller.prototype.postProcess = function(distilled, bayesResults) {
     var compData = {};
     //console.log("postProcess distilled:", distilled);
-    //console.log("postProcess wekaResults:", wekaResults);
+    //console.log("postProcess bayesResults:", bayesResults);
 
     // Get the competency level
     var competencyLevel = 0;
     var maxValue = 0;
-    for( var i = 0; i < wekaResults.length; i++ ) {
-        if(wekaResults[i] > maxValue) {
-            maxValue = wekaResults[i];
+    for( var i = 0; i < bayesResults.bayesResults.length; i++ ) {
+        if(bayesResults.bayesResults[i] > maxValue) {
+            maxValue = bayesResults.bayesResults[i];
             competencyLevel = i + 1;
         }
     }
@@ -475,7 +475,8 @@ SC_Distiller.prototype.postProcess = function(distilled, wekaResults) {
     compData.note = distilled.note;
 
     var info =_.cloneDeep(distilled);
-    info.bayes.wekaResults = wekaResults;
+    info.bayes.posteriors = bayesResults.posteriors;
+    info.bayes.bayesResults = bayesResults.bayesResults;
     compData.info = JSON.stringify(info);
 
     compData.timeSpentSec = 0;

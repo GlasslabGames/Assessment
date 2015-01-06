@@ -1,5 +1,5 @@
 /**
- * Assessment Engine Module for Weka
+ * Assessment Engine Module for R
  *
  */
 var fs            = require('fs');
@@ -11,7 +11,7 @@ var when    = require('when');
 // Glasslab libs
 var Util;
 
-function WekaEngine(aeService, engineDir, options) {
+function REngine(aeService, engineDir, options) {
     this.version = 0.01;
 
     this.engineDir = engineDir;
@@ -25,7 +25,7 @@ function WekaEngine(aeService, engineDir, options) {
     );
 }
 
-WekaEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
+REngine.prototype.run = function(userId, gameId, gameSessionId, eventsData) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -152,7 +152,7 @@ return when.promise(function(resolve, reject) {
 };
 
 
-WekaEngine.prototype.getBayesModel = function(gameId, modelName){
+REngine.prototype.getBayesModel = function(gameId, modelName){
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -176,7 +176,7 @@ WekaEngine.prototype.getBayesModel = function(gameId, modelName){
 // end promise wrapper
 };
 
-WekaEngine.prototype.getDistillerFunction = function(gameId){
+REngine.prototype.getDistillerFunction = function(gameId){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -195,4 +195,4 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
-module.exports = WekaEngine;
+module.exports = REngine;
