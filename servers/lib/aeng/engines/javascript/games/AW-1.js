@@ -31,7 +31,7 @@ function AW_SoWo(engine, aeService, options){
 
     // Helper data object for determining scoring on telemetry events.
     this.caseRecodes = {
-        "bnd": {
+        "Bond v United States": {
             "PS1": 3,
             "PS2": 2,
             "PS3": 0,
@@ -89,7 +89,7 @@ function AW_SoWo(engine, aeService, options){
             "PS9": 1,
             "PS10": 0
         },
-        "mrn": {
+        "Miranda_v_Arizona": {
             "PS1": 3,
             "PS2": 3,
             "PS3": 2,
@@ -118,7 +118,7 @@ function AW_SoWo(engine, aeService, options){
 AW_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
     var filterEventTypes = [ "launch", "select", "turn_begin", "reason_end", "opprev", "object" ];
-    var filterEventKeys = [ "case_name", "card_id", "success" ];
+    var filterEventKeys = [ "case_name", "card_id", "success", "proponent" ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -155,7 +155,9 @@ return when.promise(function(resolve, reject) {
             (eventName=\"launch\" OR \
             eventName=\"select\") AND \
             (eventData_Key=\"case_name\" OR \
-            eventData_Key=\"card_id\")";
+            eventData_Key=\"card_id\") \
+            ORDER BY \
+            serverTimeStamp ASC";
 
     //console.log("wo1 sql:", sql);
     db.all(sql, function(err, results) {
@@ -175,7 +177,7 @@ return when.promise(function(resolve, reject) {
         // Iterate through the card_ids and count the number of recodes that are less than 2
         var caseName = "";
         for( var i = 0; i < results.length; i++ ) {
-            if( results[i].key === "launch" ) {
+            if( results[i].key === "case_name" ) {
                 caseName = results[i].value;
             }
             else {
@@ -200,7 +202,7 @@ return when.promise(function(resolve, reject) {
             // do nothing
             resolve();
         }
-    });
+    }.bind(this));
 // ------------------------------------------------
 }.bind(this));
 // end promise wrapper
@@ -210,7 +212,7 @@ return when.promise(function(resolve, reject) {
 // ===============================================
 // ?
 /*
- These players did not choose Supreme Court precedent or Constitutional support in the first five moves of the last case played.
+ These players did not choose Supreme Court precedent or Constitutional support in the first three moves of the last case played.
 
  wo2
  */
@@ -229,7 +231,10 @@ AW_SoWo.prototype.wo2 = function(db) {
             eventName=\"turn_begin\") AND \
             (eventData_Key=\"case_name\" OR \
             eventData_Key=\"card_id\" OR \
-            eventData_Key=\"proponent\")";
+            (eventData_Key=\"proponent\" AND \
+            CAST(eventData_Value as integer)=1)) \
+            ORDER BY \
+            serverTimeStamp ASC";
 
         //console.log("wo2 sql:", sql);
         db.all(sql, function(err, results) {
@@ -250,10 +255,10 @@ AW_SoWo.prototype.wo2 = function(db) {
             var caseName = "";
             var numTurns = 0;
             for( var i = 0; i < results.length; i++ ) {
-                if( results[i].key === "launch" ) {
+                if( results[i].key === "case_name" ) {
                     caseName = results[i].value;
                 }
-                else if( results[i].key === "turn_begin" ) {
+                else if( results[i].key === "proponent" ) {
                     numTurns++;
                     if( numTurns > 3 ) {
                         break;
@@ -281,7 +286,7 @@ AW_SoWo.prototype.wo2 = function(db) {
                 // do nothing
                 resolve();
             }
-        });
+        }.bind(this));
 // ------------------------------------------------
     }.bind(this));
 // end promise wrapper
@@ -325,7 +330,7 @@ AW_SoWo.prototype.wo3 = function(db) {
 
             // Iterate through the success values
             for( var i = 0; i < results.length; i++ ) {
-                total += results[i].value;
+                total += parseInt( results[i].value );
             }
 
             if(total < threshold) {
@@ -409,7 +414,7 @@ AW_SoWo.prototype.wo4 = function(db) {
 // ===============================================
 // ?
 /*
- The player has reviewed one or more of the opponents cards but did not object or pass correctly one or more times in teh last case played <Change: Player did not successfully object during the last case played>
+ Player did not successfully object during the last case played.
 
  wo5
  */
@@ -587,7 +592,7 @@ AW_SoWo.prototype.so2 = function(db) {
 // ===============================================
 // ?
 /*
- This player chose Supreme Court precendent or Constitutional support at least two times within the first four moves of the last case played, and chose no irrelevant support during the game.
+ This player chose Supreme Court precedent or Constitutional support at least two times within the first four moves of the last case played, and chose no irrelevant support during the game.
 
  so3
  */
@@ -606,7 +611,10 @@ AW_SoWo.prototype.so3 = function(db) {
             eventName=\"turn_begin\") AND \
             (eventData_Key=\"case_name\" OR \
             eventData_Key=\"card_id\" OR \
-            eventData_Key=\"proponent\")";
+            (eventData_Key=\"proponent\" AND \
+            CAST(eventData_Value as integer)=1)) \
+            ORDER BY \
+            serverTimeStamp ASC";
 
         //console.log("so3 sql:", sql);
         db.all(sql, function(err, results) {
@@ -627,10 +635,10 @@ AW_SoWo.prototype.so3 = function(db) {
             var caseName = "";
             var numTurns = 0;
             for( var i = 0; i < results.length; i++ ) {
-                if( results[i].key === "launch" ) {
+                if( results[i].key === "case_name" ) {
                     caseName = results[i].value;
                 }
-                else if( results[i].key === "turn_begin" ) {
+                else if( results[i].key === "proponent" ) {
                     numTurns++;
                 }
                 else {
@@ -661,7 +669,7 @@ AW_SoWo.prototype.so3 = function(db) {
                 // do nothing
                 resolve();
             }
-        });
+        }.bind(this));
 // ------------------------------------------------
     }.bind(this));
 // end promise wrapper
@@ -743,18 +751,18 @@ AW_SoWo.prototype.so5 = function(db) {
         sql = "SELECT \
                 (SELECT COUNT(*) FROM events \
                 WHERE \
-                eventName=\"object\" \
-                eventData_Key=\"success\" \
+                eventName=\"object\" AND \
+                eventData_Key=\"success\" AND \
                 CAST(eventData_Value as integer)=1) as objectSuccessCount, \
                 (SELECT COUNT(*) FROM events \
                 WHERE \
-                eventName=\"object\" \
-                eventData_Key=\"success\" \
+                eventName=\"object\" AND \
+                eventData_Key=\"success\" AND \
                 CAST(eventData_Value as integer)=0) as objectFailCount, \
                 (SELECT COUNT(*) FROM events \
                 WHERE \
                 eventName=\"opprev\") as opprevCount \
-                FRONT events";
+                FROM events";
 
         //console.log("so5 sql:", sql);
         db.all(sql, function(err, results) {
@@ -771,7 +779,8 @@ AW_SoWo.prototype.so5 = function(db) {
                 return;
             }
 
-            total = ( ( results[0].objectSuccessCount == results[0].opprevCount ) && results[0].objectFailCount == 0 );
+            total = ( results[0].objectSuccessCount >= 1 && ( results[0].objectSuccessCount == results[0].opprevCount ) && results[0].objectFailCount == 0 );
+            total = total ? 1 : 0;
             if(total >= threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
