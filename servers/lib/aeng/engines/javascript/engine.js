@@ -127,6 +127,9 @@ return when.promise(function (resolve, reject) {
                         value = value.toString();
                     }
 
+                    // Print the data for debugging
+                    //console.log( eventId + " " + eventsData[i].gameSessionId + " " + eventsData[i].events[j].gameLevel + " " + eventsData[i].events[j].eventName + " " + key + " " + value );
+
                     var row = [
                         eventId,
                         eventsData[i].userId,
@@ -163,25 +166,39 @@ return when.promise(function (resolve, reject) {
         var rulesPromise = when.reduce(promiseList,
             function (sum, value) {
 
+                var values = [];
+
                 if ( _.isObject(value) &&
                      value.type &&
                      value.id ) {
-                    // temp save type and id
-                    var type = value.type;
-                    var id = value.id;
-                    // remove type and id, as they will be in the tree
-                    delete value.type;
-                    delete value.id;
-                    // add time stamp and gameSessionId
-                    value.timestamp = Util.GetTimeStamp();
-                    value.gameSessionId = gameSessionId;
+                    values.push( value );
+                }
+                else if( _.isArray(value) ) {
+                    values = value;
+                }
 
-                    // if type not object make it one
-                    if(!_.isObject(sum[type]) ) {
-                        sum[type] = {};
+                for( var i = 0; i < values.length; i++ ) {
+                    var nextValue = values[i];
+                    if ( _.isObject(nextValue) &&
+                        nextValue.type &&
+                        nextValue.id ) {
+                        // temp save type and id
+                        var type = nextValue.type;
+                        var id = nextValue.id;
+                        // remove type and id, as they will be in the tree
+                        delete nextValue.type;
+                        delete nextValue.id;
+                        // add time stamp and gameSessionId
+                        nextValue.timestamp = Util.GetTimeStamp();
+                        nextValue.gameSessionId = gameSessionId;
+
+                        // if type not object make it one
+                        if(!_.isObject(sum[type]) ) {
+                            sum[type] = {};
+                        }
+
+                        sum[type][ id ] = nextValue;
                     }
-
-                    sum[type][ id ] = value;
                 }
 
                 //console.log("rule - sum:", sum, ", value:", value);
