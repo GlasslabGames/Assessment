@@ -25,6 +25,44 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     var events = sessionsEvents[0];
     console.log("Starting preProcess");
 
+    // Indicator human-readable name to code
+    var indicatorCodes = {
+        "InvalidPlantingAttemptRatio": 2,
+        "PercentSunflowersInBack": 3,
+        "PercentTombstonePlants": 4,
+        "RatioUpgradedOrAoePlantsSelected": 5,
+        "UsedExplosivePlants": 6,
+        "RatioExplosivePlantsSelected": 6,
+        "PercentSunCollected": 7,
+        "PlantedSunflowersBeforeWave": 8,
+        "PercentPlantFoodCollected": 9,
+        "PercentTimeConveyorIsFull": 11,
+        "PercentLowDangerPlantFoodUsage": 12,
+        "PercentHighDangerPlantFoodUsage": 13,
+        "PercentLowDangerPowerUsage": 14,
+        "PercentHighDangerPowerUsage": 15,
+        "PercentHighDamagePlantsInDangerRows": 16,
+        "PercentToughPlantsInDangerRows": 17,
+        "PlantLayout": 21,
+        "ReplacedPlantsWithUpgrades": 29,
+        "UsedIceburgOrWallnutToCoverSpringbean": 30,
+        "CoconutHitMoreThan3Zombies": 31,
+        "PlantedBonkChoyToZombieRight": 32,
+        "PercentSuccessfulPotatoMines": 33,
+        "UsedIcebergToExtinguishExplorer": 35,
+        "UsedSpikesToKillBarrels": 36,
+        "PlantedIceburgInSnapdragonRange": 37,
+        "PlantedSpringbeanNextToWater": 38,
+        "UsedIceburg5secAfterCooldown": 41,
+        "PercentTwinSunflowers": 42,
+        "UsedPlantFoodOnSunflower": 42,
+        "ReplantedPlantsToDestroyedPlants": 43,
+        "ReplacedResourceWithOffensiveDuringIntenseFight": 44,
+        "PlantLayoutImprovement": 45,
+        "PlantedSunflowersBeforeWaveImprovement": 46
+
+    };
+
     /*
     var bayesInfo = {
         bayesFile: bayesFile,
@@ -35,6 +73,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     };
     */
 
+    var levelId = "";
     var distilledData = {};
     var computationData = {}; // use this to track counts, etc as we look through the events
 
@@ -49,6 +88,13 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         var eventName = eventsList[i].name;
         var eventData = eventsList[i].eventData;
         //console.log("\neventName:", eventName, "eventData:",eventData);
+
+        // Check the name of the level to pass to the Bayes file
+        if( eventName == "Event_level_end" ) {
+            if( eventData.hasOwnProperty( "id" ) ) {
+                levelId = eventData.id;
+            }
+        }
 
         // Special cases where we're doing some checks in the distiller for the sake of flexibility
 
@@ -67,7 +113,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
             }
         }
         // #2
-        if (eventName == "Indicator_percent_invalid_planting_attempts")
+        else if (eventName == "Indicator_percent_invalid_planting_attempts")
         {
             // Invert for bayes net calculation
             distilledData.InvalidPlantingAttemptRatio = 1-eventData.value;
@@ -121,7 +167,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
                 distilledData.UsedPlantFoodOnSunflower = true;
             }
         }
-        // #42 = ratio of collected sun to spawned sun
+        // #7 = ratio of collected sun to spawned sun
         else if (eventName == "Action_pick_gen_sun" || eventName == "Action_pick_fallen_sun") {
             if (!computationData.numSunCollected) computationData.numSunCollected = 1;
             else computationData.numSunCollected ++;
@@ -188,6 +234,11 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         }
     }
 
+    // If a level Id is not present, ignore
+    if( levelId == "" ) {
+        return {};
+    }
+
     // Parse collected info
     // #42 = ratio of collected sun to spawned sun. Note that this may have been set incorrectly by
     //      Indicator_percent_sun_collected (which used to be broken), but in that case we'll just overwrite it
@@ -197,36 +248,84 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         distilledData.PercentSunCollected = 1; // if no sun fell for some reason, they technically collected all of it
     }
 
+    var qMatrix = {
+        "W1D1": [ 3, 7, 8, 21, 33, 43, 45, 46 ],
+        "W1D2": [ 3, 7, 8, 12, 21, 33, 43, 45, 46 ],
+        "W1D3": [ 2, 3, 7, 8, 9, 12, 13, 21, 33, 43, 45, 46 ],
+        "W1D4": [ 2, 9, 11, 12, 13, 33, 43 ],
+        "W1D6": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 21, 33, 43, 44, 45, 46 ],
+        "W1D8": [ 2, 9, 11, 13, 15, 17, 33, 43 ],
+        "W1D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+        "W1D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+        "W1D11": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+        "W1D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+        "W1D13": [ 2, 7, 8, 9, 12, 13, 14, 15, 17, 33, 43, 44, 46 ],
+        "W1D14": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 33, 43, 44, 45, 46 ],
+        "W1D15": [ 2, 4, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45 ],
+        "W1D17": [ 2, 3, 4, 5, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45, 46 ],
+        "W1D18": [ 2, 4, 5, 13, 15, 32, 33 ],
+        "W1D19": [ 2, 5, 7, 12, 13, 14, 15, 16, 17, 29, 32, 33, 44 ],
+        "W1D20": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 29, 32, 33, 35, 43 ],
+        "W1D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 21, 29, 43, 44, 45, 46 ],
+        "W1D22": [ 2, 4, 5, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 46 ],
+        "W1D24": [ 2, 4, 5, 12, 13, 14, 15, 32, 35 ],
+        "W1D25": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 32, 43 ],
+        "W2D1": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
+        "W2D2": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
+        "W2D4": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+        "W2D5": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 43, 44, 45, 46 ],
+        "W2D6": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+        "W2D7": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 36, 37, 43, 44, 45, 46 ],
+        "W2D8": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 33, 36, 43, 45, 46 ],
+        "W2D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+        "W2D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 32, 37, 38, 43, 44, 45, 46 ],
+        "W2D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
+        "W2D13": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 32, 37, 38, 42, 43, 44, 45, 46 ], //42a
+        "W2D14": [ 2, 5, 9, 12, 13, 14, 15, 16, 17, 32, 38, 43, 45, 46 ],
+        "W2D15": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 37, 38, 43, 44, 45, 46 ],
+        "W2D16": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
+        "W2D17": [ 2, 3, 6, 7, 8, 9, 12, 13, 14, 15, 17, 21, 29, 30, 31, 32, 36, 37, 38, 45, 46 ],
+        "W2D18": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 38, 45, 46 ],
+        "W2D19": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 42, 43, 44, 45, 46 ], //24-42
+        "W2D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 42, 43, 44, 45, 46 ], //24-42
+        "W2D22": [ 2, 5, 9, 12, 13, 14, 15, 31, 38 ],
+        "W2D23": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ],
+        "W2D24": [ 2, 3, 8, 9, 11, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ]
+    };
+
     // convert to fragments to send distiller TODO: filter based on level
     var fragments = {};
     var value, intValue;
     for (var key in distilledData) {
+        // Only proceed if the code is used in the Q-Matrix
+        var code = indicatorCodes[ key ];
+        if( qMatrix[ levelId ].indexOf( code ) == -1 ) {
+            continue;
+        }
+
         value = distilledData[key];
         if (typeof value == "boolean") {
-            intValue = (value)? 1 : 0; // true -> 1, false -> 0
+            intValue = (value)? 0 : 1; // true -> 0, false -> 1 (conforming to the yes/no order in bayes)
         } else { // assume it's a float btw 0 and 1
-            if (value <= 0.25) intValue = 0;
-            else if (value <= 0.5) intValue = 1;
-            else if (value <= 0.75) intValue = 2;
-            else intValue = 3;
+            if (value <= 0.25) intValue = 3;
+            else if (value <= 0.5) intValue = 2;
+            else if (value <= 0.75) intValue = 1;
+            else intValue = 0;
             // spelling out the cases in order to conform exactly to the spec and handle edge cases gracefully
         }
-        fragments[key] = intValue;
-        console.log("\nAdding fragment",key,":",value,"->",intValue);
+
+        // Get the stringified indicator code and set the fragment
+        code = "I" + code;
+        fragments[ code ] = intValue;
+        console.log("\nAdding fragment",key,"(",code,"):",value,"->",intValue);
     }
 
     var distillInfo = {
-        /*competencyType : cType,
-        teacherFeedbackCode: teacherFeedbackCode,
-        note : ratingText,
         bayes: {
-            key: bayesFile,
-            root: "category_sys_mod",
-            fragments: {
-                "category_end_state": endStateCategory,
-                "category_remove_replace": combinedRRCategory
-            }
-        }*/
+            key: levelId,
+            root: "ProblemSolving",
+            fragments: fragments
+        }
     };
 
     // return distilled data
