@@ -116,7 +116,7 @@ return when.promise(function (resolve, reject) {
                 for (var key in eventsData[i].events[j].eventData) {
 
                     // only add event data if in filter list
-                    if (!_.contains(filterEventKeys, key)) continue;
+                    if (!_.contains(filterEventKeys, key) && !_.contains(filterEventKeys, "all")) continue;
 
                     var value = eventsData[i].events[j].eventData[key];
                     // convert to string
