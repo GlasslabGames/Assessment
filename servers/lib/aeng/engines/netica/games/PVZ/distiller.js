@@ -91,7 +91,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
         // Check the name of the level to pass to the Bayes file
         if( eventName == "Event_level_end" ) {
-            if( eventData.hasOwnProperty( "id" ) ) {
+            if( eventData.hasOwnProperty( "levelId" ) ) {
                 levelId = eventData.id;
             }
         }
