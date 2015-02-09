@@ -34,7 +34,7 @@ function WT_SoWo(engine, aeService, options){
 WT_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
     var filterEventTypes = [ "so1", "so2", "so3", "so4", "so5", "so6", "so7", "wo1", "wo2", "wo3", "wo4" ];
-    var filterEventKeys = [];
+    var filterEventKeys = [ "shout_out", "watch_out" ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
