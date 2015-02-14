@@ -20,60 +20,118 @@ function PVZ_Distiller()
     // Glasslab libs
 }
 
-PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
+
+var cTypeConst = {
+    TYPE_COMPLEX_PROBLEM_SOLVING: "cps"
+};
+
+// Facets and Competency constants
+var competencyMappings= {
+    "AnalyzeGivensConstraints": "facet_analyze_constraints",
+    "Planning": "facet_plan_solution_pathway",
+    "ToolUse": "facet_effective_tool_use",
+    "EvaluateProgress": "facet_monitor_progress",
+    "ProblemSolvingSkills": "competency_problem_solving"
+};
+
+// Indicator human-readable name to code
+var indicatorCodes = {
+    "InvalidPlantingAttemptRatio": 2,
+    "PercentSunflowersInBack": 3,
+    "PercentTombstonePlants": 4,
+    "RatioUpgradedOrAoePlantsSelected": 5,
+    "UsedExplosivePlants": 6,
+    "RatioExplosivePlantsSelected": 6,
+    "PercentSunCollected": 7,
+    "PlantedSunflowersBeforeWave": 8,
+    "PercentPlantFoodCollected": 9,
+    "PercentTimeConveyorIsFull": 11,
+    "PercentLowDangerPlantFoodUsage": 12,
+    "PercentHighDangerPlantFoodUsage": 13,
+    "PercentLowDangerPowerUsage": 14,
+    "PercentHighDangerPowerUsage": 15,
+    "PercentHighDamagePlantsInDangerRows": 16,
+    "PercentToughPlantsInDangerRows": 17,
+    "PlantLayout": 21,
+    "ReplacedPlantsWithUpgrades": 29,
+    "UsedIceburgOrWallnutToCoverSpringbean": 30,
+    "CoconutHitMoreThan3Zombies": 31,
+    "PlantedBonkChoyToZombieRight": 32,
+    "PercentSuccessfulPotatoMines": 33,
+    "UsedIcebergToExtinguishExplorer": 35,
+    "UsedSpikesToKillBarrels": 36,
+    "PlantedIceburgInSnapdragonRange": 37,
+    "PlantedSpringbeanNextToWater": 38,
+    "UsedIceburg5secAfterCooldown": 41,
+    "PercentTwinSunflowers": 42,
+    "UsedPlantFoodOnSunflower": 42,
+    "ReplantedPlantsToDestroyedPlants": 43,
+    "ReplacedResourceWithOffensiveDuringIntenseFight": 44,
+    "PlantLayoutImprovement": 45,
+    "PlantedSunflowersBeforeWaveImprovement": 46
+};
+
+var qMatrix = {
+    "W1D1": [ 3, 7, 8, 21, 33, 43, 45, 46 ],
+    "W1D2": [ 3, 7, 8, 12, 21, 33, 43, 45, 46 ],
+    "W1D3": [ 2, 3, 7, 8, 9, 12, 13, 21, 33, 43, 45, 46 ],
+    "W1D4": [ 2, 9, 11, 12, 13, 33, 43 ],
+    "W1D6": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 21, 33, 43, 44, 45, 46 ],
+    "W1D8": [ 2, 9, 11, 13, 15, 17, 33, 43 ],
+    "W1D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+    "W1D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+    "W1D11": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+    "W1D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
+    "W1D13": [ 2, 7, 8, 9, 12, 13, 14, 15, 17, 33, 43, 44, 46 ],
+    "W1D14": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 33, 43, 44, 45, 46 ],
+    "W1D15": [ 2, 4, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45 ],
+    "W1D17": [ 2, 3, 4, 5, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45, 46 ],
+    "W1D18": [ 2, 4, 5, 13, 15, 32, 33 ],
+    "W1D19": [ 2, 5, 7, 12, 13, 14, 15, 16, 17, 29, 32, 33, 44 ],
+    "W1D20": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 29, 32, 33, 35, 43 ],
+    "W1D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 21, 29, 43, 44, 45, 46 ],
+    "W1D22": [ 2, 4, 5, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 46 ],
+    "W1D24": [ 2, 4, 5, 12, 13, 14, 15, 32, 35 ],
+    "W1D25": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 32, 43 ],
+    "W2D1": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
+    "W2D2": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
+    "W2D4": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+    "W2D5": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 43, 44, 45, 46 ],
+    "W2D6": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+    "W2D7": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 36, 37, 43, 44, 45, 46 ],
+    "W2D8": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 33, 36, 43, 45, 46 ],
+    "W2D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
+    "W2D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 32, 37, 38, 43, 44, 45, 46 ],
+    "W2D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
+    "W2D13": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 32, 37, 38, 42, 43, 44, 45, 46 ], //use 42a, 42=42a
+    "W2D14": [ 2, 5, 9, 12, 13, 14, 15, 16, 17, 32, 38, 43, 45, 46 ],
+    "W2D15": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 37, 38, 43, 44, 45, 46 ],
+    "W2D16": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
+    "W2D17": [ 2, 3, 6, 7, 8, 9, 12, 13, 14, 15, 17, 21, 29, 30, 31, 32, 36, 37, 38, 45, 46 ],
+    "W2D18": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 38, 45, 46 ],
+    "W2D19": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ], //24-42 - use 24
+    "W2D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ], //24-42 - use 24
+    "W2D22": [ 2, 5, 9, 12, 13, 14, 15, 31, 38 ],
+    "W2D23": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ],
+    "W2D24": [ 2, 3, 8, 9, 11, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ]
+};
+
+
+PVZ_Distiller.prototype.preProcess = function(sessionsEvents, existingData)
 {
     var events = sessionsEvents[0];
     console.log("Starting preProcess");
 
-    // Indicator human-readable name to code
-    var indicatorCodes = {
-        "InvalidPlantingAttemptRatio": 2,
-        "PercentSunflowersInBack": 3,
-        "PercentTombstonePlants": 4,
-        "RatioUpgradedOrAoePlantsSelected": 5,
-        "UsedExplosivePlants": 6,
-        "RatioExplosivePlantsSelected": 6,
-        "PercentSunCollected": 7,
-        "PlantedSunflowersBeforeWave": 8,
-        "PercentPlantFoodCollected": 9,
-        "PercentTimeConveyorIsFull": 11,
-        "PercentLowDangerPlantFoodUsage": 12,
-        "PercentHighDangerPlantFoodUsage": 13,
-        "PercentLowDangerPowerUsage": 14,
-        "PercentHighDangerPowerUsage": 15,
-        "PercentHighDamagePlantsInDangerRows": 16,
-        "PercentToughPlantsInDangerRows": 17,
-        "PlantLayout": 21,
-        "ReplacedPlantsWithUpgrades": 29,
-        "UsedIceburgOrWallnutToCoverSpringbean": 30,
-        "CoconutHitMoreThan3Zombies": 31,
-        "PlantedBonkChoyToZombieRight": 32,
-        "PercentSuccessfulPotatoMines": 33,
-        "UsedIcebergToExtinguishExplorer": 35,
-        "UsedSpikesToKillBarrels": 36,
-        "PlantedIceburgInSnapdragonRange": 37,
-        "PlantedSpringbeanNextToWater": 38,
-        "UsedIceburg5secAfterCooldown": 41,
-        "PercentTwinSunflowers": 42,
-        "UsedPlantFoodOnSunflower": 42,
-        "ReplantedPlantsToDestroyedPlants": 43,
-        "ReplacedResourceWithOffensiveDuringIntenseFight": 44,
-        "PlantLayoutImprovement": 45,
-        "PlantedSunflowersBeforeWaveImprovement": 46
-
-    };
-
-    /*
-    var bayesInfo = {
-        bayesFile: bayesFile,
-        evidenceFragments: [
-            endStateCategory,
-            combinedRRCategory
-        ]
-    };
-    */
 
     var levelId = "";
+    var levelNumber = -1;
+    var newCompletionState = "";
+
+    if( !existingData.level ) {
+        existingData.level = -1;
+        existingData.completionState = "";
+    }
+
     var distilledData = {};
     var computationData = {}; // use this to track counts, etc as we look through the events
 
@@ -90,10 +148,27 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         //console.log("\neventName:", eventName, "eventData:",eventData);
 
         // Check the name of the level to pass to the Bayes file
-        if( eventName == "Event_level_end" ) {
-            if( eventData.hasOwnProperty( "id" ) ) {
-                levelId = eventData.id;
+        if( eventName == "Event_level_started" ) {
+            if( eventData.hasOwnProperty( "levelId" ) ) {
+                levelId = eventData.levelId;
             }
+            if( eventData.hasOwnProperty( "levelNumber" ) ) {
+                levelNumber = eventData.levelNumber;
+
+                // Check this level against the previously completed level and success/failure
+                if( levelNumber < existingData.level ||
+                    ( levelNumber == existingData.level &&
+                      existingData.completionState == "success" ) ) {
+                    return {};
+                }
+            }
+        }
+        // Check if the level succeeded or failed
+        else if( eventName == "Event_level_end" ) {
+            newCompletionState = "fail";
+        }
+        else if( eventName == "Player_win" ) {
+            newCompletionState = "success";
         }
 
         // Special cases where we're doing some checks in the distiller for the sake of flexibility
@@ -248,54 +323,14 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
         distilledData.PercentSunCollected = 1; // if no sun fell for some reason, they technically collected all of it
     }
 
-    var qMatrix = {
-        "W1D1": [ 3, 7, 8, 21, 33, 43, 45, 46 ],
-        "W1D2": [ 3, 7, 8, 12, 21, 33, 43, 45, 46 ],
-        "W1D3": [ 2, 3, 7, 8, 9, 12, 13, 21, 33, 43, 45, 46 ],
-        "W1D4": [ 2, 9, 11, 12, 13, 33, 43 ],
-        "W1D6": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 21, 33, 43, 44, 45, 46 ],
-        "W1D8": [ 2, 9, 11, 13, 15, 17, 33, 43 ],
-        "W1D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
-        "W1D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
-        "W1D11": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
-        "W1D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 17, 21, 33, 35, 43, 44, 45, 46 ],
-        "W1D13": [ 2, 7, 8, 9, 12, 13, 14, 15, 17, 33, 43, 44, 46 ],
-        "W1D14": [ 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 33, 43, 44, 45, 46 ],
-        "W1D15": [ 2, 4, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45 ],
-        "W1D17": [ 2, 3, 4, 5, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 45, 46 ],
-        "W1D18": [ 2, 4, 5, 13, 15, 32, 33 ],
-        "W1D19": [ 2, 5, 7, 12, 13, 14, 15, 16, 17, 29, 32, 33, 44 ],
-        "W1D20": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 29, 32, 33, 35, 43 ],
-        "W1D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 21, 29, 43, 44, 45, 46 ],
-        "W1D22": [ 2, 4, 5, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 33, 43, 44, 46 ],
-        "W1D24": [ 2, 4, 5, 12, 13, 14, 15, 32, 35 ],
-        "W1D25": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 32, 43 ],
-        "W2D1": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
-        "W2D2": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 43, 44, 45, 46 ],
-        "W2D4": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
-        "W2D5": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 43, 44, 45, 46 ],
-        "W2D6": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
-        "W2D7": [ 2, 3, 7, 8, 9, 12, 14, 16, 17, 21, 29, 32, 36, 37, 43, 44, 45, 46 ],
-        "W2D8": [ 2, 9, 11, 12, 13, 14, 15, 16, 17, 33, 36, 43, 45, 46 ],
-        "W2D9": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 32, 37, 43, 44, 45, 46 ],
-        "W2D10": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 32, 37, 38, 43, 44, 45, 46 ],
-        "W2D12": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
-        "W2D13": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 32, 37, 38, 42, 43, 44, 45, 46 ], //use 42a, 42=42a
-        "W2D14": [ 2, 5, 9, 12, 13, 14, 15, 16, 17, 32, 38, 43, 45, 46 ],
-        "W2D15": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 37, 38, 43, 44, 45, 46 ],
-        "W2D16": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 32, 36, 37, 38, 43, 44, 45, 46 ],
-        "W2D17": [ 2, 3, 6, 7, 8, 9, 12, 13, 14, 15, 17, 21, 29, 30, 31, 32, 36, 37, 38, 45, 46 ],
-        "W2D18": [ 2, 7, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 38, 45, 46 ],
-        "W2D19": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ], //24-42 - use 24
-        "W2D21": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 24, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ], //24-42 - use 24
-        "W2D22": [ 2, 5, 9, 12, 13, 14, 15, 31, 38 ],
-        "W2D23": [ 2, 3, 7, 8, 9, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ],
-        "W2D24": [ 2, 3, 8, 9, 11, 12, 13, 14, 15, 16, 17, 21, 29, 30, 31, 36, 37, 38, 43, 44, 45, 46 ]
-    };
-
     // convert to fragments to send distiller TODO: filter based on level
     var fragments = {};
     var value, intValue;
+    for( var i = 0; i < qMatrix[ levelId ].length; i++ ) {
+        var code = qMatrix[ levelId ][ i ];
+        code = "I" + code;
+        fragments[ code ] = -1;
+    }
     for (var key in distilledData) {
         // Only proceed if the code is used in the Q-Matrix
         var code = indicatorCodes[ key ];
@@ -321,12 +356,18 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
     }
 
     var distillInfo = {
+        competencyType : cTypeConst.TYPE_COMPLEX_PROBLEM_SOLVING,
+        level: levelNumber,
+        completionState: newCompletionState,
         bayes: {
             key: levelId,
-            root: "ProblemSolving",
+            root: "ProblemSolvingSkills",
+            facets: [ "AnalyzeGivensConstraints", "Planning", "EvaluateProgress", "ToolUse" ],
             fragments: fragments
         }
     };
+
+    console.log( "Distilled Info: " + JSON.stringify( distillInfo ) );
 
     // return distilled data
     return distillInfo;
@@ -334,36 +375,52 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents)
 
 PVZ_Distiller.prototype.postProcess = function(distilled, bayesResults) {
     var compData = {};
-    //console.log("postProcess distilled:", distilled);
-    //console.log("postProcess wekaResults:", wekaResults);
+    console.log( "postProcess distilled:", distilled );
+    console.log( "postProcess bayesResults:", bayesResults );
 
-    /*// Get the competency level
-    var competencyLevel = 0;
-    var maxValue = 0;
-    for( var i = 0; i < wekaResults.length; i++ ) {
-        if(wekaResults[i] > maxValue) {
-            maxValue = wekaResults[i];
-            competencyLevel = i + 1;
+    // Setup the facets/competency info
+    compData.data = {
+        competencyType : distilled.competencyType,
+        facet_analyze_constraints : 0,
+        facet_plan_solution_pathway : 0,
+        facet_effective_tool_use : 0,
+        facet_monitor_progress : 0,
+        competency_problem_solving : 0
+    };
+
+    // Get the competency levels for facets and overall competency
+    if( bayesResults && bayesResults.bayesResults ) {
+        for( var key in bayesResults.bayesResults ) {
+            var distribution = bayesResults.bayesResults[ key ];
+
+            var competencyLevel = 0;
+            var maxValue = 0;
+
+            console.log( "Checking key: " + key + " with distribution: " + distribution );
+            for( var i = 0; i < distribution.length; i++ ) {
+                if( distribution[ i ] > maxValue ) {
+                    maxValue = distribution[ i ];
+                    competencyLevel = i + 1;
+                }
+            }
+
+            compData.data[ competencyMappings[ key ] ] = competencyLevel;
         }
     }
 
-    // competency type
+    // competency id and level
     compData.id = distilled.competencyType;
-    compData.level = competencyLevel;
-    compData.teacherFeedbackCode = distilled.teacherFeedbackCode;
-    compData.studentFeedbackCode = distilled.teacherFeedbackCode;
-    compData.data = { competencyLevel : competencyLevel, competencyType : distilled.competencyType };
-    compData.note = distilled.note;
+    compData.level = distilled.level;
 
+    console.log( "PostProcess result before info: " + JSON.stringify( compData ) );
+
+    // competency metadata
     var info =_.cloneDeep(distilled);
-    info.bayes.wekaResults = wekaResults;
+    info.bayes.bayesResults = bayesResults;
     compData.info = JSON.stringify(info);
 
-    compData.timeSpentSec = 0;
-    compData.numAttempts = 1;
-
     // TODO: add model version and distiller version
-    // compData.version = this.version;*/
+    // compData.version = this.version;
 
     return compData;
 };
