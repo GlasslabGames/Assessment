@@ -20,7 +20,7 @@ cd ../../classes
 # Parameter n+1: -> evidenceValue
 #
 # standard in -> XML Bayes File
-java -cp .:../lib/linux_64/NeticaJ.jar -Djava.library.path=../lib/linux_64 $@
+java -cp .:../lib/osx/commons-codec-1.9.jar:../lib/linux_64/NeticaJ.jar -Djava.library.path=../lib/linux_64 $@
 
 # Test Run:
 #   ./run.sh AdvancedBayes ../games/SC/bayes/sierra_madre.xml category_systems_thinking category_end_state 0 category_process 0
