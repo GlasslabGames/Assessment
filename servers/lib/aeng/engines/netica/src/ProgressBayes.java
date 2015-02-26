@@ -91,6 +91,7 @@ public class ProgressBayes {
 
 				System.out.println( "binary arg: " + args[ 3 + facetOffset ] );
 				System.out.println( "binary: " + b );
+				System.out.println( "binary length: " + b.length + "\n" );
 
 				// Load in the net for the student model and compile it
 				ByteArrayInputStream bais = new ByteArrayInputStream( b );
@@ -244,7 +245,7 @@ public class ProgressBayes {
 			Streamer stream = new Streamer( baos, "W1D1.neta", env );
 			studentModel.write( stream );
 			stream.flush();
-			stream.close();
+			//stream.finalize();
 
 			/*
 			 * Begin constructing the JSON output
