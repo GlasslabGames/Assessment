@@ -310,7 +310,7 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents, existingData)
     }
 
     // If a level Id is not present, ignore
-    if( levelId == "" ) {
+    if( !qMatrix[ levelId ] ) {
         return {};
     }
 
