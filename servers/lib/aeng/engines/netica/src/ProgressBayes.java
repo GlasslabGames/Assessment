@@ -81,7 +81,6 @@ public class ProgressBayes {
 			// Keep an array of indicator nodes so we know which to absorb
 			NodeList indicatorNodes;
 
-
 			// If the previous level exists, get the binary data that describes it and load it in
 			boolean hadPreviousLevel = Boolean.parseBoolean( args[ 2 + facetOffset ] );
 			System.out.println( "hadPreviousLevel = " + hadPreviousLevel );
@@ -90,13 +89,15 @@ public class ProgressBayes {
 				byte[] b = Base64.decodeBase64( args[ 3 + facetOffset ] );
 
 				System.out.println( "binary arg: " + args[ 3 + facetOffset ] );
-				System.out.println( "binary: " + b );
+				//System.out.println( "binary after decoding:" );
+				//printByteArray( b );
 				System.out.println( "binary length: " + b.length + "\n" );
 
 				// Load in the net for the student model and compile it
 				ByteArrayInputStream bais = new ByteArrayInputStream( b );
 				bais.close();
-				studentModel = new Net( new Streamer( bais, "W1D1.neta", env ) );
+				Streamer inStreamer = new Streamer( bais, "W1D1.neta", env );
+				studentModel = new Net( inStreamer );
 				studentModel.compile();
 
 				System.out.println( "Student model: " + studentModel.getName() );
@@ -244,7 +245,11 @@ public class ProgressBayes {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			Streamer stream = new Streamer( baos, "W1D1.neta", env );
 			studentModel.write( stream );
+			byte[] bytesToEncode = baos.toByteArray();
 			stream.flush();
+			System.out.println( "Byte array before encoding:" );
+			String encoded = Base64.encodeBase64String( bytesToEncode );
+			//printByteArray( bytesToEncode );
 			//stream.finalize();
 
 			/*
@@ -266,7 +271,7 @@ public class ProgressBayes {
 			System.out.print( "}" );
 
 			// Print the encoded binary for the results
-			String encoded = Base64.encodeBase64String( baos.toByteArray() );
+			//String encoded = Base64.encodeBase64String( bytesToEncode );
 			System.out.println( ",\"modelBinary\":\"" + encoded + "\"" );
 
 			// Closing
@@ -322,6 +327,19 @@ public class ProgressBayes {
 	            }
 	        }
 	        System.out.println( "]" );
+  		}
+  		catch( Exception e ) {
+  			e.printStackTrace();
+  		}
+  	}
+
+  	public static void printByteArray( byte[] b ) {
+  		try {
+  			System.out.println( "length: " + b.length );
+  			for( int i = 0; i < b.length; i++ ) {
+  				//System.out.print( b[i] + "\n" );
+  			}
+  			System.out.println( "" );
   		}
   		catch( Exception e ) {
   			e.printStackTrace();
