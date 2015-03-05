@@ -33,7 +33,19 @@ function WPLUS_SoWo(engine, aeService, options){
 
 WPLUS_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
-    var filterEventTypes = [ "TimeOutInPack1", "TimeOutInPack2", "TimeOutInPack3", "TimeOutInPack4", "AllBasicNoChallenge", "SOChallenge1and2", "SOChallenge3", "SOChallenge4", "SOAllBasicLevels", "SOAllLevels", "SOExtremePipeCount" ];
+    var filterEventTypes = [
+        "TimeOutInPack1",
+        "TimeOutInPack2",
+        "TimeOutInPack3",
+        "TimeOutInPack4",
+        "AllBasicNoChallenge",
+        "SOChallenge1and2",
+        "SOChallenge3",
+        "SOChallenge4",
+        "SOAllBasicLevels",
+        "SOAllLevels",
+        "SOExtremePipeCount"
+    ];
     var filterEventKeys = [ "all" ];
 
     // this is a list of function names that will be ran every time process is called

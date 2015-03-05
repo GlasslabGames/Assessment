@@ -88,7 +88,7 @@ public class ProgressBayes {
 				System.out.println( "\nStarting previous level logic...\n" );
 				byte[] b = Base64.decodeBase64( args[ 3 + facetOffset ] );
 
-				System.out.println( "binary arg: " + args[ 3 + facetOffset ] );
+				//System.out.println( "binary arg: " + args[ 3 + facetOffset ] );
 				//System.out.println( "binary after decoding:" );
 				//printByteArray( b );
 				System.out.println( "binary length: " + b.length + "\n" );
