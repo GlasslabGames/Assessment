@@ -328,6 +328,12 @@ PVZ_Distiller.prototype.preProcess = function(sessionsEvents, existingData)
     var value, intValue;
     for( var i = 0; i < qMatrix[ levelId ].length; i++ ) {
         var code = qMatrix[ levelId ][ i ];
+
+        // check for code 42 and change to 42a
+        if( code == 42 ) {
+            code = 42 + "a";
+        }
+        
         code = "I" + code;
         fragments[ code ] = -1;
     }
