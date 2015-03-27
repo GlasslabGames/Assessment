@@ -100,6 +100,12 @@ return when.promise(function (resolve, reject) {
             target \
         ) VALUES (?, ?,?,?,?, ?,?,?, ?,?,?)";
 
+        // check ahead if filterEventKeys contains "all"
+        var gatherAllEvents = false;
+        if( _.contains( filterEventKeys, "all" ) ) {
+            gatherAllEvents = true;
+        }
+
         var eventId = 0;
         var totalNumEvents = 0;
         for (var i = 0; i < eventsData.length; i++) {
@@ -116,7 +122,7 @@ return when.promise(function (resolve, reject) {
                 for (var key in eventsData[i].events[j].eventData) {
 
                     // only add event data if in filter list
-                    if (!_.contains(filterEventKeys, key)) continue;
+                    if (!_.contains(filterEventKeys, key) && !gatherAllEvents) continue;
 
                     var value = eventsData[i].events[j].eventData[key];
                     // convert to string
@@ -142,6 +148,24 @@ return when.promise(function (resolve, reject) {
                         key,
                         value,
                         eventsData[i].events[j].eventData['target'] || ""
+                    ];
+                    db.run(sql, row);
+                }
+
+                // If the eventsData is empty and we're filtering for "all", add the event anyway
+                if( gatherAllEvents && _.isEmpty( eventsData[i].events[j].eventData ) ) {
+                    var row = [
+                        eventId,
+                        eventsData[i].userId,
+                        eventsData[i].gameSessionId,
+                        eventsData[i].events[j].clientTimeStamp,
+                        eventsData[i].events[j].serverTimeStamp,
+                        eventsData[i].events[j].eventName,
+                        eventsData[i].events[j].gameLevel || "",
+                        eventsData[i].events[j].gameSessionEventOrder || i,
+                        "",
+                        "",
+                        ""
                     ];
                     db.run(sql, row);
                 }

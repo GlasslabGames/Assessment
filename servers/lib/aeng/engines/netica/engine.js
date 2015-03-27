@@ -53,12 +53,24 @@ return when.promise(function(resolve, reject) {
 
             try {
                 // TODO: maybe run in thread
+
+                // Get the previously completed level and pass it into the distiller
+                var existingData = {};
+                if( currentResults &&
+                    currentResults.results &&
+                    currentResults.results.cps &&
+                    currentResults.results.cps.level &&
+                    currentResults.results.cps.completionState ) {
+                    existingData.level = currentResults.results.cps.level;
+                    existingData.completionState = currentResults.results.cps.completionState;
+                }
+
                 // Run distiller function
-                distilledData = distiller.preProcess(eventsData);
+                distilledData = distiller.preProcess(eventsData, existingData);
                 //console.log( "Distilled data:", JSON.stringify(distilledData, null, 2) );
 
                 // If the distilled data has no bayes key, don't save anything
-                if( !(distilledData && distilledData.bayes.key) ) {
+                if( !(distilledData && distilledData.bayes && distilledData.bayes.key) ) {
                     console.log( "AssessmentEngine: NeticaEngine - No bayes key found in distilled data" );
                     resolve();
                     return;
@@ -88,6 +100,18 @@ return when.promise(function(resolve, reject) {
             // add root node
             commandString += " " + distilledData.bayes.root;
 
+            // add facets if any exist
+            if( distilledData.bayes.facets ) {
+                var numFacets = distilledData.bayes.facets.length;
+                commandString += " " + numFacets;
+                for( var i = 0; i < numFacets; i++ ) {
+                    commandString += " " + distilledData.bayes.facets[ i ];
+                }
+            }
+            else {
+                commandString += " 0";
+            }
+
             // add the flag for previous level
             if( currentResults &&
                 currentResults.results &&
@@ -95,8 +119,9 @@ return when.promise(function(resolve, reject) {
                 currentResults.results[ distilledData.competencyType ].info ) {
                 var resultsInfo = JSON.parse( currentResults.results[ distilledData.competencyType ].info );
                 if( resultsInfo.bayes &&
-                    resultsInfo.bayes.bin ) {
-                    commandString += " true " + resultsInfo.bayes.bin;
+                    resultsInfo.bayes.bayesResults &&
+                    resultsInfo.bayes.bayesResults.modelBinary ) {
+                    commandString += " true " + resultsInfo.bayes.bayesResults.modelBinary;
                 }
                 else {
                     commandString += " false 0";
@@ -145,7 +170,8 @@ return when.promise(function(resolve, reject) {
                             console.log( "exec error: " + error );
                             reject2( error );
                         } else {
-                            resolve2({distilled: distilledData, netica: data});
+                            var neticaData = data.substring( data.indexOf( "{" ) );
+                            resolve2({distilled: distilledData, netica: neticaData});
                         }
                     }.bind(this)
                 );
@@ -163,7 +189,7 @@ return when.promise(function(resolve, reject) {
 
             try {
                 data.netica = JSON.parse(data.netica);
-                console.log( "AssessmentEngine: NeticaEngine - data.netica: " + data.netica );
+                console.log( "AssessmentEngine: NeticaEngine - data.netica: " + JSON.stringify( data.netica ) );
                 // process neticaResults and distilled Data
                 var compData = distiller.postProcess(data.distilled, data.netica);
                 compData.timestamp = Util.GetTimeStamp();
