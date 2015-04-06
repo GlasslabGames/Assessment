@@ -403,15 +403,49 @@ PVZ_Distiller.prototype.postProcess = function(distilled, bayesResults) {
             var maxValue = 0;
 
             console.log( "Checking key: " + key + " with distribution: " + distribution );
-            for( var i = 0; i < distribution.length; i++ ) {
+            /*for( var i = 0; i < distribution.length; i++ ) {
                 if( distribution[ i ] > maxValue ) {
                     maxValue = distribution[ i ];
                     competencyLevel = i;
                 }
+            }*/
+
+            // Ignore if there are not enough values in the distribution
+            if( distribution.length != 3 ) {
+                break;
+            }
+
+            // Calculate EAP values for the distributions
+            var highLow = distribution[ 0 ] - distribution[ 2 ];
+            var highLowAbs = Math.abs( highLow );
+            var highMedAbs = Math.abs( distribution[ 0 ] - distribution[ 1 ] );
+            var medLowAbs = Math.abs( distribution[ 1 ] - distribution[ 2 ] );
+
+            // Determine if the node is grey (eapsWithUncertainty >= 2)
+            var eapArray = [ highLowAbs, highMedAbs, medLowAbs ];
+            var eapsWithUncertainty = 0;
+            for( var i = 0; i < eapArray.length; i++ ) {
+                if( eapArray[ i ] <= 0.15 ) {
+                    eapsWithUncertainty++;
+                }
+            }
+
+            // EAP check for uncertainty
+            if( eapsWithUncertainty < 2 ) {
+                // Passed uncertainty check, get the node color
+                if( highLow >= 0.34 && highLow <= 1.0 ) {
+                    competencyLevel = 3;
+                }
+                else if( highLow >= -0.34 && highLow < 0.34 ) {
+                    competencyLevel = 2;
+                }
+                else {
+                    competencyLevel = 1;
+                }
             }
 
             // Invert the level, since high to low is 0 to 2
-            competencyLevel = distribution.length - competencyLevel;
+            //competencyLevel = distribution.length - competencyLevel;
 
             // Set the final value
             compData.data[ competencyMappings[ key ] ] = competencyLevel;
