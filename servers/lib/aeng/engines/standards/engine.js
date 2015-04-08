@@ -64,11 +64,8 @@ StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsDa
                     var standardsData = distiller.postProcess(distilledData);
                     standardsData.timestamp = Util.GetTimeStamp();
 
-                    var out = {};
-                    out[standardsData.id] = standardsData;
-
                     // done
-                    resolve(out);
+                    resolve(standardsData);
                 } catch(err) {
                     console.error("AssessmentEngine: StandardsEngine - Invalid Standards JSON data - Error:", err);
                     reject(err);
