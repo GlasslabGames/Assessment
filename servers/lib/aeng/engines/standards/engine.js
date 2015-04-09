@@ -57,7 +57,7 @@ StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsDa
                 try {
                     // TODO: maybe run in thread
                     // Run distiller function
-                    distilledData = distiller.preProcess(eventsData);
+                    distilledData = distiller.preProcess(eventsData, currentResults);
                     //console.log( "Distilled data:", JSON.stringify(distilledData, null, 2) );
 
                     // If the distilled data has no bayes key, don't save anything
