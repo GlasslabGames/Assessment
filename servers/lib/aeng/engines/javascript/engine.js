@@ -74,6 +74,7 @@ return when.promise(function (resolve, reject) {
         sql = "CREATE TABLE IF NOT EXISTS events (\
             eventId INT, \
             userId INT, \
+            gameSessionId TEXT, \
             clientTimeStamp DATETIME, \
             serverTimeStamp DATETIME, \
             eventName TEXT, \
@@ -88,6 +89,7 @@ return when.promise(function (resolve, reject) {
         sql = "INSERT INTO events ( \
             eventId, \
             userId, \
+            gameSessionId, \
             clientTimeStamp, \
             serverTimeStamp, \
             eventName, \
@@ -96,7 +98,13 @@ return when.promise(function (resolve, reject) {
             eventData_Key, \
             eventData_Value, \
             target \
-        ) VALUES (?, ?,?,?, ?,?,?, ?,?,?)";
+        ) VALUES (?, ?,?,?,?, ?,?,?, ?,?,?)";
+
+        // check ahead if filterEventKeys contains "all"
+        var gatherAllEvents = false;
+        if( _.contains( filterEventKeys, "all" ) ) {
+            gatherAllEvents = true;
+        }
 
         var eventId = 0;
         var totalNumEvents = 0;
@@ -114,7 +122,7 @@ return when.promise(function (resolve, reject) {
                 for (var key in eventsData[i].events[j].eventData) {
 
                     // only add event data if in filter list
-                    if (!_.contains(filterEventKeys, key)) continue;
+                    if (!_.contains(filterEventKeys, key) && !gatherAllEvents) continue;
 
                     var value = eventsData[i].events[j].eventData[key];
                     // convert to string
@@ -125,9 +133,13 @@ return when.promise(function (resolve, reject) {
                         value = value.toString();
                     }
 
+                    // Print the data for debugging
+                    //console.log( eventId + " " + eventsData[i].gameSessionId + " " + eventsData[i].events[j].gameLevel + " " + eventsData[i].events[j].eventName + " " + key + " " + value );
+
                     var row = [
                         eventId,
                         eventsData[i].userId,
+                        eventsData[i].gameSessionId,
                         eventsData[i].events[j].clientTimeStamp,
                         eventsData[i].events[j].serverTimeStamp,
                         eventsData[i].events[j].eventName,
@@ -136,6 +148,24 @@ return when.promise(function (resolve, reject) {
                         key,
                         value,
                         eventsData[i].events[j].eventData['target'] || ""
+                    ];
+                    db.run(sql, row);
+                }
+
+                // If the eventsData is empty and we're filtering for "all", add the event anyway
+                if( gatherAllEvents && _.isEmpty( eventsData[i].events[j].eventData ) ) {
+                    var row = [
+                        eventId,
+                        eventsData[i].userId,
+                        eventsData[i].gameSessionId,
+                        eventsData[i].events[j].clientTimeStamp,
+                        eventsData[i].events[j].serverTimeStamp,
+                        eventsData[i].events[j].eventName,
+                        eventsData[i].events[j].gameLevel || "",
+                        eventsData[i].events[j].gameSessionEventOrder || i,
+                        "",
+                        "",
+                        ""
                     ];
                     db.run(sql, row);
                 }
@@ -160,25 +190,39 @@ return when.promise(function (resolve, reject) {
         var rulesPromise = when.reduce(promiseList,
             function (sum, value) {
 
+                var values = [];
+
                 if ( _.isObject(value) &&
                      value.type &&
                      value.id ) {
-                    // temp save type and id
-                    var type = value.type;
-                    var id = value.id;
-                    // remove type and id, as they will be in the tree
-                    delete value.type;
-                    delete value.id;
-                    // add time stamp and gameSessionId
-                    value.timestamp = Util.GetTimeStamp();
-                    value.gameSessionId = gameSessionId;
+                    values.push( value );
+                }
+                else if( _.isArray(value) ) {
+                    values = value;
+                }
 
-                    // if type not object make it one
-                    if(!_.isObject(sum[type]) ) {
-                        sum[type] = {};
+                for( var i = 0; i < values.length; i++ ) {
+                    var nextValue = values[i];
+                    if ( _.isObject(nextValue) &&
+                        nextValue.type &&
+                        nextValue.id ) {
+                        // temp save type and id
+                        var type = nextValue.type;
+                        var id = nextValue.id;
+                        // remove type and id, as they will be in the tree
+                        delete nextValue.type;
+                        delete nextValue.id;
+                        // add time stamp and gameSessionId
+                        nextValue.timestamp = Util.GetTimeStamp();
+                        nextValue.gameSessionId = gameSessionId;
+
+                        // if type not object make it one
+                        if(!_.isObject(sum[type]) ) {
+                            sum[type] = {};
+                        }
+
+                        sum[type][ id ] = nextValue;
                     }
-
-                    sum[type][ id ] = value;
                 }
 
                 //console.log("rule - sum:", sum, ", value:", value);
