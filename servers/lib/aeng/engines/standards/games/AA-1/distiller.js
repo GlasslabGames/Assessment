@@ -22,37 +22,74 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
 
     // data structure which will replace the current results object
     // merges in current reports statuses or sets defaults if no report present
-    var reportCardData = _buildReportCardData(results, standards);
+    var reportCard = _buildReportCardData(results, standards);
     // used to make sure the updated achievements only progress in the approved order
     var achievementsHierarchy = _buildAchievementsHierarchy();
     // used to connect particular events to standards and achievements
     var eventStandardsMap = _buildEventStandardsMap();
+    // used to track ongoing requirement
 
     var action;
     var data;
-    var value;
+    var questId;
     var achievement;
     var standard;
+    var conditions;
     var status;
+    var ratio;
+    var weakness;
+    var total;
+    var good;
 
     _(eventsList).forEach(function(event){
         action = event.action;
         data = event.data;
-        value = data.questId;
+        questId = data.questId || null;
+        weakness = data.weakness || null;
 
-        if(eventStandardsMap[action] && eventStandardsMap[action][value]){
-            achievement = eventStandardsMap[action][value];
+        if(action === "Fuse_core" && weakness){
+            standard = "CCRA.R.1";
+            conditions = reportCard[standard];
+            status = conditions.status;
+            if(status !== "Full"){
+                total = ++conditions.data.totalFuseCores;
+                if(weakness === "none"){
+                    good = ++conditions.data.strongFuseCores;
+                } else{
+                    good = conditions.data.strongFuseCores;
+                }
+                ratio = good/total;
+                if(ratio < conditions.data.threshold){
+                    if(achievementsHierarchy["Watchout1"] > achievementsHierarchy[status]){
+                        conditions.status = "Watchout1";
+                    }
+                }
+            }
+        }
+
+        if(questId && eventStandardsMap[action] && eventStandardsMap[action][questId]){
+            achievement = eventStandardsMap[action][questId];
             standard = achievement[0];
             achievement = achievement[1];
-            status = reportCardData[standard].status;
+            conditions = reportCard[standard];
+            status = conditions.status;
 
             if(achievementsHierarchy[achievement] > achievementsHierarchy[status]){
-                reportCardData[standard].status = achievement;
+                if(!conditions.data.threshold){
+                    conditions.status = achievement;
+                } else{
+                    ratio = _findThresholdRatio(conditions, standard, achievement);
+                    if(ratio > conditions.data.threshold){
+                        conditions.status = achievement;
+                    } else{
+                        conditions.status = "Watchout2";
+                    }
+                }
             }
         }
     });
 
-    return reportCardData;
+    return reportCard;
 };
 
 AA_Distiller.prototype.postProcess = function(distilled) {
@@ -61,16 +98,19 @@ AA_Distiller.prototype.postProcess = function(distilled) {
 };
 
 function _buildReportCardData(results, standards){
-    var distilledData = {};
+    var reportCard = {};
     if(_.isEmpty(results)) {
         standards.forEach(function (standard) {
-            distilledData[standard] = {status: "Not-Started"};
+            reportCard[standard] = {status: "Not-Started", data: {}};
         });
+        reportCard["CCRA.R.1"].data = { totalFuseCores: 0, strongFuseCores: 0, threshold: 0.5};
+        // this threshold is not determined in the google doc yet
+        reportCard["21st.RE"].data  = { totalLaunchAttacks: 0, successLaunchAttacks: 0, threshold: 0.5};
     } else {
-        _.merge(distilledData, results);
+        _.merge(reportCard, results);
     }
 
-    return distilledData;
+    return reportCard;
 }
 
 function _buildAchievementsHierarchy(){
@@ -130,4 +170,15 @@ function _buildEventStandardsMap(){
     questComplete["Quest24"]  = ["21st.MJD", "Full"];
 
     return eventStandardsMap;
+}
+
+function _findThresholdRatio(conditions, standard){
+    var data = conditions.data;
+    var ratio;
+    if(standard === "CCRA.R.1"){
+        ratio = data.strongFuseCores/data.totalFuseCores;
+    } else if(standard === "21st.RE"){
+        ratio = data.successLaunchAttacks/data.totalLaunchAttacks;
+    }
+    return ratio;
 }
