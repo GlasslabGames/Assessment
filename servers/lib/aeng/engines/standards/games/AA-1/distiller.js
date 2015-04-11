@@ -138,9 +138,29 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             }
             // still have a few watchouts to define
             //else if(data.quest === "Let's Evo"){
-            //
+            //    standards = "CCRA.R.8";
+            //    conditions = reportCard[standard];
+            //    status = conditions.status;
+            //    if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
+            //        tally = ++conditions.data.losses;
+            //        if (tally > 2) {
+            //            conditions.status = "Watchout1";
+            //        }
+            //    }
+            //}
+            //else if(data.quest === "Final Battle") {
+            //    standards = "21st.MJD";
+            //    conditions = reportCard[standard];
+            //    status = conditions.status;
+            //    if (achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
+            //        tally = ++conditions.data.losses;
+            //        if (tally > 2) {
+            //            conditions.status = "Watchout2";
+            //        }
+            //    }
             //}
         }
+
         //if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
         //    tally = ++conditions.data.failures;
         //    if(tally > 3){
