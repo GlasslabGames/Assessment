@@ -51,18 +51,29 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             standard = "CCRA.R.1";
             conditions = reportCard[standard];
             status = conditions.status;
-            if(status !== "Full"){
-                total = ++conditions.data.totalFuseCores;
+            if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] &&
+                questOrder[questMap[data.quest]] > questOrder["Quest0-5"] && questOrder[questMap[data.quest]] < questOrder["Ques11"]){
+                total = ++conditions.data.partialFuseCores;
                 if(data.weakness === "none"){
-                    good = ++conditions.data.strongFuseCores;
+                    good = ++conditions.data.partialStrongFuseCores;
                 } else{
-                    good = conditions.data.strongFuseCores;
+                    good = conditions.data.partialStrongFuseCores;
                 }
                 ratio = good/total;
                 if(ratio < conditions.data.threshold){
-                    if(achievementsHierarchy["WatchoutA"] > achievementsHierarchy[status]){
                         conditions.status = "WatchoutA";
-                    }
+                }
+            } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] &&
+                questOrder[questMap[data.quest]] > questOrder["0-6"] && questOrder[questMap[data.quest]] < questOrder["Quest26"]){
+                total = ++conditions.data.fullFuseCores;
+                if(data.weakness === "none"){
+                    good = ++conditions.data.fullStrongFuseCores;
+                } else{
+                    good = conditions.data.fullStrongFuseCores;
+                }
+                ratio = good/total;
+                if(ratio < conditions.data.threshold){
+                    conditions.status = "WatchoutB";
                 }
             }
         }
@@ -99,88 +110,104 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         }
 
         if(action === "Finish_battle" && data.success === false) {
-            if (data.quest === "Build a Bot\r\n") {
+            if(data.quest === "Build a Bot\r\n") {
                 standard = "RI 6.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
-                if (achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
-                    tally = ++conditions.data.losses;
-                    if (tally > 2) {
+                if(achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
+                    tally = ++conditions.data.lossesB;
+                    if(tally >= 3) {
                         conditions.status = "WatchoutB";
                     }
                 }
-            } else if (data.quest === "Which Protein?") {
+            } else if(data.quest === "Which Protein?") {
                 standards = "RI 7.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
-                if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
-                    tally = ++conditions.data.losses1;
-                    if (tally > 2) {
-                        conditions.status = "WatchoutB";
-                    }
-                }
-            } else if (data.quest === "Helpbots") {
-                standards = "RI 7.8";
-                conditions = reportCard[standard];
-                status = conditions.status;
-                if (achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
-                    tally = ++conditions.data.losses2;
-                    if (tally > 2) {
-                        conditions.status = "WatchoutB";
-                    }
-                }
-            } else if (data.quest === "Bot Trainer 5000") {
-                standards = "RI 8.8";
-                conditions = reportCard[standard];
-                status = conditions.status;
-                if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
-                    tally = ++conditions.data.losses1;
-                    if (tally > 2) {
+                if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
+                    tally = ++conditions.data.lossesA;
+                    if(tally >= 3) {
                         conditions.status = "WatchoutA";
                     }
                 }
-            } else if(data.quest === "Hero Or Zero"){
+            } else if(data.quest === "Helpbots") {
+                standards = "RI 7.8";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if(achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
+                    tally = ++conditions.data.lossesB;
+                    if(tally >= 3) {
+                        conditions.status = "WatchoutB";
+                    }
+                }
+            } else if(data.quest === "Bot Trainer 5000") {
                 standards = "RI 8.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
-                if (achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
-                    tally = ++conditions.data.losses2;
-                    if (tally > 2) {
+                if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
+                    tally = ++conditions.data.lossesA;
+                    if(tally >= 3) {
+                        conditions.status = "WatchoutA";
+                    }
+                }
+            } else if(data.quest === "Hero Or Zero?"){
+                standards = "RI 8.8";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if(achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
+                    tally = ++conditions.data.lossesB;
+                    if(tally >= 3) {
+                        conditions.status = "WatchoutB";
+                    }
+                }
+            } else if(data.quest === "Let's Evo-2"){
+                standards = "CCRA.R.8";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
+                    tally = ++conditions.data.lossesA;
+                    if(tally >= 3){
+                        conditions.status = "WatchoutA";
+                    }
+                }
+            } else if(data.quest === "Brackett City Objectives"){
+                standards = "21st.MJD";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if (achievementsHierarchy[status] < achievementsHierarchy["Full"]){
+                    tally = ++conditions.data.lossesB;
+                    if(tally >= 3){
+                        conditions.status = "WatchoutB";
+                    }
+                }
+            }
+        }
+        // watchout! quest names are not unique
+        if(action === "Give_schemeTrainingEvidence" && data.success === false){
+            // watchout! quest names are not unique
+            if(data.quest === "Create an Argubot"){
+                standards = "RI6.8";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
+                    tally = ++conditions.data.failuresA;
+                    if(tally >= 3){
+                        conditions.status = "WatchoutA";
+                    }
+                }
+            // watchout! quest names are not unique
+            } else if(data.quest === "Level Up\r!"){
+                standards = "21st.MJD";
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
+                    tally = ++conditions.data.failuresA;
+                    if(tally >= 4){
                         conditions.status = "WatchoutA";
                     }
                 }
             }
-            // still have a few watchouts to define
-            //else if(data.quest === "Let's Evo"){
-            //    standards = "CCRA.R.8";
-            //    conditions = reportCard[standard];
-            //    status = conditions.status;
-            //    if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
-            //        tally = ++conditions.data.losses;
-            //        if (tally > 2) {
-            //            conditions.status = "WatchoutA";
-            //        }
-            //    }
-            //}
-            //else if(data.quest === "Final Battle") {
-            //    standards = "21st.MJD";
-            //    conditions = reportCard[standard];
-            //    status = conditions.status;
-            //    if (achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
-            //        tally = ++conditions.data.losses;
-            //        if (tally > 2) {
-            //            conditions.status = "WatchoutB";
-            //        }
-            //    }
-            //}
         }
-
-        //if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
-        //    tally = ++conditions.data.failures;
-        //    if(tally > 3){
-        //        conditions.status = "WatchoutA";
-        //    }
-        //}
 
         if(data.questId && eventStandardsMap[action] && eventStandardsMap[action][data.questId]){
             achievement = eventStandardsMap[action][data.questId];
@@ -213,16 +240,16 @@ AA_Distiller.prototype.postProcess = function(distilled) {
 function _buildReportCardData(results, standards){
     var reportCard = {};
     if(_.isEmpty(results)) {
-        reportCard["RI 6.8"] = { status: "Not-Started", data: { failures: 0, losses: 0} };
-        reportCard["RI 7.8"] = { status: "Not-Started", data: { losses1: 0, losses2:0} };
-        reportCard["RI 8.8"] = { status: "Not-Started", data: { losses1: 0, losses2:0} };
+        reportCard["RI 6.8"] = { status: "Not-Started", data: { failuresA: 0, lossesB: 0} };
+        reportCard["RI 7.8"] = { status: "Not-Started", data: { lossesA: 0, lossesB:0} };
+        reportCard["RI 8.8"] = { status: "Not-Started", data: { lossesA: 0, lossesB:0} };
         reportCard["CCRA.R.1"] = { status: "Not-Started", data: { partialFuseCores: 0, partialStrongFuseCores: 0,
                                     fullFuseCores: 0, fullStrongFuseCores: 0, threshold: 0.5} };
-        reportCard["CCRA.R.8"] = { status: "Not-Started", data: { losses: 0, failures: 0} };
+        reportCard["CCRA.R.8"] = { status: "Not-Started", data: { lossesA: 0} };
         // this threshold is not determined in the google doc yet
         reportCard["21st.RE"]  = { status: "Not-Started", data: { partialLaunchAttacks: 0, partialSuccessLaunchAttacks: 0,
                                     fullLaunchAttacks: 0, fullSuccessLaunchAttacks: 0, threshold: 0.5} };
-        reportCard["21st.MJD"] = { status: "Not-Started", data: { failures: 0, losses: 0} };
+        reportCard["21st.MJD"] = { status: "Not-Started", data: { failuresA: 0, lossesB: 0} };
     } else {
         _.merge(reportCard, results);
     }
@@ -314,12 +341,11 @@ function _buildQuestMap(){
     //quest_complete and quest_cancel have quest value of interstitial, likely meaning between quest activity
     // otherwise these map to questIds.
     map["Welcome!"] = "Quest0-1";
-    //conflict
+    //conflict with Quest19
     //map["Talk to Lucas"] = "Quest0-2";
     map["Choose Your Argubot"] = "Quest0-3";
     map["The Rec Room"] = "Quest0-4";
     map["Build a Bot\r\n"] = "Quest0-5";
-    //more training and which protein out of order
     map["Which Protein?"] = "Quest1-1";
     map["More Training!"] = "Quest0-6";
     map["Missing Evidence"] = "Quest11";
@@ -327,10 +353,11 @@ function _buildQuestMap(){
     map["Helpbots"] = "Quest14";
     map["Chloe's Lost Her Marbles"] = "Quest16";
     map["Bot Trainer 5000"] = "Quest18";
-    //conflict
+    //conflict with Quest0-2
     map["Talk to Lucas"] = "Quest19";
     map["Hero or Zero?"] = "Quest21";
     map["Let's Evo-2"] = "Quest23";
+    map["All About Backing"] = "Quest23a";
     map["Brackett City Objectives"] = "Quest24";
     map["Lev's Missing Data Cube"] = "Quest26";
     map["What to do about Lucas"] = "Quest28";
@@ -350,20 +377,21 @@ function _buildQuestOrder(){
     questOrder["Quest0-5"] = 5;
     questOrder["Quest1-1"] = 6;
     questOrder["Quest0-6"] = 7;
-    questOrder["Quest11"] = 8;
-    questOrder["Quest13"] = 9;
-    questOrder["Quest14"] = 10;
-    questOrder["Quest16"] = 11;
-    questOrder["Quest18"] = 12;
-    questOrder["Quest19"] = 13;
-    questOrder["Quest21"] = 14;
-    questOrder["Quest23"] = 15;
-    questOrder["Quest24"] = 16;
-    questOrder["Quest26"] = 17;
-    questOrder["Quest28"] = 18;
-    questOrder["Quest30"] = 19;
-    questOrder["Quest33"] = 20;
-    questOrder["Quest34"] = 21;
+    questOrder["Quest11"]  = 8;
+    questOrder["Quest13"]  = 9;
+    questOrder["Quest14"]  = 10;
+    questOrder["Quest16"]  = 11;
+    questOrder["Quest18"]  = 12;
+    questOrder["Quest19"]  = 13;
+    questOrder["Quest21"]  = 14;
+    questOrder["Quest23"]  = 15;
+    questOrder["Quest23a"] = 16;
+    questOrder["Quest24"]  = 17;
+    questOrder["Quest26"]  = 18;
+    questOrder["Quest28"]  = 19;
+    questOrder["Quest30"]  = 20;
+    questOrder["Quest33"]  = 21;
+    questOrder["Quest34"]  = 22;
 
     return questOrder;
 }
