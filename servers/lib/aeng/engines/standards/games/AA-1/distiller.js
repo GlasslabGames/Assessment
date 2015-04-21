@@ -184,8 +184,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         }
         // watchout! quest names are not unique
         if(action === "Give_schemeTrainingEvidence" && data.success === false){
-            // watchout! quest names are not unique
-            if(data.quest === "Create an Argubot"){
+            if(data.quest === "Choose Your Argubot"){
                 standards = "RI6.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
@@ -232,12 +231,12 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     return reportCard;
 };
 
-AA_Distiller.prototype.postProcess = function(distilled) {
+AA_Distiller.prototype.postProcess = function(standardsData) {
     var standardsData;
     return standardsData;
 };
 
-function _buildReportCardData(results, standards){
+function _buildReportCardData(results){
     var reportCard = {};
     if(_.isEmpty(results)) {
         reportCard["RI 6.8"] = { status: "Not-Started", data: { failuresA: 0, lossesB: 0} };
@@ -370,28 +369,28 @@ function _buildQuestMap(){
 
 function _buildQuestOrder(){
     var questOrder = {};
-    questOrder["Quest0-1"] = 1;
-    questOrder["Quest0-2"] = 2;
-    questOrder["Quest0-3"] = 3;
-    questOrder["Quest0-4"] = 4;
-    questOrder["Quest0-5"] = 5;
-    questOrder["Quest1-1"] = 6;
-    questOrder["Quest0-6"] = 7;
-    questOrder["Quest11"]  = 8;
-    questOrder["Quest13"]  = 9;
-    questOrder["Quest14"]  = 10;
-    questOrder["Quest16"]  = 11;
-    questOrder["Quest18"]  = 12;
-    questOrder["Quest19"]  = 13;
-    questOrder["Quest21"]  = 14;
-    questOrder["Quest23"]  = 15;
-    questOrder["Quest23a"] = 16;
-    questOrder["Quest24"]  = 17;
-    questOrder["Quest26"]  = 18;
-    questOrder["Quest28"]  = 19;
-    questOrder["Quest30"]  = 20;
-    questOrder["Quest33"]  = 21;
-    questOrder["Quest34"]  = 22;
+    questOrder["Quest0-1"] = 0;
+    questOrder["Quest0-2"] = 1;
+    questOrder["Quest0-3"] = 2;
+    questOrder["Quest0-4"] = 3;
+    questOrder["Quest0-5"] = 4;
+    questOrder["Quest1-1"] = 5;
+    questOrder["Quest0-6"] = 6;
+    questOrder["Quest11"]  = 7;
+    questOrder["Quest13"]  = 8;
+    questOrder["Quest14"]  = 9;
+    questOrder["Quest16"]  = 10;
+    questOrder["Quest18"]  = 11;
+    questOrder["Quest19"]  = 12;
+    questOrder["Quest21"]  = 13;
+    questOrder["Quest23"]  = 14;
+    questOrder["Quest23a"] = 15;
+    questOrder["Quest24"]  = 16;
+    questOrder["Quest26"]  = 17;
+    questOrder["Quest28"]  = 18;
+    questOrder["Quest30"]  = 19;
+    questOrder["Quest33"]  = 20;
+    questOrder["Quest34"]  = 21;
 
     return questOrder;
 }
