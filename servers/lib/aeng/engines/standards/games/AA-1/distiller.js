@@ -193,7 +193,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         if(action === "Give_schemeTrainingEvidence" && data.success === false){
             if(quest === "Quest0-3"){
                 // Choose Your Argubot
-                standard = "RI6.8";
+                standard = "RI 6.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
@@ -241,7 +241,6 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
 };
 
 AA_Distiller.prototype.postProcess = function(standardsData) {
-    var standardsData;
     return standardsData;
 };
 
