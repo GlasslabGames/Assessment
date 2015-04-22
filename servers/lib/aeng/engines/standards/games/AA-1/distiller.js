@@ -18,17 +18,14 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     var events = sessionsEvents[0];
     var eventsList = events.events;
     var results = currentResults.results;
-    var standards = ["RI 6.8", "RI 7.8", "RI 8.8", "CCRA.R.1", "CCRA.R.8", "21st.RE", "21st.MJD"];
 
     // data structure which will replace the current results object
     // merges in current reports statuses or sets defaults if no report present
-    var reportCard = _buildReportCardData(results, standards);
+    var reportCard = _buildReportCardData(results);
     // used to make sure the updated achievements only progress in the approved order
     var achievementsHierarchy = _buildAchievementsHierarchy();
     // used to connect particular events to standards and achievements
     var eventStandardsMap = _buildEventStandardsMap();
-    // used to correlate quest names in data to quest id
-    var questMap = _buildQuestMap();
     // used to determine which quests occur before or after other quests
     var questOrder = _buildQuestOrder();
 
@@ -42,17 +39,21 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     var total;
     var good;
     var tally;
+    var quest;
+    var questId;
 
     _(eventsList).forEach(function(event){
-        action = event.action;
-        data = event.data;
+        action = event.eventName;
+        data = event.eventData;
+        quest = data.quest;
+        questId = data.questId;
 
         if(action === "Fuse_core" && data.weakness){
             standard = "CCRA.R.1";
             conditions = reportCard[standard];
             status = conditions.status;
             if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] &&
-                questOrder[questMap[data.quest]] > questOrder["Quest0-5"] && questOrder[questMap[data.quest]] < questOrder["Ques11"]){
+                questOrder[quest] > questOrder["Quest0-5"] && questOrder[quest] < questOrder["Quest11"]){
                 total = ++conditions.data.partialFuseCores;
                 if(data.weakness === "none"){
                     good = ++conditions.data.partialStrongFuseCores;
@@ -64,7 +65,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutA";
                 }
             } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] &&
-                questOrder[questMap[data.quest]] > questOrder["0-6"] && questOrder[questMap[data.quest]] < questOrder["Quest26"]){
+                questOrder[quest] > questOrder["Quest0-6"] && questOrder[quest] < questOrder["Quest26"]){
                 total = ++conditions.data.fullFuseCores;
                 if(data.weakness === "none"){
                     good = ++conditions.data.fullStrongFuseCores;
@@ -83,7 +84,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             conditions = reportCard[standard];
             status = conditions.status;
             if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] &&
-                questOrder[questMap[data.quest]] > questOrder["Quest0-5"] && questOrder[questMap[data.quest]] < questOrder["Quest16"]){
+                questOrder[quest] > questOrder["Quest0-5"] && questOrder[quest] < questOrder["Quest16"]){
                 total = ++conditions.data.partialLaunchAttacks;
                 if(data.success === true){
                     good = ++conditions.data.partialSuccessLaunchAttacks;
@@ -95,7 +96,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                     conditions.status = "WatchoutA";
                 }
             } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] &&
-                questOrder[questMap[data.quest]] > questOrder["Quest14"] && questOrder[QuestMap[data.quest]] < questOrder["Quest23"]){
+                questOrder[quest] > questOrder["Quest14"] && questOrder[quest] < questOrder["Quest23"]){
                 total = ++conditions.data.fullLaunchAttacks;
                 if(data.success === true){
                     good = ++conditions.data.fullSuccessLaunchAttacks;
@@ -110,7 +111,8 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         }
 
         if(action === "Finish_battle" && data.success === false) {
-            if(data.quest === "Build a Bot\r\n") {
+            if(quest === "Quest0-5") {
+                // Build a Bot
                 standard = "RI 6.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
@@ -120,8 +122,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutB";
                     }
                 }
-            } else if(data.quest === "Which Protein?") {
-                standards = "RI 7.8";
+            } else if(quest === "Quest1-1") {
+                // Which Protein
+                standard = "RI 7.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
@@ -130,8 +133,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutA";
                     }
                 }
-            } else if(data.quest === "Helpbots") {
-                standards = "RI 7.8";
+            } else if(quest === "Quest14") {
+                // Helpbots
+                standard = "RI 7.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
@@ -140,8 +144,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutB";
                     }
                 }
-            } else if(data.quest === "Bot Trainer 5000") {
-                standards = "RI 8.8";
+            } else if(quest === "Quest18") {
+                // Bot Trainer 5000
+                standard = "RI 8.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]) {
@@ -150,8 +155,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutA";
                     }
                 }
-            } else if(data.quest === "Hero Or Zero?"){
-                standards = "RI 8.8";
+            } else if(quest === "Quest21"){
+                // Hero Or Zero?
+                standard = "RI 8.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Full"]) {
@@ -160,8 +166,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutB";
                     }
                 }
-            } else if(data.quest === "Let's Evo-2"){
-                standards = "CCRA.R.8";
+            } else if(quest === "Quest23"){
+                // Let's Evo-2
+                standard = "CCRA.R.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if (achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
@@ -170,8 +177,9 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutA";
                     }
                 }
-            } else if(data.quest === "Brackett City Objectives"){
-                standards = "21st.MJD";
+            } else if(quest === "Quest24"){
+                // Brackett City Objectives
+                standard = "21st.MJD";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if (achievementsHierarchy[status] < achievementsHierarchy["Full"]){
@@ -182,10 +190,10 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                 }
             }
         }
-        // watchout! quest names are not unique
         if(action === "Give_schemeTrainingEvidence" && data.success === false){
-            if(data.quest === "Choose Your Argubot"){
-                standards = "RI6.8";
+            if(quest === "Quest0-3"){
+                // Choose Your Argubot
+                standard = "RI6.8";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
@@ -194,9 +202,10 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
                         conditions.status = "WatchoutA";
                     }
                 }
-            // watchout! quest names are not unique
-            } else if(data.quest === "Level Up\r!"){
-                standards = "21st.MJD";
+            } else if(quest === "Quest13"){
+                // this quest names is not unique
+                // Level Up!
+                standard = "21st.MJD";
                 conditions = reportCard[standard];
                 status = conditions.status;
                 if(achievementsHierarchy[status] < achievementsHierarchy["Partial"]){
@@ -208,8 +217,8 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             }
         }
 
-        if(data.questId && eventStandardsMap[action] && eventStandardsMap[action][data.questId]){
-            achievement = eventStandardsMap[action][data.questId];
+        if(questId && eventStandardsMap[action] && eventStandardsMap[action][questId]){
+            achievement = eventStandardsMap[action][questId];
             standard = achievement[0];
             achievement = achievement[1];
             conditions = reportCard[standard];
@@ -333,38 +342,6 @@ function _findThresholdRatio(conditions, standard, achievement){
         }
     }
     return ratio;
-}
-
-function _buildQuestMap(){
-    var map = {};
-    //quest_complete and quest_cancel have quest value of interstitial, likely meaning between quest activity
-    // otherwise these map to questIds.
-    map["Welcome!"] = "Quest0-1";
-    //conflict with Quest19
-    //map["Talk to Lucas"] = "Quest0-2";
-    map["Choose Your Argubot"] = "Quest0-3";
-    map["The Rec Room"] = "Quest0-4";
-    map["Build a Bot\r\n"] = "Quest0-5";
-    map["Which Protein?"] = "Quest1-1";
-    map["More Training!"] = "Quest0-6";
-    map["Missing Evidence"] = "Quest11";
-    map["Level Up\r!"] = "Quest13";
-    map["Helpbots"] = "Quest14";
-    map["Chloe's Lost Her Marbles"] = "Quest16";
-    map["Bot Trainer 5000"] = "Quest18";
-    //conflict with Quest0-2
-    map["Talk to Lucas"] = "Quest19";
-    map["Hero or Zero?"] = "Quest21";
-    map["Let's Evo-2"] = "Quest23";
-    map["All About Backing"] = "Quest23a";
-    map["Brackett City Objectives"] = "Quest24";
-    map["Lev's Missing Data Cube"] = "Quest26";
-    map["What to do about Lucas"] = "Quest28";
-    map["Adrian's Project"] = "Quest30";
-    map["Pet Decision"] = "Quest33";
-    map["Help SAM"] = "Quest34";
-
-    return map;
 }
 
 function _buildQuestOrder(){
