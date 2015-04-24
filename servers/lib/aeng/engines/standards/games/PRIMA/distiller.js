@@ -21,24 +21,41 @@ PRIMA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
 
     // needs development
     var reportCard = _buildReportCardData(results);
-    // used to make sure the updated achievements only progress in the approved order
-    var achievementsHierarchy = _buildAchievementsHierarchy();
-    // needs development
-    var eventStandardsMap = _buildEventStandardsMap();
-    // questOrder may not apply to prima
+    var firstResults = reportCard.firstResults;
 
-    var action;
-    var data;
-    var achievement;
-    var standard;
-    var conditions;
-    var status;
+    var name;
+    var level;
+    var success;
+    var attempts;
+    var timestamp;
 
     _(eventsList).forEach(function(event){
+        name = event.name;
+        if(name === "submit_answer"){
+            level = event.gameLevel;
+            if(!firstResults[level]){
+                success = event.eventData.success;
+                attempts = event.eventData.attempt_count;
+                timestamp = event.timestamp;
+                if(success && attempts === 1){
+                    firstResults[level] = { success: true, timestamp: timestamp };
+                } else{
+                    firstResults[level] = { success: false, timestamp: timestamp };
+                }
+            }
+        }
     });
 
-    reportCard.data = reportCard.data || [];
-    reportCard.data = reportCard.data.concat(eventsList);
+    if(reportCard.day < 3 ){
+        _day3Check(reportCard, firstResults);
+    }
+    if(reportCard.day === 3){
+        _day4Check(reportCard, firstResults);
+    }
+    if(reportCard.day === 4){
+        _day5Check(reportCard, firstResults);
+    }
+
     return reportCard;
 };
 
@@ -49,17 +66,42 @@ PRIMA_Distiller.prototype.postProcess = function(standardsData) {
 function _buildReportCardData(results){
     var reportCard = {};
     if(_.isEmpty(results)) {
-        // create default prima report structure
-        //reportCard["RI 6.8"] = { status: "Not-Started", data: { failuresA: 0, lossesB: 0} };
-        //reportCard["RI 7.8"] = { status: "Not-Started", data: { lossesA: 0, lossesB:0} };
-        //reportCard["RI 8.8"] = { status: "Not-Started", data: { lossesA: 0, lossesB:0} };
-        //reportCard["CCRA.R.1"] = { status: "Not-Started", data: { partialFuseCores: 0, partialStrongFuseCores: 0,
-        //    fullFuseCores: 0, fullStrongFuseCores: 0, threshold: 0.5} };
-        //reportCard["CCRA.R.8"] = { status: "Not-Started", data: { lossesA: 0} };
-        //// this threshold is not determined in the google doc yet
-        //reportCard["21st.RE"]  = { status: "Not-Started", data: { partialLaunchAttacks: 0, partialSuccessLaunchAttacks: 0,
-        //    fullLaunchAttacks: 0, fullSuccessLaunchAttacks: 0, threshold: 0.5} };
-        //reportCard["21st.MJD"] = { status: "Not-Started", data: { failuresA: 0, lossesB: 0} };
+        // if one, two, three fields refer to questions in the progression which have not yet been done.
+        // if one, two, or three are marked false, the user missed the problem on first attempt
+        // if one, two, or three are marked true, the user got the problem right on first attempt
+        var days;
+        reportCard["6.RP.A.1"] = { status: "Not-Started", days: {} };
+        days = reportCard["6.RP.A.1"].days;
+        days[3] = {status: "Not-Started", one: null, two: null, three: null };
+        days[4] = {status: "Not-Started", one: null, two: null, three: null };
+        days[5] = {status: "Not-Started", one: null, two: null, three: null };
+
+        reportCard["6.RP.A.2"] = { status: "Not-Started", days: {} };
+        days = reportCard["6.RP.A.2"].days;
+        days[3] = {status: "Not-Started", one: null, two: null, three: null };
+        days[4] = {status: "Not-Started", one: null, two: null, three: null };
+        days[5] = {status: "Not-Started", one: null, two: null, three: null };
+
+        reportCard["6.RP.A.3"] = { status: "Not-Started", days: {} };
+        days = reportCard["6.RP.A.3"].days;
+        days[3] = {status: "Not-Started", one: null, two: null, three: null };
+        days[4] = {status: "Not-Started", one: null, two: null, three: null };
+        days[5] = {status: "Not-Started", one: null, two: null, three: null };
+
+        reportCard["6.RP.A.3.A"] = { status: "Not-Started", days: {} };
+        days = reportCard["6.RP.A.3.A"].days;
+        days[3] = {status: "Not-Started", one: null, two: null, three: null };
+        days[4] = {status: "Not-Started", one: null, two: null, three: null };
+        days[5] = {status: "Not-Started", one: null, two: null, three: null };
+
+        // keeps track of how a user did on the first try for each problem. key is problem name. values listed below
+        // if true, user succeeded on first try
+        // if false, user failed on first try
+        // if null, user has attempted an analogous problem, so this one should not be considered
+        reportCard["firstResults"] = {};
+        // the day parameter mentions which day the standard refers to to derive the status value.
+        // day is initialized to 0, after that it is replaced by the last complete day starting with day 3.
+        reportCard.day = 0;
     } else {
         _.merge(reportCard, results);
     }
@@ -67,62 +109,87 @@ function _buildReportCardData(results){
     return reportCard;
 }
 
-function _buildAchievementsHierarchy(){
-    var achievementsHierarchy = {};
-    achievementsHierarchy["Not-Started"] = 0;
-    achievementsHierarchy["In-Progress"] = 1;
-    achievementsHierarchy["WatchoutA"]   = 2;
-    achievementsHierarchy["Partial"]     = 3;
-    achievementsHierarchy["WatchoutB"]   = 4;
-    achievementsHierarchy["Full"]        = 5;
+function _day3Check(reportCard, firstResults){
+    // each input is a tuple, that records the problem name and the user's success value on first attempt
+    var standards = ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3", "6.RP.A.3.A"];
 
-    return achievementsHierarchy;
+    var addResultToDay = _addResultToDay.bind(reportCard);
+    var addStatusToDayStandards = _addStatusToDayStandards.bind(reportCard);
+    var event;
+    if(firstResults["1.05b"]){
+        if(firstResults["1.05b"].success){
+            addResultToDay("one", 3, true);
+            event = _findFirstEvent([firstResults["1.07a"], firstResults["1.08"], firstResults["1.09"]]);
+            if(event && event.success){
+                addResultToDay("two", 3, true);
+                if(firstResults["1.06"] && firstResults["1.06"].success){
+                    addResultToDay("three", 3, true);
+                    addStatusToDayStandards("Full", ["6.RP.A.1","6.RP.A.2"], "day3");
+                    addStatusToDayStandards("Partial", ["6.RP.A.3","6.RP.A.3.A"], "day3");
+                }
+            } else if(event && event.success === false){
+                addResultToDay("two", 3, false);
+                if(firstResults["1.07b"] && firstResults["1.07b"].success){
+                    addResultToDay("three", 3, true);
+                    addStatusToDayStandards("Full", ["6.RP.A.1"], 3);
+                    addStatusToDayStandards("Partial", ["6.RP.A.2"], 3);
+                }
+            }
+        } else if(firstResults["1.05b"].success === false){
+            addResultToDay("one", 3, false);
+
+        }
+    }
+    return eventStandardsMap;
 }
 
-function _buildEventStandardsMap(){
-    var eventStandardsMap = {};
-    //correlate certain events with relevant standard and achievement
-    //var questStart = eventStandardsMap["Quest_start"] = {};
-    //var questComplete = eventStandardsMap["Quest_complete"] = {};
-    //
-    ////in progress
-    //questStart["Quest0-1"]    = ["RI 6.8", "In-Progress"];
-    //questStart["Quest0-5"]    = ["RI 7.8", "In-Progress"];
-    //questStart["Quest13"]     = ["RI 8.8", "In-Progress"];
-    //questStart["Quest1-1"]    = ["CCRA.R.1", "In-Progress"];
-    //questStart["Quest14"]     = ["CCRA.R.8", "In-Progress"];
-    //questComplete["Quest0-5"] = ["21st.RE", "In-Progress"];
-    //questStart["Quest0-6"]    = ["21st.MJD", "In-Progress"];
-    //
-    //// watchout1
-    //
-    ////partial
-    //questComplete["Quest0-3"] = ["RI 6.8", "Partial"];
-    //questComplete["Quest1-1"] = ["RI 7.8", "Partial"];
-    //questComplete["Quest18"]  = ["RI 8.8", "Partial"];
-    ////Calculation: (# of Fuse_core {data: weakness:none}) / (total # of Fuse_core)
-    ////Threshold: >.5
-    //questComplete["Quest0-6"] = ["CCRA.R.1", "Partial"];
-    //questComplete["Quest23"]  = ["CCRA.R.8", "Partial"];
-    ////Calculation: (# of Launch_attack {data: success:true}) / (total # of Launch_attack)
-    ////Threshold:_______
-    //questComplete["Quest14"]  = ["21st.RE", "Partial"];
-    //questComplete["Quest13"]  = ["21st.MJD", "Partial"];
-    //
-    ////watchout2
-    //
-    ////full
-    //questComplete["Quest0-5"] = ["RI 6.8", "Full"];
-    //questComplete["Quest14"] = ["RI 7.8", "Full"];
-    //questComplete["Quest21"]  = ["RI 8.8", "Full"];
-    ////Calculation: (# of Fuse_core {data: weakness:none}) / (total # of Fuse_core)
-    ////Threshold: >.5
-    //questComplete["Quest24"] = ["CCRA.R.1", "Full"];
-    //questComplete["Quest23a"]  = ["CCRA.R.8", "Full"];
-    ////Calculation: (# of Launch_attack {data: success:true}) / (total # of Launch_attack)
-    ////Threshold:______________
-    //questComplete["Quest21"]  = ["21st.RE", "Full"];
-    //questComplete["Quest24"]  = ["21st.MJD", "Full"];
+function _day4Check(reportCard, firstResults){
 
-    return eventStandardsMap;
+}
+
+function _day5Check(reportCard, firstResults){
+    
+}
+
+function _addResultToDay(problemNumber, day, success){
+    var dayResults;
+    _(this).forEach(function(standard){
+        dayResults = standard.days[day];
+        dayResults[problemNumber] = success;
+    });
+}
+
+function _addStatusToDayStandards(status, standards, day){
+    standards = _arrayToObjKeys(standards);
+    _(this).forEach(function(standard, key){
+        if(standards[key]){
+            standard.days[day].status = status;
+            standard.status = status;
+        }
+    });
+    this.day = day;
+}
+
+function _arrayToObjKeys(array){
+    var obj = {};
+    _(array).forEach(function(value){
+        obj[value] = true;
+    });
+    return obj;
+}
+
+function _findFirstEvent(events){
+    var first;
+    _(events).forEach(function(event){
+        first = first || event.timestamp;
+        if( event && event.timestamp < first.timestamp){
+            first = event;
+        }
+    });
+    _(events).forEach(function(event){
+        if(event && first && event.timestamp !== first.timestamp){
+            event.status = null;
+        }
+    });
+    return first;
 }
