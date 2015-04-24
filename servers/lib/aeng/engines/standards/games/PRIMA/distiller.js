@@ -34,7 +34,7 @@ PRIMA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     var timestamp;
 
     _(eventsList).forEach(function(event){
-        name = event.name;
+        name = event.eventName;
         if(name === "submit_answer"){
             level = event.gameLevel;
             if(gradedProblems[level] && !firstResults[level]){
@@ -143,11 +143,12 @@ function _day3Check(reportCard, firstResults){
                 addResultToDay("two", 3, true);
                 if(firstResults["1.06"] && firstResults["1.06"].success){
                     addResultToDay("three", 3, true);
-                    addStatusToDayStandards("Full", ["6.RP.A.1","6.RP.A.2"], "day3");
-                    addStatusToDayStandards("Partial", ["6.RP.A.3","6.RP.A.3.A"], "day3");
+                    addStatusToDayStandards("Full", ["6.RP.A.1","6.RP.A.2"], 3);
+                    addStatusToDayStandards("Partial", ["6.RP.A.3","6.RP.A.3.A"], 3);
                 } else if(firstResults["1.06"] && firstResults["1.06"].success === false){
                     addResultToDay("three", 3, false);
-                    // rules not defined yet
+                    addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2"], 3);
+                    addStatusToDayStandards("Partial", ["6.RP.A.3", "6.RP.A.3.A"], 3);
                 }
             } else if(event && event.success === false){
                 addResultToDay("two", 3, false);
@@ -157,7 +158,8 @@ function _day3Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.2"], 3);
                 } else if(firstResults["1.07b"] && firstResults["1.07b"].success === false){
                     addResultToDay("three", 3, false);
-                    // rules not defined yet
+                    addStatusToDayStandards("Partial", ["6.RP.A.1"], 3);
+                    addStatusToDayStandards("Watchout", ["6.RP.A.2"], 3);
                 }
             }
         } else if(firstResults["1.05b"].success === false){
@@ -207,7 +209,8 @@ function _day4Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.3.A"], 4);
                 } else if(firstResults["2.03a"] && firstResults["2.03a"].success === false){
                     addResultToDay("three", 4, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3"], 4);
+                    addStatusToDayStandards("Partial", ["6.RP.A.3.A"], 4);
                 }
             } else if(event && event.success === false){
                 addResultToDay("two", 4, false);
@@ -218,7 +221,7 @@ function _day4Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.3", "6.RP.A.3.A"], 4);
                 } else if(event && event.success === false){
                     addResultToDay("three", 4, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Partial", ["6.RP.A.2", "6.RP.A.3", "6.RP.A.3.A"]);
                 }
             }
         } else if(firstResults["2.01c"].success === false){
@@ -265,7 +268,7 @@ function _day5Check(reportCard, firstResults){
                     addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3.A"], 5);
                 } else if(firstResults["3.03d"] && firstResults["3.03d"].success === false){
                     addResultToDay("three", 5, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3.A"], 5);
                 }
             } else if(firstResults["3.03b"] && firstResults["3.03b"].success === false){
                 addResultToDay("two", 5, false);
@@ -275,7 +278,8 @@ function _day5Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.2", "6.RP.A.3.A"], 5);
                 } else if(firstResults["3.03a"] && firstResults["3.03a"].success === false){
                     addResultToDay("three", 5, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Partial", ["6.RP.A.2"], 5);
+                    addStatusToDayStandards("Watchout", ["6.RP.A.3.A"], 5);
                 }
             }
         } else if(firstResults["3.01b"].success === false){
@@ -321,7 +325,7 @@ function _day6Check(reportCard, firstResults){
                     addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3", "6.RP.A.3.A"], 6);
                 } else if(firstResults["4.13"] && firstResults["4.13"].success === false){
                     addResultToDay("three", 6, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3", "6.RP.A.3.A"], 6);
                 }
             } else if(event && event.success === false){
                 addResultToDay("two", 6, false);
@@ -331,7 +335,8 @@ function _day6Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.3", "6.RP.A.3.A"], 6);
                 } else if(firstResults["4.15"] && firstResults["4.15"].success === false){
                     addResultToDay("three", 6, false);
-                    // rules not defined yet.
+                    addStatusToDayStandards("Partial", ["6.RP.A.3"], 6);
+                    addStatusToDayStandards("Watchout", ["6.RP.A.3.A"], 6);
                 }
             }
         } else if(firstResults["4.07b"].success === false){
@@ -348,23 +353,21 @@ function _day6Check(reportCard, firstResults){
                     addStatusToDayStandards("Watchout", ["6.RP.A.3.A"], 6);
                 }
             } else if(firstResults["4.04a"] && firstResults["4.04a"].success === false){
-                addResultToDay("two", 6, false);
                 event = _findFirstEvent([firstResults["4.03a"], firstResults["4.03b"], firstResults["4.03c"]]);
                 if(event && event.success){
+                    // this two add refers to level 4.04a
+                    addResultToDay("two", 6, false);
+                    // this three add refers to the 4.03s
                     addResultToDay("three", 6, true);
                     addStatusToDayStandards("Watchout", ["6.RP.A.3", "6.RP.A.3.A"], 6);
+                } else if(event && event.success === false){
+                    // this two refers to the 4.03s
+                    addResultToDay("two", 6, false);
+                    if(firstResults["4.15"] && firstResults["4.15"].success === false) {
+                        addResultToDay("three", 6, false);
+                        addStatusToDayStandards("Watchout", ["6.RP.A.3", "6.RP.A.3.A"], 6);
+                    }
                 }
-                // check with seth, logic looked weird in last part
-                //how it is in the docs
-                else if(firstResults["4.15"] && firstResults["4.15"].success === false){
-                    addResultToDay("three", 6, false);
-                    addStatusToDayStandards("Watchout", ["6.RP.A.3", "6.RP.A.3.A"], 6);
-                }
-                //how i think it may be, based on other problem patterns
-                //else if(event && event.success === false){
-                //    addResultToDay("three", 6, false);
-                //    addStatusToDayStandards("Watchout", ["6.RP.A.3", "6.RP.A.3.A"], 6);
-                //}
             }
         }
     }
