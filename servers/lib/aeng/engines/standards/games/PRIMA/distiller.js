@@ -399,14 +399,14 @@ function _arrayToObjKeys(array){
 function _findFirstEvent(events){
     var first;
     _(events).forEach(function(event){
-        first = first || event.timestamp;
+        first = first || event;
         if( event && event.timestamp < first.timestamp){
             first = event;
         }
     });
     _(events).forEach(function(event){
         if(event && first && event.timestamp !== first.timestamp){
-            event.status = null;
+            event.success = null;
         }
     });
     return first;
