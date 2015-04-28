@@ -441,7 +441,6 @@ function _buildGradedProblems(){
     gradedProblems["2.05a"] = true;
     gradedProblems["2.06b"] = true;
     gradedProblems["2.03a"] = true;
-    gradedProblems["2.05"]  = true;
     // day 5
     gradedProblems["3.01b"] = true;
     gradedProblems["3.02c"] = true;
