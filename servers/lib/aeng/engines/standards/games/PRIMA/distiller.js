@@ -205,12 +205,13 @@ function _day4Check(reportCard, firstResults){
                 addResultToDay("two", 4, true);
                 // documentation told me level was named 2.03a
                 // same game level named differently in the data. named 2.05
-                // made change to reflect game data. may need to change again later
-                if(firstResults["2.05"] && firstResults["2.05"].success){
+                // Evan tracked down the issue
+                // occurred in a few more problems as well, but will be fixed in future game versions
+                if(firstResults["2.03a"] && firstResults["2.03a"].success){
                     addResultToDay("three", 4, true);
                     addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3"], 4);
                     addStatusToDayStandards("Partial", ["6.RP.A.3.A"], 4);
-                } else if(firstResults["2.05"] && firstResults["2.05"].success === false){
+                } else if(firstResults["2.03a"] && firstResults["2.03a"].success === false){
                     addResultToDay("three", 4, false);
                     addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3"], 4);
                     addStatusToDayStandards("Partial", ["6.RP.A.3.A"], 4);
