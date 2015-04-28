@@ -50,16 +50,16 @@ PRIMA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         }
     });
 
-    if(reportCard.day < 3 ){
+    if(reportCard.day < 3){
         _day3Check(reportCard, firstResults);
     }
-    if(reportCard.day === 3){
+    if(reportCard.day < 4){
         _day4Check(reportCard, firstResults);
     }
-    if(reportCard.day === 4){
+    if(reportCard.day < 5){
         _day5Check(reportCard, firstResults);
     }
-    if(reportCard.day === 5){
+    if(reportCard.day < 6){
         _day6Check(reportCard, firstResults);
     }
 
@@ -203,6 +203,10 @@ function _day4Check(reportCard, firstResults){
             event = _findFirstEvent([firstResults["2.04b"], firstResults["2.05a"], firstResults["2.06b"]]);
             if(event && event.success){
                 addResultToDay("two", 4, true);
+                // documentation told me level was named 2.03a
+                // same game level named differently in the data. named 2.05
+                // Evan tracked down the issue
+                // occurred in a few more problems as well, but will be fixed in future game versions
                 if(firstResults["2.03a"] && firstResults["2.03a"].success){
                     addResultToDay("three", 4, true);
                     addStatusToDayStandards("Full", ["6.RP.A.1", "6.RP.A.2", "6.RP.A.3"], 4);
@@ -399,14 +403,14 @@ function _arrayToObjKeys(array){
 function _findFirstEvent(events){
     var first;
     _(events).forEach(function(event){
-        first = first || event.timestamp;
+        first = first || event;
         if( event && event.timestamp < first.timestamp){
             first = event;
         }
     });
     _(events).forEach(function(event){
         if(event && first && event.timestamp !== first.timestamp){
-            event.status = null;
+            event.success = null;
         }
     });
     return first;
