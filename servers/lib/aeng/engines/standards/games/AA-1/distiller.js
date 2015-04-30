@@ -35,9 +35,6 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     var standard;
     var conditions;
     var status;
-    var ratio;
-    var total;
-    var good;
     var tally;
     var quest;
     var questId;
@@ -53,28 +50,16 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             conditions = reportCard[standard];
             status = conditions.status;
             if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] &&
-                questOrder[quest] > questOrder["Quest0-5"] && questOrder[quest] < questOrder["Quest11"]){
-                total = ++conditions.data.partialFuseCores;
+                questOrder[quest] < questOrder["Quest11"]){
+                conditions.data.partialFuseCores++;
                 if(data.weakness === "none"){
-                    good = ++conditions.data.partialStrongFuseCores;
-                } else{
-                    good = conditions.data.partialStrongFuseCores;
-                }
-                ratio = good/total;
-                if(ratio < conditions.data.threshold){
-                        conditions.status = "WatchoutA";
+                    conditions.data.partialStrongFuseCores++;
                 }
             } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] &&
                 questOrder[quest] > questOrder["Quest0-6"] && questOrder[quest] < questOrder["Quest26"]){
-                total = ++conditions.data.fullFuseCores;
+                conditions.data.fullFuseCores++;
                 if(data.weakness === "none"){
-                    good = ++conditions.data.fullStrongFuseCores;
-                } else{
-                    good = conditions.data.fullStrongFuseCores;
-                }
-                ratio = good/total;
-                if(ratio < conditions.data.threshold){
-                    conditions.status = "WatchoutB";
+                    conditions.data.fullStrongFuseCores++;
                 }
             }
         }
@@ -84,28 +69,16 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             conditions = reportCard[standard];
             status = conditions.status;
             if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] && quest !== "interstitial" &&
-                questOrder[quest] > questOrder["Quest0-5"] && questOrder[quest] < questOrder["Quest16"]){
-                total = ++conditions.data.partialLaunchAttacks;
+                questOrder[quest] < questOrder["Quest16"]){
+                conditions.data.partialLaunchAttacks++;
                 if(data.success === true){
-                    good = ++conditions.data.partialSuccessLaunchAttacks;
-                } else{
-                    good = conditions.data.partialSuccessLaunchAttacks;
-                }
-                ratio = good/total;
-                if(ratio < conditions.data.partialThreshold){
-                    conditions.status = "WatchoutA";
+                    conditions.data.partialSuccessLaunchAttacks++;
                 }
             } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] && quest !== "interstitial" &&
                 questOrder[quest] > questOrder["Quest14"] && questOrder[quest] < questOrder["Quest23"]){
-                total = ++conditions.data.fullLaunchAttacks;
+                conditions.data.fullLaunchAttacks++;
                 if(data.success === true){
-                    good = ++conditions.data.fullSuccessLaunchAttacks;
-                } else{
-                    good = conditions.data.fullSuccessLaunchAttacks;
-                }
-                ratio = good/total;
-                if(ratio < conditions.data.fullThreshold){
-                    conditions.status = "WatchoutB";
+                    conditions.data.fullSuccessLaunchAttacks++;
                 }
             }
         }
@@ -328,11 +301,15 @@ function _assessThresholdRatio(conditions, standard, achievement){
             ratio = data.partialStrongFuseCores/data.partialFuseCores;
             if(ratio >= data.threshold){
                 conditions.status = achievement;
+            } else{
+                conditions.status = "WatchoutA";
             }
         } else if(achievement === "Full"){
             ratio = data.fullStrongFuseCores/data.fullFuseCores;
             if(ratio >= data.threshold){
                 conditions.status = achievement;
+            } else {
+                conditions.status = "WatchoutB";
             }
         }
     } else if(standard === "21st.RE"){
@@ -340,11 +317,15 @@ function _assessThresholdRatio(conditions, standard, achievement){
             ratio = data.partialSuccessLaunchAttacks/data.partialLaunchAttacks;
             if(ratio >= data.partialThreshold){
                 conditions.status = achievement;
+            } else{
+                conditions.status = "WatchoutA";
             }
         } else if(achievement === "Full"){
             ratio = data.fullSuccessLaunchAttacks/data.fullLaunchAttacks;
             if(ratio >= data.fullThreshold){
                 conditions.status = achievement;
+            } else{
+                conditions.status = "WatchoutB";
             }
         }
     }
