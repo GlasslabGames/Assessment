@@ -49,13 +49,13 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             standard = "CCRA.R.1";
             conditions = reportCard[standard];
             status = conditions.status;
-            if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] &&
+            if(achievementsHierarchy[status] < achievementsHierarchy["WatchoutA"] &&
                 questOrder[quest] < questOrder["Quest11"]){
                 conditions.data.partialFuseCores++;
                 if(data.weakness === "none"){
                     conditions.data.partialStrongFuseCores++;
                 }
-            } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] &&
+            } else if(achievementsHierarchy[status] < achievementsHierarchy["WatchoutB"] &&
                 questOrder[quest] > questOrder["Quest0-6"] && questOrder[quest] < questOrder["Quest26"]){
                 conditions.data.fullFuseCores++;
                 if(data.weakness === "none"){
@@ -68,13 +68,13 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             standard = "21st.RE";
             conditions = reportCard[standard];
             status = conditions.status;
-            if(achievementsHierarchy[status] < achievementsHierarchy["Partial"] && quest !== "interstitial" &&
+            if(achievementsHierarchy[status] < achievementsHierarchy["WatchoutA"] && quest !== "interstitial" &&
                 questOrder[quest] < questOrder["Quest16"]){
                 conditions.data.partialLaunchAttacks++;
                 if(data.success === true){
                     conditions.data.partialSuccessLaunchAttacks++;
                 }
-            } else if(achievementsHierarchy[status] < achievementsHierarchy["Full"] && quest !== "interstitial" &&
+            } else if(achievementsHierarchy[status] < achievementsHierarchy["WatchoutB"] && quest !== "interstitial" &&
                 questOrder[quest] > questOrder["Quest14"] && questOrder[quest] < questOrder["Quest23"]){
                 conditions.data.fullLaunchAttacks++;
                 if(data.success === true){
