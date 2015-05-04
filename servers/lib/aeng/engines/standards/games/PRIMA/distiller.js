@@ -317,8 +317,8 @@ function _day6Check(reportCard, firstResults){
     var addResultToDay = _addResultToDay.bind(reportCard);
     var addStatusToDayStandards = _addStatusToDayStandards.bind(reportCard);
     var event;
-    if(firstResults["4.07b"]){
-        if(firstResults["4.07b"].success){
+    if(firstResults["4.03c"]){
+        if(firstResults["4.03c"].success){
             addResultToDay("one", 6, true);
             event = _findFirstEvent([firstResults["4.17"], firstResults["4.16"], firstResults["4.10"]]);
             if(event && event.success){
@@ -342,9 +342,10 @@ function _day6Check(reportCard, firstResults){
                     addStatusToDayStandards("Watchout", ["6.RP.A.3.A"], 6);
                 }
             }
-        } else if(firstResults["4.07b"].success === false){
+        } else if(firstResults["4.03c"].success === false){
             addResultToDay("one", 6, false);
-            if(firstResults["4.04a"] && firstResults["4.04a"].success){
+            event = _findFirstEvent([firstResults["4.04a"], firstResults["4.04b"]]);
+            if(event && event.success){
                 addResultToDay("two", 6, true);
                 event = _findFirstEvent([firstResults["4.17"], firstResults["4.16"], firstResults["4.10"]]);
                 if(event && event.success){
@@ -355,8 +356,8 @@ function _day6Check(reportCard, firstResults){
                     addStatusToDayStandards("Partial", ["6.RP.A.3"], 6);
                     addStatusToDayStandards("Watchout", ["6.RP.A.3.A"], 6);
                 }
-            } else if(firstResults["4.04a"] && firstResults["4.04a"].success === false){
-                event = _findFirstEvent([firstResults["4.03a"], firstResults["4.03b"], firstResults["4.03c"]]);
+            } else if(event && event.success === false){
+                event = _findFirstEvent([firstResults["4.03a"], firstResults["4.03b"]]);
                 if(event && event.success){
                     // this two add refers to level 4.04a
                     addResultToDay("two", 6, false);
@@ -452,11 +453,11 @@ function _buildGradedProblems(){
     gradedProblems["3.03b"] = true;
     gradedProblems["3.03d"] = true;
     // day 6
-    gradedProblems["4.07b"] = true;
+    gradedProblems["4.03c"] = true;
     gradedProblems["4.04a"] = true;
+    gradedProblems["4.04b"] = true;
     gradedProblems["4.03a"] = true;
     gradedProblems["4.03b"] = true;
-    gradedProblems["4.03c"] = true;
     gradedProblems["4.15"]  = true;
     gradedProblems["4.17"]  = true;
     gradedProblems["4.16"]  = true;
