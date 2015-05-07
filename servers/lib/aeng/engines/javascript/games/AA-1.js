@@ -9,7 +9,7 @@
 // Third-party libs
 var _       = require('lodash');
 var when    = require('when');
-var sqlite3 = require('sqlite3').verbose();;
+var sqlite3 = require('sqlite3').verbose();
 
 module.exports = AA_SoWo;
 
