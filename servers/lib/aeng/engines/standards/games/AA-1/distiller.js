@@ -198,7 +198,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
             status = conditions.status;
 
             if(achievementsHierarchy[achievement] > achievementsHierarchy[status]){
-                if(!conditions.data.threshold){
+                if(!(conditions.data.threshold && conditions.data.partialThreshold && conditions.data.fullThreshold)){
                     conditions.status = achievement;
                 } else{
                     _assessThresholdRatio(conditions, standard, achievement);
