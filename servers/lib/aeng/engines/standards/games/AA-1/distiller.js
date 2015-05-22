@@ -38,6 +38,7 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
     var tally;
     var quest;
     var questId;
+    var achievements;
 
     _(eventsList).forEach(function(event){
         action = event.eventName;
@@ -191,19 +192,20 @@ AA_Distiller.prototype.preProcess = function(sessionsEvents, currentResults)
         }
 
         if(questId && eventStandardsMap[action] && eventStandardsMap[action][questId]){
-            achievement = eventStandardsMap[action][questId];
-            standard = achievement[0];
-            achievement = achievement[1];
-            conditions = reportCard[standard];
-            status = conditions.status;
-
-            if(achievementsHierarchy[achievement] > achievementsHierarchy[status]){
-                if(!conditions.data.threshold){
-                    conditions.status = achievement;
-                } else{
-                    _assessThresholdRatio(conditions, standard, achievement);
+            achievements = eventStandardsMap[action][questId];
+            _(achievements).forEach(function(achievementTuple){
+                standard = achievementTuple[0];
+                achievement = achievementTuple[1];
+                conditions = reportCard[standard];
+                status = conditions.status;
+                if(achievementsHierarchy[achievement] > achievementsHierarchy[status]){
+                    if(action === "Quest_start" || !(conditions.data.threshold || conditions.data.partialThreshold || conditions.data.fullThreshold)){
+                        conditions.status = achievement;
+                    } else{
+                        _assessThresholdRatio(conditions, standard, achievement);
+                    }
                 }
-            }
+            });
         }
     });
 
@@ -251,44 +253,89 @@ function _buildEventStandardsMap(){
     var questStart = eventStandardsMap["Quest_start"] = {};
     var questComplete = eventStandardsMap["Quest_complete"] = {};
 
+    questStart["Quest0-1"] = [];
+    questStart["Quest0-2"] = [];
+    questStart["Quest0-3"] = [];
+    questStart["Quest0-4"] = [];
+    questStart["Quest0-5"] = [];
+    questStart["Quest1-1"] = [];
+    questStart["Quest0-6"] = [];
+    questStart["Quest11"]  = [];
+    questStart["Quest13"]  = [];
+    questStart["Quest14"]  = [];
+    questStart["Quest16"]  = [];
+    questStart["Quest18"]  = [];
+    questStart["Quest19"]  = [];
+    questStart["Quest21"]  = [];
+    questStart["Quest23"]  = [];
+    questStart["Quest23a"] = [];
+    questStart["Quest24"]  = [];
+    questStart["Quest26"]  = [];
+    questStart["Quest28"]  = [];
+    questStart["Quest30"]  = [];
+    questStart["Quest33"]  = [];
+    questStart["Quest34"]  = [];
+
+    questComplete["Quest0-1"] = [];
+    questComplete["Quest0-2"] = [];
+    questComplete["Quest0-3"] = [];
+    questComplete["Quest0-4"] = [];
+    questComplete["Quest0-5"] = [];
+    questComplete["Quest1-1"] = [];
+    questComplete["Quest0-6"] = [];
+    questComplete["Quest11"]  = [];
+    questComplete["Quest13"]  = [];
+    questComplete["Quest14"]  = [];
+    questComplete["Quest16"]  = [];
+    questComplete["Quest18"]  = [];
+    questComplete["Quest19"]  = [];
+    questComplete["Quest21"]  = [];
+    questComplete["Quest23"]  = [];
+    questComplete["Quest23a"] = [];
+    questComplete["Quest24"]  = [];
+    questComplete["Quest26"]  = [];
+    questComplete["Quest28"]  = [];
+    questComplete["Quest30"]  = [];
+    questComplete["Quest33"]  = [];
+    questComplete["Quest34"]  = [];
     //in progress
-    questStart["Quest0-1"]    = ["RI 6.8", "In-Progress"];
-    questStart["Quest0-5"]    = ["RI 7.8", "In-Progress"];
-    questStart["Quest13"]     = ["RI 8.8", "In-Progress"];
-    questStart["Quest1-1"]    = ["CCRA.R.1", "In-Progress"];
-    questStart["Quest14"]     = ["CCRA.R.8", "In-Progress"];
-    questComplete["Quest0-5"] = ["21st.RE", "In-Progress"];
-    questStart["Quest0-6"]    = ["21st.MJD", "In-Progress"];
+    questStart["Quest0-1"].push(["RI 6.8", "In-Progress"]);
+    questStart["Quest0-5"].push(["RI 7.8", "In-Progress"]);
+    questStart["Quest13"].push(["RI 8.8", "In-Progress"]);
+    questStart["Quest1-1"].push(["CCRA.R.1", "In-Progress"]);
+    questStart["Quest14"].push(["CCRA.R.8", "In-Progress"]);
+    questComplete["Quest0-5"].push(["21st.RE", "In-Progress"]);
+    questStart["Quest0-6"].push(["21st.MJD", "In-Progress"]);
 
     // watchout1
 
     //partial
-    questComplete["Quest0-3"] = ["RI 6.8", "Partial"];
-    questComplete["Quest1-1"] = ["RI 7.8", "Partial"];
-    questComplete["Quest18"]  = ["RI 8.8", "Partial"];
+    questComplete["Quest0-3"].push(["RI 6.8", "Partial"]);
+    questComplete["Quest1-1"].push(["RI 7.8", "Partial"]);
+    questComplete["Quest18"].push(["RI 8.8", "Partial"]);
     //Calculation: (# of Fuse_core {data: weakness:none}) / (total # of Fuse_core)
     //Threshold: >.5
-    questComplete["Quest0-6"] = ["CCRA.R.1", "Partial"];
-    questComplete["Quest23"]  = ["CCRA.R.8", "Partial"];
+    questComplete["Quest0-6"].push(["CCRA.R.1", "Partial"]);
+    questComplete["Quest23"].push(["CCRA.R.8", "Partial"]);
     //Calculation: (# of Launch_attack {data: success:true}) / (total # of Launch_attack)
     //Threshold:_______
-    questComplete["Quest14"]  = ["21st.RE", "Partial"];
-    questComplete["Quest13"]  = ["21st.MJD", "Partial"];
+    questComplete["Quest14"].push(["21st.RE", "Partial"]);
+    questComplete["Quest13"].push(["21st.MJD", "Partial"]);
 
     //watchout2
 
     //full
-    questComplete["Quest0-5"] = ["RI 6.8", "Full"];
-    questComplete["Quest14"] = ["RI 7.8", "Full"];
-    questComplete["Quest21"]  = ["RI 8.8", "Full"];
+    questComplete["Quest0-5"].push(["RI 6.8", "Full"]);
+    questComplete["Quest14"].push(["RI 7.8", "Full"]);
+    questComplete["Quest21"].push(["RI 8.8", "Full"]);
     //Calculation: (# of Fuse_core {data: weakness:none}) / (total # of Fuse_core)
     //Threshold: >.5
-    questComplete["Quest24"] = ["CCRA.R.1", "Full"];
-    questComplete["Quest23a"]  = ["CCRA.R.8", "Full"];
+    questComplete["Quest24"].push(["CCRA.R.1", "Full"]);
+    questComplete["Quest23a"].push(["CCRA.R.8", "Full"]);
     //Calculation: (# of Launch_attack {data: success:true}) / (total # of Launch_attack)
     //Threshold:______________
-    questComplete["Quest21"]  = ["21st.RE", "Full"];
-    questComplete["Quest24"]  = ["21st.MJD", "Full"];
+    questComplete["Quest21"].push(["21st.RE", "Full"]);
+    questComplete["Quest24"].push(["21st.MJD", "Full"]);
 
     return eventStandardsMap;
 }
