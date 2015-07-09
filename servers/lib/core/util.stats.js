@@ -23,14 +23,10 @@ function Stats(options, root){
         options
     );
 
-    /*
-    // disabled for now
     statsdInst = new StatsD(this.options.statsd);
     statsdInst.socket.on('error', function(err) {
-        this.statsd = null;
         return console.error("StatsD: Error connecting to server. ", err);
     });
-    */
 
     this.sRoot = root;
     this.root  = root;
@@ -58,14 +54,14 @@ Stats.prototype.increment = function(level, key, count) {
         level = level.toLowerCase();
 
         // dev.App.error.Loaded
-        this.statsd.increment(this.env+"."+this.root+"."+level+"."+key, count);
+        statsdInst.increment(this.env+"."+this.root+"."+level+"."+key, count);
 
         // dev.error.App.Loaded
-        this.statsd.increment(this.env+"."+level+"."+this.root+"."+key, count);
+        statsdInst.increment(this.env+"."+level+"."+this.root+"."+key, count);
         // dev.error.App._total
-        this.statsd.increment(this.env+"."+level+"."+this.root+"._total", count);
+        statsdInst.increment(this.env+"."+level+"."+this.root+"._total", count);
         // dev.error._total
-        this.statsd.increment(this.env+"."+level+"._total", count);
+        statsdInst.increment(this.env+"."+level+"._total", count);
     }
 };
 
@@ -75,6 +71,6 @@ Stats.prototype.gauge = function(level, key, value) {
         level = level.toLowerCase();
 
         // dev.error.App.Loaded
-        this.statsd.gauge(this.env+"."+level+"."+this.root+"."+key, value);
+        statsdInst.gauge(this.env+"."+level+"."+this.root+"."+key, value);
     }
 };
