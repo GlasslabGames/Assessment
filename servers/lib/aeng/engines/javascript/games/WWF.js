@@ -1285,12 +1285,15 @@ WWF_SoWo.prototype.so12 = function(db) {
             }
 
             var total = results[0].total;
-            var out = {
-                id:   "so12",
-                type: "shoutout",
-                total: total
-            };
-            resolve(out);
+            if (total > 0) {
+                resolve({
+                    id:   "so12",
+                    type: "shoutout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
 
         });
 // ------------------------------------------------
@@ -1340,13 +1343,15 @@ WWF_SoWo.prototype.so13 = function(db) {
             }
 
             var total = results[0].total;
-            var out = {
-                id:   "so13",
-                type: "shoutout",
-                total: total,
-                overPercent: (total - threshold + 1)/(max - threshold + 1)
-            };
-            resolve(out);
+            if (total > 0) {
+                resolve({
+                    id:   "so13",
+                    type: "shoutout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
 
         });
 // ------------------------------------------------
@@ -1396,13 +1401,15 @@ WWF_SoWo.prototype.so14 = function(db) {
             }
 
             var total = results[0].total;
-            var out = {
-                id:   "so14",
-                type: "shoutout",
-                total: total,
-                overPercent: (total - threshold + 1)/(max - threshold + 1)
-            };
-            resolve(out);
+            if (total > 0) {
+                resolve({
+                    id:   "so14",
+                    type: "shoutout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
 
         });
 // ------------------------------------------------
@@ -1452,14 +1459,15 @@ WWF_SoWo.prototype.so15 = function(db) {
             }
 
             var total = results[0].total;
-            var out = {
-                id:   "so15",
-                type: "shoutout",
-                total: total,
-                overPercent: (total - threshold + 1)/(max - threshold + 1)
-            };
-            resolve(out);
-
+            if (total > 0) {
+                resolve({
+                    id:   "so15",
+                    type: "shoutout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
         });
 // ------------------------------------------------
     }.bind(this));
