@@ -20,7 +20,7 @@ OSX Installation
 1. Install **Brew**
    * http://brew.sh/
     ```sh
-    $ ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go/install)"
+    $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     ```
 2. Install **Node.js**
    * Use Brew to install node

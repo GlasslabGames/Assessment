@@ -51,7 +51,7 @@ case "$1" in
         exit 0
     ;;
     **)
-        echo "Usage: $0 {start|stop|reload}" 1>&2
+        echo "Usage: $0 {start|stop|restart}" 1>&2
         exit 1
     ;;
 esac
