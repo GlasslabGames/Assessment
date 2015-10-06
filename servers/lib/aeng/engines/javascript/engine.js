@@ -25,6 +25,8 @@ function JavascriptEngine(aeService, engineDir, options){
         { },
         options
     );
+
+    this.requestUtil   = new Util.Request(this.options);
 }
 
 JavascriptEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
@@ -50,6 +52,21 @@ return when.promise(function(resolve, reject) {
 }.bind(this));
 // end promise wrapper
 };
+
+JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
+    var url = "http://" + this.options.sdk.connect + ":" + this.options.services.appExternalPort + "/api/v2/dash/badge/" + badgeId + "/generateCode/" + userId;
+
+    console.log("awardBadge ", url);
+
+    this.requestUtil.postRequest( url, null, null,
+        function( err, result, data ) {
+            if ( data ) {
+                console.log("Awarded");
+            } else if ( err ) {
+                console.log("Failed to award ", err);
+            }
+        }.bind(this) );
+}
 
 /*
  Dump all the relivent events into an in memory SQLite DB
@@ -181,7 +198,7 @@ return when.promise(function (resolve, reject) {
         for (var i = 0; i < ruleFuncs.length; i++) {
             // calling the function
             if (_.isFunction(ruleFuncs[i])) {
-                promiseList.push(ruleFuncs[i](db, userId, gameId, gameSessionId, eventsData));
+                promiseList.push(ruleFuncs[i](this, db, userId, gameId, gameSessionId, eventsData));
             }
         }
 
