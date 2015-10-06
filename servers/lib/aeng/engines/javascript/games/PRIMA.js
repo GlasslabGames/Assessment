@@ -19,6 +19,9 @@ module.exports = PRIMA_SoWo;
 */
 
 function PRIMA_SoWo(engine, aeService, options){
+//console.log("PRIMA aeService ", aeService);
+//console.log("PRIMA options ", options);
+
     this.version = 0.01;
     this.aeService = aeService;
 
@@ -67,7 +70,7 @@ PRIMA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsDat
 
  wo1
  */
-PRIMA_SoWo.prototype.wo1 = function(db) {
+PRIMA_SoWo.prototype.wo1 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -124,7 +127,7 @@ PRIMA_SoWo.prototype.wo1 = function(db) {
 
  wo2
  */
-PRIMA_SoWo.prototype.wo2 = function(db) {
+PRIMA_SoWo.prototype.wo2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -181,7 +184,7 @@ PRIMA_SoWo.prototype.wo2 = function(db) {
 
  wo3
  */
-PRIMA_SoWo.prototype.wo3 = function(db) {
+PRIMA_SoWo.prototype.wo3 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -238,7 +241,7 @@ PRIMA_SoWo.prototype.wo3 = function(db) {
 
  wo4
  */
-PRIMA_SoWo.prototype.wo4 = function(db) {
+PRIMA_SoWo.prototype.wo4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -295,7 +298,7 @@ PRIMA_SoWo.prototype.wo4 = function(db) {
 
  wo5
  */
-PRIMA_SoWo.prototype.wo5 = function(db) {
+PRIMA_SoWo.prototype.wo5 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -352,7 +355,7 @@ PRIMA_SoWo.prototype.wo5 = function(db) {
 
  wo6
  */
-PRIMA_SoWo.prototype.wo6 = function(db) {
+PRIMA_SoWo.prototype.wo6 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -409,7 +412,7 @@ PRIMA_SoWo.prototype.wo6 = function(db) {
 
  wo7
  */
-PRIMA_SoWo.prototype.wo7 = function(db) {
+PRIMA_SoWo.prototype.wo7 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -466,7 +469,7 @@ PRIMA_SoWo.prototype.wo7 = function(db) {
 
  wo8
  */
-PRIMA_SoWo.prototype.wo8 = function(db) {
+PRIMA_SoWo.prototype.wo8 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -523,7 +526,7 @@ PRIMA_SoWo.prototype.wo8 = function(db) {
 
  so1
  */
-PRIMA_SoWo.prototype.so1 = function(db) {
+PRIMA_SoWo.prototype.so1 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -553,6 +556,9 @@ PRIMA_SoWo.prototype.so1 = function(db) {
 
             total = results[0].total;
             if(total >= threshold) {
+
+                engine.awardBadge(userId, 9);
+
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -580,7 +586,7 @@ PRIMA_SoWo.prototype.so1 = function(db) {
 
  so2
  */
-PRIMA_SoWo.prototype.so2 = function(db) {
+PRIMA_SoWo.prototype.so2 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -610,6 +616,7 @@ PRIMA_SoWo.prototype.so2 = function(db) {
 
             total = results[0].total;
             if(total >= threshold) {
+                engine.awardBadge(userId, 10);
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -637,7 +644,7 @@ PRIMA_SoWo.prototype.so2 = function(db) {
 
  so3
  */
-PRIMA_SoWo.prototype.so3 = function(db) {
+PRIMA_SoWo.prototype.so3 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -667,6 +674,7 @@ PRIMA_SoWo.prototype.so3 = function(db) {
 
             total = results[0].total;
             if(total >= threshold) {
+                engine.awardBadge(userId, 27);
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -694,7 +702,7 @@ PRIMA_SoWo.prototype.so3 = function(db) {
 
  so4
  */
-PRIMA_SoWo.prototype.so4 = function(db) {
+PRIMA_SoWo.prototype.so4 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -751,7 +759,7 @@ PRIMA_SoWo.prototype.so4 = function(db) {
 
  so5
  */
-PRIMA_SoWo.prototype.so5 = function(db) {
+PRIMA_SoWo.prototype.so5 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -808,7 +816,7 @@ PRIMA_SoWo.prototype.so5 = function(db) {
 
  so6
  */
-PRIMA_SoWo.prototype.so6 = function(db) {
+PRIMA_SoWo.prototype.so6 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -865,7 +873,7 @@ PRIMA_SoWo.prototype.so6 = function(db) {
 
  so7
  */
-PRIMA_SoWo.prototype.so7 = function(db) {
+PRIMA_SoWo.prototype.so7 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -922,7 +930,7 @@ PRIMA_SoWo.prototype.so7 = function(db) {
 
  so8
  */
-PRIMA_SoWo.prototype.so8 = function(db) {
+PRIMA_SoWo.prototype.so8 = function(engine, db, userId) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------

@@ -58,7 +58,7 @@ GOG_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData)
 
  FAILED_LEVEL
  */
-GOG_SoWo.prototype.wo1 = function(db) {
+GOG_SoWo.prototype.wo1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -118,7 +118,7 @@ return when.promise(function(resolve, reject) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'cornSilosPlaced', 'level' ]
  */
-GOG_SoWo.prototype.wo2 = function(db) {
+GOG_SoWo.prototype.wo2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -201,7 +201,7 @@ GOG_SoWo.prototype.wo2 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'iceLettuceCorrect', 'level' ]
  */
-GOG_SoWo.prototype.wo3 = function(db) {
+GOG_SoWo.prototype.wo3 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -284,7 +284,7 @@ GOG_SoWo.prototype.wo3 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'melonsCorrect', 'level' ]
  */
-GOG_SoWo.prototype.wo4 = function(db) {
+GOG_SoWo.prototype.wo4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -367,7 +367,7 @@ GOG_SoWo.prototype.wo4 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'wheatgrassPlaced', 'level' ]
  */
-GOG_SoWo.prototype.wo5 = function(db) {
+GOG_SoWo.prototype.wo5 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -449,7 +449,7 @@ GOG_SoWo.prototype.wo5 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'attempts' ]
  */
-GOG_SoWo.prototype.wo6 = function(db) {
+GOG_SoWo.prototype.wo6 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -508,7 +508,7 @@ GOG_SoWo.prototype.wo6 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'attempts' ]
  */
-GOG_SoWo.prototype.so1 = function(db) {
+GOG_SoWo.prototype.so1 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -569,7 +569,7 @@ GOG_SoWo.prototype.so1 = function(db) {
  'wheatgrassPlaced','carrotLaunchersPlaced','beetTrapsPlaced',
  'garlicRaysPlaced','crannonsPlaced','cornSilosPlaced' ]
  */
-GOG_SoWo.prototype.so2 = function(db) {
+GOG_SoWo.prototype.so2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -634,7 +634,7 @@ GOG_SoWo.prototype.so2 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'level' ]
  */
-GOG_SoWo.prototype.so3 = function(db) {
+GOG_SoWo.prototype.so3 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -692,7 +692,7 @@ GOG_SoWo.prototype.so3 = function(db) {
 
  COMPLETED_LEVEL [ 'level' ]
  */
-GOG_SoWo.prototype.so4 = function(db) {
+GOG_SoWo.prototype.so4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
