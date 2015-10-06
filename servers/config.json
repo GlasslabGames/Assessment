@@ -12,7 +12,7 @@
         "port": 8002
     },
     "sdk": {
-        "connect": "www.glasslabgames.org"
+        "connect": "localhost"
     },
     "assessment": {
         "getMaxFromQueue":      20,

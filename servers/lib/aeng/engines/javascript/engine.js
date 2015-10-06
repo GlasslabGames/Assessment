@@ -54,6 +54,10 @@ return when.promise(function(resolve, reject) {
 };
 
 JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
+    var addr = this.options.sdk.connect;
+    if ( ! addr ) {
+        addr = "localhost";
+    }
     var url = "http://" + this.options.sdk.connect + ":" + this.options.services.appExternalPort + "/api/v2/dash/badge/" + badgeId + "/generateCode/" + userId;
 
     console.log("awardBadge ", url);
