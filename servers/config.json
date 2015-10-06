@@ -4,11 +4,15 @@
         "httpTimeout": 60000, "//": "1 min in milliseconds"
     },
     "services": {
-        "port": 8003
+        "port": 8003,
+        "appExternalPort": 8001
     },
     "telemetry": {
         "host": "localhost",
         "port": 8002
+    },
+    "sdk": {
+        "connect": "www.glasslabgames.org"
     },
     "assessment": {
         "getMaxFromQueue":      20,
