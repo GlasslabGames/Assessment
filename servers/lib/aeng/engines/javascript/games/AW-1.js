@@ -159,6 +159,12 @@ return when.promise(function(resolve, reject) {
             ORDER BY \
             serverTimeStamp ASC";
 
+    // sql = 'SELECT eventData_Key as key, eventData_Value as value FROM events WHERE \
+    //         (eventName="launch" OR eventName="select") \
+    //         AND \
+    //         (eventData_Key="case_name" OR eventData_Key="card_id") \
+    //         ORDER BY serverTimeStamp ASC';
+
     //console.log("wo1 sql:", sql);
     db.all(sql, function(err, results) {
         if(err) {
@@ -195,9 +201,15 @@ return when.promise(function(resolve, reject) {
                     id:   "wo1",
                     type: "watchout",
                     total: total,
-                    overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    overPercent: (total - threshold)/(max)
+
                 }
             );
+if(0==(max - threshold + 1)) {
+    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+    console.log('overPercent =', overPercent);
+}
         } else {
             // do nothing
             resolve();
@@ -279,9 +291,15 @@ AW_SoWo.prototype.wo2 = function(engine, db) {
                         id:   "wo2",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -340,9 +358,15 @@ AW_SoWo.prototype.wo3 = function(engine, db) {
                         id:   "wo3",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -397,9 +421,15 @@ AW_SoWo.prototype.wo4 = function(engine, db) {
                         id:   "wo4",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -455,9 +485,15 @@ AW_SoWo.prototype.wo5 = function(engine, db) {
                         id:   "wo5",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -510,6 +546,7 @@ AW_SoWo.prototype.so1 = function(engine, db) {
             }
 
             // Triggered if the number of successes equals the number of reason_end events found
+// wcj -- ...  and 0 < events ... ?
             if(total >= results.length) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
@@ -517,7 +554,9 @@ AW_SoWo.prototype.so1 = function(engine, db) {
                         id:   "so1",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -575,7 +614,9 @@ AW_SoWo.prototype.so2 = function(engine, db) {
                         id:   "so2",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -662,7 +703,9 @@ AW_SoWo.prototype.so3 = function(engine, db) {
                         id:   "so3",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -719,7 +762,8 @@ AW_SoWo.prototype.so4 = function(engine, db) {
                         id:   "so4",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
                     }
                 );
             } else {
@@ -788,9 +832,15 @@ AW_SoWo.prototype.so5 = function(engine, db) {
                         id:   "so5",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
