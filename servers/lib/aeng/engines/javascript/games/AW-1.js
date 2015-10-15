@@ -525,7 +525,7 @@ AW_SoWo.prototype.so1 = function(engine, db) {
             eventName=\"reason_end\" AND \
             eventData_Key=\"success\"";
 
-        //console.log("so1 sql:", sql);
+        console.log("so1 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
                 console.error("AssessmentEngine: Javascript_Engine - AW_SoWo so1 DB Error:", err);
@@ -546,9 +546,10 @@ AW_SoWo.prototype.so1 = function(engine, db) {
             }
 
             // Triggered if the number of successes equals the number of reason_end events found
-// wcj -- ...  and 0 < events ... ?
-            if(total >= results.length) {
+            if((0<total) && (total >= results.length)) {
                 // over is 0 - 1 float percent of the amount past threshold over max
+                console.log('so1 total=',total,' max=',max,' overPercent =',overPercent, 'oldover =',
+                    ((total - threshold + 1)/(max - threshold + 1)));
                 resolve(
                     {
                         id:   "so1",
