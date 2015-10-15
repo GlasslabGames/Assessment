@@ -480,6 +480,10 @@ AW_SoWo.prototype.wo5 = function(engine, db) {
             total = results[0].total;
             if(total >= threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
                 resolve(
                     {
                         id:   "wo5",
@@ -490,10 +494,6 @@ AW_SoWo.prototype.wo5 = function(engine, db) {
 
                     }
                 );
-                if(0==(max - threshold + 1)) {
-                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
-                    console.log('overPercent =', overPercent);
-                }
             } else {
                 // do nothing
                 resolve();
