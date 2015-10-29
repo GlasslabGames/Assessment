@@ -202,7 +202,7 @@ return when.promise(function (resolve, reject) {
         for (var i = 0; i < ruleFuncs.length; i++) {
             // calling the function
             if (_.isFunction(ruleFuncs[i])) {
-                promiseList.push(ruleFuncs[i](this, db, userId, gameId, gameSessionId, eventsData));
+                promiseList.push(ruleFuncs[i](db, userId, gameId, gameSessionId, eventsData));
             }
         }
 
