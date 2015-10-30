@@ -142,7 +142,7 @@ AW_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
 
  wo1
  */
-AW_SoWo.prototype.wo1 = function(engine, db) {
+AW_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -158,6 +158,12 @@ return when.promise(function(resolve, reject) {
             eventData_Key=\"card_id\") \
             ORDER BY \
             serverTimeStamp ASC";
+
+    // sql = 'SELECT eventData_Key as key, eventData_Value as value FROM events WHERE \
+    //         (eventName="launch" OR eventName="select") \
+    //         AND \
+    //         (eventData_Key="case_name" OR eventData_Key="card_id") \
+    //         ORDER BY serverTimeStamp ASC';
 
     //console.log("wo1 sql:", sql);
     db.all(sql, function(err, results) {
@@ -195,9 +201,15 @@ return when.promise(function(resolve, reject) {
                     id:   "wo1",
                     type: "watchout",
                     total: total,
-                    overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    overPercent: (total - threshold)/(max)
+
                 }
             );
+if(0==(max - threshold + 1)) {
+    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+    console.log('overPercent =', overPercent);
+}
         } else {
             // do nothing
             resolve();
@@ -216,7 +228,7 @@ return when.promise(function(resolve, reject) {
 
  wo2
  */
-AW_SoWo.prototype.wo2 = function(engine, db) {
+AW_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -279,9 +291,15 @@ AW_SoWo.prototype.wo2 = function(engine, db) {
                         id:   "wo2",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -300,7 +318,7 @@ AW_SoWo.prototype.wo2 = function(engine, db) {
 
  wo3
  */
-AW_SoWo.prototype.wo3 = function(engine, db) {
+AW_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -340,9 +358,15 @@ AW_SoWo.prototype.wo3 = function(engine, db) {
                         id:   "wo3",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -361,7 +385,7 @@ AW_SoWo.prototype.wo3 = function(engine, db) {
 
  wo4
  */
-AW_SoWo.prototype.wo4 = function(engine, db) {
+AW_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -397,9 +421,15 @@ AW_SoWo.prototype.wo4 = function(engine, db) {
                         id:   "wo4",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();
@@ -418,7 +448,7 @@ AW_SoWo.prototype.wo4 = function(engine, db) {
 
  wo5
  */
-AW_SoWo.prototype.wo5 = function(engine, db) {
+AW_SoWo.prototype.wo5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -450,12 +480,18 @@ AW_SoWo.prototype.wo5 = function(engine, db) {
             total = results[0].total;
             if(total >= threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
                 resolve(
                     {
                         id:   "wo5",
                         type: "watchout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -476,7 +512,7 @@ AW_SoWo.prototype.wo5 = function(engine, db) {
 
  so1
  */
-AW_SoWo.prototype.so1 = function(engine, db) {
+AW_SoWo.prototype.so1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -489,7 +525,7 @@ AW_SoWo.prototype.so1 = function(engine, db) {
             eventName=\"reason_end\" AND \
             eventData_Key=\"success\"";
 
-        //console.log("so1 sql:", sql);
+        console.log("so1 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
                 console.error("AssessmentEngine: Javascript_Engine - AW_SoWo so1 DB Error:", err);
@@ -510,14 +546,18 @@ AW_SoWo.prototype.so1 = function(engine, db) {
             }
 
             // Triggered if the number of successes equals the number of reason_end events found
-            if(total >= results.length) {
+            if((0<total) && (total >= results.length)) {
                 // over is 0 - 1 float percent of the amount past threshold over max
+                console.log('so1 total=',total,' max=',max,' overPercent =',overPercent, 'oldover =',
+                    ((total - threshold + 1)/(max - threshold + 1)));
                 resolve(
                     {
                         id:   "so1",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -538,7 +578,7 @@ AW_SoWo.prototype.so1 = function(engine, db) {
 
  so2
  */
-AW_SoWo.prototype.so2 = function(engine, db) {
+AW_SoWo.prototype.so2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -575,7 +615,9 @@ AW_SoWo.prototype.so2 = function(engine, db) {
                         id:   "so2",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -596,7 +638,7 @@ AW_SoWo.prototype.so2 = function(engine, db) {
 
  so3
  */
-AW_SoWo.prototype.so3 = function(engine, db) {
+AW_SoWo.prototype.so3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -662,7 +704,9 @@ AW_SoWo.prototype.so3 = function(engine, db) {
                         id:   "so3",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
             } else {
@@ -683,7 +727,7 @@ AW_SoWo.prototype.so3 = function(engine, db) {
 
  so4
  */
-AW_SoWo.prototype.so4 = function(engine, db) {
+AW_SoWo.prototype.so4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -719,7 +763,8 @@ AW_SoWo.prototype.so4 = function(engine, db) {
                         id:   "so4",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
                     }
                 );
             } else {
@@ -740,7 +785,7 @@ AW_SoWo.prototype.so4 = function(engine, db) {
 
  so5
  */
-AW_SoWo.prototype.so5 = function(engine, db) {
+AW_SoWo.prototype.so5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -788,9 +833,15 @@ AW_SoWo.prototype.so5 = function(engine, db) {
                         id:   "so5",
                         type: "shoutout",
                         total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        // overPercent: (total - threshold + 1)/(max - threshold + 1)
+                        overPercent: (total - threshold)/(max)
+
                     }
                 );
+                if(0==(max - threshold + 1)) {
+                    console.warn('ZZZZNNNN==== found divide by zero in code .. ?!');
+                    console.log('overPercent =', overPercent);
+                }
             } else {
                 // do nothing
                 resolve();

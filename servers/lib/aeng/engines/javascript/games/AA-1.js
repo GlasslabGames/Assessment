@@ -56,7 +56,7 @@ AA_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
 
  action variable is 'Fuse_core'' ; data variable is 'weakness: inconsistent"; 3-6 cases of inconsistent then watch out
 */
-AA_SoWo.prototype.wo_rule1 = function(engine, db) {
+AA_SoWo.prototype.wo_rule1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -122,7 +122,7 @@ return when.promise(function(resolve, reject) {
 
  action variable = "Launch_attack"; data variable = success: true (looking for 0 or 1 'true's)
  */
-AA_SoWo.prototype.wo_rule3 = function(engine, db) {
+AA_SoWo.prototype.wo_rule3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -190,7 +190,7 @@ AA_SoWo.prototype.wo_rule3 = function(engine, db) {
  Action = "Set_up_battle" >=2; AND action = "Launch_attack" (last three of these events are 'true') AND
  playerTurn = "true"
  */
-AA_SoWo.prototype.so_rule1 = function(engine, db) {
+AA_SoWo.prototype.so_rule1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
