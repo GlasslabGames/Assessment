@@ -36,13 +36,14 @@ WWF_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "DictionaryAccess", "WordPlay", "TurnStart", "TurnEnd", "GameStart", "GameEnd", "AcademicWordListView", "AWIC"
     ];
     var filterEventKeys = [
-        "academic_words_looked_up", "academic_words_played", "current_TurnID", "current_gameID",
-        "number_AWIC_correct", "points_scored", "outcome", "AWIC_status", "AWIC_answer"
+        "academic_words_looked_up", "academic_words_played", "current_TurnID", "current_gameID", "points_scored",
+        "number_AWIC_correct", "outcome", "AWIC_status", "AWIC_answer", "double_definition_hints_used"
     ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
         this.wo1.bind(this),
+        this.wo4.bind(this),
         this.wo5.bind(this),
         this.wo10.bind(this),
         this.wo12.bind(this),
@@ -201,6 +202,70 @@ WWF_SoWo.prototype.wo1 = function(db) {
 };
 
 
+
+// ===============================================
+// Student used a two Definition Hints ("word freebie") and then didn't play the Power Word from the hint
+/*
+ within 1:   Unit Start/End --> Unit Start --> Turn Start
+             Unit Start/End --> Unit End --> Turn End
+ if:         double_definition_hints_used = true             (this info is nested in Turn End event)
+ and:        academic_words_played = NULL (no academic words played)  (this info is nested in Turn End event)
+ */
+WWF_SoWo.prototype.wo4 = function(db) {
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+        var sql;
+        var threshold = 1;
+        var max = 100;
+        var debug = true;
+
+        sql = 'SELECT count(*) as total \
+                FROM (SELECT eventId, eventData_Value as DDHintUsed FROM events \
+                    WHERE \
+                        eventName="TurnEnd" AND \
+                        eventData_Key="double_definition_hints_used" AND\
+                        eventData_Value="true" \
+                    ) double_definition_hints_used \
+                LEFT JOIN (SELECT eventId, eventData_Value AS AWPlayed FROM events \
+                    WHERE \
+                        eventName="TurnEnd" AND \
+                        eventData_Key="academic_words_played" \
+                    ) academic_words_played \
+                    ON double_definition_hints_used.eventId = academic_words_played.eventId \
+                WHERE \
+                    AWPlayed IS NULL OR AWPlayed = "" \
+                LIMIT '+max;
+
+        debug && console.log("wo4 sql:", sql);
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("AssessmentEngine: Javascript_Engine - WWF_SoWo wo4 DB Error:", err);
+                reject(err);
+                return;
+            }
+            debug && console.log("wo4 results:", results);
+
+            // no results
+            if(!results.length) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            var total = results[0].total;
+            var out = {
+                id:   "wo4",
+                type: "watchout",
+                total: total
+            };
+            resolve(out);
+
+        });
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};
 
 
 
