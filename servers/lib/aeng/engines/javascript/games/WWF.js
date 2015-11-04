@@ -130,7 +130,7 @@ WWF_SoWo.prototype.wo1 = function(db) {
                 reject(err);
                 return;
             }
-            debug && console.log("wo1 results", results[0]);
+            debug && console.log("wo1 results[0]", results[0]);
 
             // no results
             if(!results.length) {
@@ -218,7 +218,6 @@ WWF_SoWo.prototype.wo4 = function(db) {
         var sql;
         var threshold = 1;
         var max = 100;
-        var debug = true;
 
         sql = 'SELECT count(*) as total \
                 FROM (SELECT eventId, eventData_Value as DDHintUsed FROM events \
@@ -319,7 +318,7 @@ WWF_SoWo.prototype.wo5 = function(db) {
                 reject(err);
                 return;
             }
-            debug && console.log("wo5 results", results[0]);
+            debug && console.log("wo5 results[0]", results[0]);
 
             // no results
             if(!results.length) {
@@ -920,6 +919,7 @@ WWF_SoWo.prototype.so6 = function(db) {
                 reject(err);
                 return;
             }
+            debug && console.log("so6 results:", results);
 
             // no results
             if(!results.length) {
@@ -1322,7 +1322,6 @@ WWF_SoWo.prototype.so12 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 4;
-        var max = 10;
 
         sql = 'SELECT COUNT(*) as total \
                 FROM events \
@@ -1330,8 +1329,7 @@ WWF_SoWo.prototype.so12 = function(db) {
                     eventName="GameEnd" AND \
                     eventData_Key="outcome" AND \
                     eventData_Value="win" \
-                \
-                LIMIT '+max;
+                ';
 
         debug && console.log("so12 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1350,7 +1348,7 @@ WWF_SoWo.prototype.so12 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so12",
                     type: "shoutout",
@@ -1381,15 +1379,12 @@ WWF_SoWo.prototype.so13 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 10;
-        var max = 10;
 
-        sql = 'SELECT COUNT(*) as total \
-                FROM (SELECT DISTINCT eventId, eventData_Value as gameId FROM events \
-                    WHERE \
-                        eventName="GameEnd" AND \
-                        eventData_Key="current_gameID" \
-                    ) game \
-                LIMIT '+max;
+        sql = 'SELECT COUNT(DISTINCT eventData_Value) as total FROM events \
+                WHERE \
+                    eventName="GameEnd" AND \
+                    eventData_Key="current_gameID" \
+                ';
 
         debug && console.log("so13 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1408,7 +1403,7 @@ WWF_SoWo.prototype.so13 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so13",
                     type: "shoutout",
@@ -1439,15 +1434,12 @@ WWF_SoWo.prototype.so14 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 50;
-        var max = 50;
 
-        sql = 'SELECT COUNT(*) as total \
-                FROM (SELECT DISTINCT eventId, eventData_Value as gameId FROM events \
-                    WHERE \
-                        eventName="GameEnd" AND \
-                        eventData_Key="current_gameID" \
-                    ) game \
-                LIMIT '+max;
+        sql = 'SELECT COUNT(DISTINCT eventData_Value) as total FROM events \
+                WHERE \
+                    eventName="GameEnd" AND \
+                    eventData_Key="current_gameID" \
+                ';
 
         debug && console.log("so14 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1466,7 +1458,7 @@ WWF_SoWo.prototype.so14 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so14",
                     type: "shoutout",
