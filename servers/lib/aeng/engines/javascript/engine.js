@@ -64,7 +64,7 @@ return when.promise(function(resolve, reject) {
     }
 
 
-got_game = false;
+got_game = false;   // wip testing
 
 
 // XXXXXXXX        XXXXXXXX
@@ -146,62 +146,95 @@ JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
 JavascriptEngine.prototype._processAutoSOWOs = function(that, userId, gameId, gameSessionId, eventsData) {
 return when.promise(function (resolve, reject) {
 
-    // // testing
-    // if (eventsData[0].events) {
-    //     // var len = eventsData[0].events.length;
-    //     eventsData[0].events.push( { id: 'so5', type: 'trigger_shout_out'} );
-    // }
+    // testing - inject fake event ...
+    if (eventsData[0].events) {
 
-    var xtest = {};     // { id: 'soNN', type: "shoutout", total: 0 };
+        // SOWO events look like this ...
+
+        eventsData[0].events.push( {
+            timestamp: 1446643225000,
+            name: 'trigger_shout_out',
+            gameSessionEventOrder: 33,
+            clientTimeStamp: 1446643225000,
+            serverTimeStamp: 1446643242006,
+            eventName: 'trigger_shout_out',
+            eventData: { keySOWO: 'so5', total: 3, overPercent: 0 },
+            totalTimePlayed: 37740,
+            gameLevel: 'Argument Wars' });
+    }
 
     console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
-    console.log('    ----        * eventsData[] length =', eventsData.length);
+    // console.log('    ----        * eventsData[] length =', eventsData.length);
 
-    for (var i = 0; i < eventsData.length; ++i) {
+    var sum = {};
+
+    for (var i = 0; i < eventsData.length; ++i) {         // likely just one
 
         if (!eventsData[i].events) continue;    // skip if not events
 
-        console.log('    ----        * eventsData[', i, '] :');
-        console.log('    ----            * userId =', eventsData[i].userId);
-        console.log('    ----            * gameSessionId =', eventsData[i].gameSessionId);
-        console.log('    ----            * events[] length =', eventsData[i].events.length);
+        // console.log('    ----        * eventsData[', i, '] :');
+        // console.log('    ----            * userId =', eventsData[i].userId);
+        // console.log('    ----            * gameSessionId =', eventsData[i].gameSessionId);
+        // console.log('    ----            * events[] length =', eventsData[i].events.length);
 
         for (var j = 0; j < eventsData[i].events.length; j++) {
 
             if (!eventsData[i].events[j].eventName) continue;
             if (!eventsData[i].events[j].eventData) continue;
 
-            var enm = eventsData[i].events[j].eventName || '';
-            var ttp = eventsData[i].events[j].totalTimePlayed || 0;
-            var gmlvl = eventsData[i].events[j].gameLevel || '';
+            // var enm = eventsData[i].events[j].eventName || '';
+            // var ttp = eventsData[i].events[j].totalTimePlayed || 0;
+            // var gmlvl = eventsData[i].events[j].gameLevel || '';
 
-            console.log('    ----            * events[', j, '] :');
-            console.log('    ----                * eventName  =', enm);
-            console.log('    ----                * totalTimePlayed  =', ttp);
-            console.log('    ----                * gameLevel  =', gmlvl);
-            console.log('    ----                * eventData :');
+            // console.log('    ----            * events[', j, '] :');
+            // console.log('    ----                * eventName  =', enm);
+            // console.log('    ----                * totalTimePlayed  =', ttp);
+            // console.log('    ----                * gameLevel  =', gmlvl);
+            // console.log('    ----                * eventData :');
 
-            console.log('    xxxx    DBG     This is where trigger_shout_out is checked ...');
+            // console.log('    xxxx    DBG     This is where trigger_shout_out is checked ...');
 
-//            if (!eventsData[i].events[j].eventData.keySOWO) continue;
-//
-//            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // 'so15' or 'wo4'
+            if (!eventsData[i].events[j].eventData.keySOWO) continue;
+
+            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // 'so15' or 'wo4'
+
+            // var time = eventsData[i].events[j].timestamp || 0;
+            var time = Util.GetTimeStamp();
+            var gsid = eventsData[i].gameSessionId;
 
             if ('trigger_shout_out' == eventsData[i].events[j].eventName) {
-                xtest = { id: sowo_ID, type: 'shoutout', total: 0 };
+
+                if (!sum) {
+                    sum = { shoutout: {} };
+                }
+
+                if (!_.isObject(sum.shoutout)) {
+                    sum.shoutout = {};
+                }
+
+                sum.shoutout[ sowo_ID ] = { total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid };
             }
 
             if ('trigger_watch_out' == eventsData[i].events[j].eventName) {
-                xtest = { id: sowo_ID, type: 'watchout', total: 0 };
-            }
 
-            // for (var key in eventsData[i].events[j].eventData) {    // for all eventData
-            //     console.log('    ----                    * eventData {} key :', key);
-            // }
+                if (!sum) {
+                    sum = { watchout: {} };
+                }
+
+                if (!_.isObject(sum.watchout)) {
+                    sum.watchout = {};
+                }
+
+                sum.watchout[ sowo_ID ] = { total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid };
+            }
         }
     }
 
-    // resolve(sum);    // aggregate SOWO event tree
+    if (sum) {
+        resolve(sum);    // aggregate SOWO event tree
+    } else {
+        resolve();
+    }
 
 }.bind(this));
 };
