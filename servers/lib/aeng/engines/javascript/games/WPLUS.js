@@ -71,7 +71,7 @@ WPLUS_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsDat
 
  TimeOutInPack1
  */
-WPLUS_SoWo.prototype.wo1 = function(engine, db) {
+WPLUS_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -128,7 +128,7 @@ return when.promise(function(resolve, reject) {
 
  TimeOutInPack2
  */
-WPLUS_SoWo.prototype.wo2 = function(engine, db) {
+WPLUS_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -185,7 +185,7 @@ WPLUS_SoWo.prototype.wo2 = function(engine, db) {
 
  TimeOutInPack3
  */
-WPLUS_SoWo.prototype.wo3 = function(engine, db) {
+WPLUS_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -242,7 +242,7 @@ WPLUS_SoWo.prototype.wo3 = function(engine, db) {
 
  TimeOutInPack4
  */
-WPLUS_SoWo.prototype.wo4 = function(engine, db) {
+WPLUS_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -299,7 +299,7 @@ WPLUS_SoWo.prototype.wo4 = function(engine, db) {
 
  AllBasicNoChallenge
  */
-WPLUS_SoWo.prototype.wo5 = function(engine, db) {
+WPLUS_SoWo.prototype.wo5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -356,7 +356,7 @@ WPLUS_SoWo.prototype.wo5 = function(engine, db) {
 
  SOChallenge1and2
  */
-WPLUS_SoWo.prototype.so1 = function(engine, db) {
+WPLUS_SoWo.prototype.so1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -413,7 +413,7 @@ WPLUS_SoWo.prototype.so1 = function(engine, db) {
 
  SOChallenge3
  */
-WPLUS_SoWo.prototype.so2 = function(engine, db) {
+WPLUS_SoWo.prototype.so2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -470,7 +470,7 @@ WPLUS_SoWo.prototype.so2 = function(engine, db) {
 
  SOChallenge4
  */
-WPLUS_SoWo.prototype.so3 = function(engine, db) {
+WPLUS_SoWo.prototype.so3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -527,7 +527,7 @@ WPLUS_SoWo.prototype.so3 = function(engine, db) {
 
  SOAllBasicLevels
  */
-WPLUS_SoWo.prototype.so4 = function(engine, db) {
+WPLUS_SoWo.prototype.so4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -584,7 +584,7 @@ WPLUS_SoWo.prototype.so4 = function(engine, db) {
 
  SOAllLevels
  */
-WPLUS_SoWo.prototype.so5 = function(engine, db) {
+WPLUS_SoWo.prototype.so5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -641,7 +641,7 @@ WPLUS_SoWo.prototype.so5 = function(engine, db) {
 
  SOExtremePipeCount
  */
-WPLUS_SoWo.prototype.so6 = function(engine, db) {
+WPLUS_SoWo.prototype.so6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------

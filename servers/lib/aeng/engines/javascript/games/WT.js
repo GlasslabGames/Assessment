@@ -59,7 +59,7 @@ WT_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
 
  wo1
  */
-WT_SoWo.prototype.wo1 = function(engine, db) {
+WT_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -116,7 +116,7 @@ return when.promise(function(resolve, reject) {
 
  wo2
  */
-WT_SoWo.prototype.wo2 = function(engine, db) {
+WT_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -173,7 +173,7 @@ WT_SoWo.prototype.wo2 = function(engine, db) {
 
  wo3
  */
-WT_SoWo.prototype.wo3 = function(engine, db) {
+WT_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -230,7 +230,7 @@ WT_SoWo.prototype.wo3 = function(engine, db) {
 
  wo4
  */
-WT_SoWo.prototype.wo4 = function(engine, db) {
+WT_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -287,7 +287,7 @@ WT_SoWo.prototype.wo4 = function(engine, db) {
 
  so1
  */
-WT_SoWo.prototype.so1 = function(engine, db) {
+WT_SoWo.prototype.so1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -344,7 +344,7 @@ WT_SoWo.prototype.so1 = function(engine, db) {
 
  so2
  */
-WT_SoWo.prototype.so2 = function(engine, db) {
+WT_SoWo.prototype.so2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -401,7 +401,7 @@ WT_SoWo.prototype.so2 = function(engine, db) {
 
  so3
  */
-WT_SoWo.prototype.so3 = function(engine, db) {
+WT_SoWo.prototype.so3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -458,7 +458,7 @@ WT_SoWo.prototype.so3 = function(engine, db) {
 
  so4
  */
-WT_SoWo.prototype.so4 = function(engine, db) {
+WT_SoWo.prototype.so4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -515,7 +515,7 @@ WT_SoWo.prototype.so4 = function(engine, db) {
 
  so5
  */
-WT_SoWo.prototype.so5 = function(engine, db) {
+WT_SoWo.prototype.so5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -572,7 +572,7 @@ WT_SoWo.prototype.so5 = function(engine, db) {
 
  so6
  */
-WT_SoWo.prototype.so6 = function(engine, db) {
+WT_SoWo.prototype.so6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -629,7 +629,7 @@ WT_SoWo.prototype.so6 = function(engine, db) {
 
  so7
  */
-WT_SoWo.prototype.so7 = function(engine, db) {
+WT_SoWo.prototype.so7 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
