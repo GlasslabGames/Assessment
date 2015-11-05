@@ -34,22 +34,6 @@ JavascriptEngine.prototype.run = function(userId, gameId, gameSessionId, eventsD
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
 
-/*
-    // load file and run
-    try {
-        //console.log("AssessmentEngine: Javascript_Engine - getDistillerFunction cwd:", process.cwd());
-        var file = this.engineDir + "games"+path.sep + gameId+".js";
-        var game = require(file);
-
-        var g = new game(this, this.aeService, this.options);
-        g.process(userId, gameId, gameSessionId, eventsData).then(resolve, reject);
-
-    } catch(err) {
-        console.error("AssessmentEngine: Javascript_Engine - Get Distiller Function Error -", err);
-        reject(err);
-    }
-*/
-
     var g;
     var file;
     var game;
@@ -63,20 +47,7 @@ return when.promise(function(resolve, reject) {
         got_game = false;
     }
 
-
-got_game = false;   // wip testing
-
-
-// XXXXXXXX        XXXXXXXX
-//   XXXXXXXX    XXXXXXXX
-//     XXXXXXXXXXXXXXXX
-//       XXXXXXXXXXXX
-//         XXXXXXXX
-//       XXXXXXXXXXXX
-//     XXXXXXXXXXXXXXXX
-//   XXXXXXXX    XXXXXXXX
-// XXXXXXXX        XXXXXXXX
-
+    // got_game = false;   // wip testing
 
     if(got_game) {
 
@@ -98,7 +69,6 @@ got_game = false;   // wip testing
         // auto process SOWO events
         this._processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData)
         .then(resolve, reject);
-
     }
 
 // ------------------------------------------------
@@ -125,45 +95,30 @@ JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
         }.bind(this) );
 }
 
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//                     XXXXXXXX                            XXXXXXXX
-//                       XXXXXXXX                        XXXXXXXX
-//                         XXXXXXXX                    XXXXXXXX
-//                           XXXXXXXX                XXXXXXXX
-//                             XXXXXXXX            XXXXXXXX
-//                               XXXXXXXX        XXXXXXXX
-//                                 XXXXXXXX    XXXXXXXX
-//                                   XXXXXXXXXXXXXXXX
-//                                     XXXXXXXXXXXX
-//                                       XXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 /*
  Telemetry can directly trigger Shout Outs and Watch Outs.
 */
 JavascriptEngine.prototype._processAutoSOWOs = function(that, userId, gameId, gameSessionId, eventsData) {
 return when.promise(function (resolve, reject) {
 
-    // testing - inject fake event ...
-    if (eventsData[0].events) {
+    // // testing - inject fake event ...
+    // if (eventsData[0].events) {
 
-        // SOWO events look like this ...
+    //     // SOWO events look like this ...
 
-        eventsData[0].events.push( {
-            timestamp: 1446643225000,
-            name: 'trigger_shout_out',
-            gameSessionEventOrder: 33,
-            clientTimeStamp: 1446643225000,
-            serverTimeStamp: 1446643242006,
-            eventName: 'trigger_shout_out',
-            eventData: { keySOWO: 'so5', total: 3, overPercent: 0 },
-            totalTimePlayed: 37740,
-            gameLevel: 'Argument Wars' });
-    }
+    //     eventsData[0].events.push( {
+    //         timestamp: 1446643225000,
+    //         name: 'trigger_shout_out',
+    //         gameSessionEventOrder: 33,
+    //         clientTimeStamp: 1446643225000,
+    //         serverTimeStamp: 1446643242006,
+    //         eventName: 'trigger_shout_out',
+    //         eventData: { keySOWO: 'so5', total: 3, overPercent: 0 },
+    //         totalTimePlayed: 37740,
+    //         gameLevel: 'Argument Wars' });
+    // }
 
-    console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
+    // console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
     // console.log('    ----        * eventsData[] length =', eventsData.length);
 
     var sum = {};
@@ -196,9 +151,8 @@ return when.promise(function (resolve, reject) {
 
             if (!eventsData[i].events[j].eventData.keySOWO) continue;
 
-            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // 'so15' or 'wo4'
+            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // eg. 'so15' or 'wo4'
 
-            // var time = eventsData[i].events[j].timestamp || 0;
             var time = Util.GetTimeStamp();
             var gsid = eventsData[i].gameSessionId;
 
@@ -238,21 +192,6 @@ return when.promise(function (resolve, reject) {
 
 }.bind(this));
 };
-
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//                                       XXXXXXXX
-//                                     XXXXXXXXXXXX
-//                                   XXXXXXXXXXXXXXXX
-//                                 XXXXXXXX    XXXXXXXX
-//                               XXXXXXXX        XXXXXXXX
-//                             XXXXXXXX            XXXXXXXX
-//                           XXXXXXXX                XXXXXXXX
-//                         XXXXXXXX                    XXXXXXXX
-//                       XXXXXXXX                        XXXXXXXX
-//                     XXXXXXXX                            XXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /*
  Dump all the relivent events into an in memory SQLite DB
@@ -308,19 +247,6 @@ return when.promise(function (resolve, reject) {
         if( _.contains( filterEventKeys, "all" ) ) {
             gatherAllEvents = true;
         }
-
-
-
-
-        if (0 < eventsData.length) {
-            console.log('\nzzzzzzzzzzzzzzzz        zzzzzzzzzzzzzzzz        zzzzzzzzzzzzzzzz');
-            console.log('eventsData[0].events[0].eventData =', eventsData[0].events[0].eventData);
-            console.log('\nzzzzzzzzzzzzzzzz                                zzzzzzzzzzzzzzzz');
-            // console.log('eventsData[0] =', eventsData[0]);
-        }
-
-
-
 
         var eventId = 0;
         var totalNumEvents = 0;
