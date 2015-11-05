@@ -63,11 +63,26 @@ return when.promise(function(resolve, reject) {
         got_game = false;
     }
 
+
+got_game = false;
+
+
+// XXXXXXXX        XXXXXXXX
+//   XXXXXXXX    XXXXXXXX
+//     XXXXXXXXXXXXXXXX
+//       XXXXXXXXXXXX
+//         XXXXXXXX
+//       XXXXXXXXXXXX
+//     XXXXXXXXXXXXXXXX
+//   XXXXXXXX    XXXXXXXX
+// XXXXXXXX        XXXXXXXX
+
+
     if(got_game) {
 
         // load file and run
         try {
-            //console.log("AssessmentEngine: Javascript_Engine - getDistillerFunction cwd:", process.cwd());
+
             file = this.engineDir + "games"+path.sep + gameId+".js";
             game = require(file);
 
@@ -81,7 +96,7 @@ return when.promise(function(resolve, reject) {
     } else {
 
         // auto process SOWO events
-        _processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData)
+        this._processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData)
         .then(resolve, reject);
 
     }
@@ -110,137 +125,101 @@ JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
         }.bind(this) );
 }
 
-
-
-
-
-
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//                     XXXXXXXX                            XXXXXXXX
+//                       XXXXXXXX                        XXXXXXXX
+//                         XXXXXXXX                    XXXXXXXX
+//                           XXXXXXXX                XXXXXXXX
+//                             XXXXXXXX            XXXXXXXX
+//                               XXXXXXXX        XXXXXXXX
+//                                 XXXXXXXX    XXXXXXXX
+//                                   XXXXXXXXXXXXXXXX
+//                                     XXXXXXXXXXXX
+//                                       XXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /*
  Telemetry can directly trigger Shout Outs and Watch Outs.
 */
 JavascriptEngine.prototype._processAutoSOWOs = function(that, userId, gameId, gameSessionId, eventsData) {
-
-    // function AW_SoWo(engine, aeService, options){ ...
-
 return when.promise(function (resolve, reject) {
 
-    var sql;
-    var dbFile = ':memory:';
-    var db = new sqlite3.Database(dbFile);
+    // // testing
+    // if (eventsData[0].events) {
+    //     // var len = eventsData[0].events.length;
+    //     eventsData[0].events.push( { id: 'so5', type: 'trigger_shout_out'} );
+    // }
 
-    db.serialize(function () {
+    var xtest = {};     // { id: 'soNN', type: "shoutout", total: 0 };
 
-        sql = "CREATE TABLE IF NOT EXISTS events (\
-            eventId INT, \
-            userId INT, \
-            gameSessionId TEXT, \
-            clientTimeStamp DATETIME, \
-            serverTimeStamp DATETIME, \
-            eventName TEXT, \
-            gameLevel TEXT, \
-            gameSessionEventOrder INT, \
-            eventData_Key TEXT, \
-            eventData_Value TEXT,\
-            target TEXT)";
+    console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
+    console.log('    ----        * eventsData[] length =', eventsData.length);
 
-        db.run(sql);
+    for (var i = 0; i < eventsData.length; ++i) {
 
-        // insert
-        sql = "INSERT INTO events ( \
-            eventId, \
-            userId, \
-            gameSessionId, \
-            clientTimeStamp, \
-            serverTimeStamp, \
-            eventName, \
-            gameLevel, \
-            gameSessionEventOrder, \
-            eventData_Key, \
-            eventData_Value, \
-            target \
-        ) VALUES (?, ?,?,?,?, ?,?,?, ?,?,?)";
+        if (!eventsData[i].events) continue;    // skip if not events
 
-        var eventId = 0;
-        var totalNumEvents = 0;
-        var filterSoWoEventTypes = ['trigger_shout_out', 'trigger_watch_out'];
-        // var filterSoWoEventKeys = [
-        //     'so1', 'so2', 'so3', 'so4', 'so5', 'so6', 'so7', 'so8',
-        //     'so9', 'so10', 'so11', 'so12', 'so13', 'so14', 'so15', 'so16',
-        //     'wo1', 'wo2', 'wo3', 'wo4', 'wo5', 'wo6', 'wo7', 'wo8',
-        //     'wo9', 'wo10', 'wo11', 'wo12', 'wo13', 'wo14', 'wo15', 'wo16'
-        // ];
+        console.log('    ----        * eventsData[', i, '] :');
+        console.log('    ----            * userId =', eventsData[i].userId);
+        console.log('    ----            * gameSessionId =', eventsData[i].gameSessionId);
+        console.log('    ----            * events[] length =', eventsData[i].events.length);
 
-        for (var i = 0; i < eventsData.length; i++) {
+        for (var j = 0; j < eventsData[i].events.length; j++) {
 
-            if (!eventsData[i].events) continue;    // skip if not events
+            if (!eventsData[i].events[j].eventName) continue;
+            if (!eventsData[i].events[j].eventData) continue;
 
-            totalNumEvents += eventsData[i].events.length;
+            var enm = eventsData[i].events[j].eventName || '';
+            var ttp = eventsData[i].events[j].totalTimePlayed || 0;
+            var gmlvl = eventsData[i].events[j].gameLevel || '';
 
-            for (var j = 0; j < eventsData[i].events.length; j++) {
+            console.log('    ----            * events[', j, '] :');
+            console.log('    ----                * eventName  =', enm);
+            console.log('    ----                * totalTimePlayed  =', ttp);
+            console.log('    ----                * gameLevel  =', gmlvl);
+            console.log('    ----                * eventData :');
 
-                if (!_.contains(filterSoWoEventTypes, eventsData[i].events[j].eventName)) continue;
+            console.log('    xxxx    DBG     This is where trigger_shout_out is checked ...');
 
-                for (var key in eventsData[i].events[j].eventData) {    // for all eventData
+//            if (!eventsData[i].events[j].eventData.keySOWO) continue;
+//
+//            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // 'so15' or 'wo4'
 
-                    // if (!_.contains(filterSoWoEventKeys, key)) continue;
-
-                    var value = eventsData[i].events[j].eventData[key];
-
-                    if(_.isObject(value)) { value = JSON.stringify(value); }
-                    if(!_.isString(value)) { value = value.toString(); }
-
-                    var row = [
-                        eventId,
-                        eventsData[i].userId,
-                        eventsData[i].gameSessionId,
-                        eventsData[i].events[j].clientTimeStamp,
-                        eventsData[i].events[j].serverTimeStamp,
-                        eventsData[i].events[j].eventName,
-                        eventsData[i].events[j].gameLevel || "",
-                        eventsData[i].events[j].gameSessionEventOrder || i,
-                        key,
-                        value,
-                        eventsData[i].events[j].eventData['target'] || ""
-                    ];
-                    db.run(sql, row);
-                }
-
-                ++eventId;
+            if ('trigger_shout_out' == eventsData[i].events[j].eventName) {
+                xtest = { id: sowo_ID, type: 'shoutout', total: 0 };
             }
+
+            if ('trigger_watch_out' == eventsData[i].events[j].eventName) {
+                xtest = { id: sowo_ID, type: 'watchout', total: 0 };
+            }
+
+            // for (var key in eventsData[i].events[j].eventData) {    // for all eventData
+            //     console.log('    ----                    * eventData {} key :', key);
+            // }
         }
+    }
 
-
-
-
-
-
-
-    }.bind(this));
-    db.close();
+    // resolve(sum);    // aggregate SOWO event tree
 
 }.bind(this));
+};
 
-
-
-    // eg.
-    //     resolve(
-    //         {
-    //             id:   "so5",
-    //             type: "shoutout",
-    //             total: total,
-    //             // overPercent: (total - threshold + 1)/(max - threshold + 1)
-    //             overPercent: (total - threshold)/(max)
-    //         }
-
-}
-
-
-
-
-
-
-
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//                                       XXXXXXXX
+//                                     XXXXXXXXXXXX
+//                                   XXXXXXXXXXXXXXXX
+//                                 XXXXXXXX    XXXXXXXX
+//                               XXXXXXXX        XXXXXXXX
+//                             XXXXXXXX            XXXXXXXX
+//                           XXXXXXXX                XXXXXXXX
+//                         XXXXXXXX                    XXXXXXXX
+//                       XXXXXXXX                        XXXXXXXX
+//                     XXXXXXXX                            XXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /*
  Dump all the relivent events into an in memory SQLite DB
@@ -296,6 +275,19 @@ return when.promise(function (resolve, reject) {
         if( _.contains( filterEventKeys, "all" ) ) {
             gatherAllEvents = true;
         }
+
+
+
+
+        if (0 < eventsData.length) {
+            console.log('\nzzzzzzzzzzzzzzzz        zzzzzzzzzzzzzzzz        zzzzzzzzzzzzzzzz');
+            console.log('eventsData[0].events[0].eventData =', eventsData[0].events[0].eventData);
+            console.log('\nzzzzzzzzzzzzzzzz                                zzzzzzzzzzzzzzzz');
+            // console.log('eventsData[0] =', eventsData[0]);
+        }
+
+
+
 
         var eventId = 0;
         var totalNumEvents = 0;
@@ -364,6 +356,7 @@ return when.promise(function (resolve, reject) {
                 eventId++;
             }
         }
+
         if (this.options.env == "dev") {
             console.log("AssessmentEngine: Javascript_Engine - processEventRules: process - # of events:", totalNumEvents);
         }
@@ -416,13 +409,14 @@ return when.promise(function (resolve, reject) {
                     }
                 }
 
-                //console.log("rule - sum:", sum, ", value:", value);
+                console.log("rule - sum:", sum, ", value:", value);
+
                 return sum;
             }, results);
 
         rulesPromise
             .then(function (sum) {
-                //console.log("rulesPromise sum:", sum);
+                console.log("rulesPromise sum:", sum);
                 resolve(sum);
             }.bind(this))
 
