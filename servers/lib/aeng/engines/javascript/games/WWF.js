@@ -253,12 +253,15 @@ WWF_SoWo.prototype.wo4 = function(db) {
             }
 
             var total = results[0].total;
-            var out = {
-                id:   "wo4",
-                type: "watchout",
-                total: total
-            };
-            resolve(out);
+            if (total > 0) {
+                resolve({
+                    id:   "wo4",
+                    type: "watchout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
 
         });
 // ------------------------------------------------
