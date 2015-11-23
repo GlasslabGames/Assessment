@@ -118,8 +118,8 @@ return when.promise(function (resolve, reject) {
     //         gameLevel: 'Argument Wars' });
     // }
 
-    // console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
-    // console.log('    ----        * eventsData[] length =', eventsData.length);
+    console.log('    ----    JavascriptEngine.prototype._processAutoSOWOs() ...');
+    console.log('    ----        * eventsData[] length =', eventsData.length);
 
     var sum = {};
 
@@ -127,10 +127,10 @@ return when.promise(function (resolve, reject) {
 
         if (!eventsData[i].events) continue;    // skip if not events
 
-        // console.log('    ----        * eventsData[', i, '] :');
-        // console.log('    ----            * userId =', eventsData[i].userId);
-        // console.log('    ----            * gameSessionId =', eventsData[i].gameSessionId);
-        // console.log('    ----            * events[] length =', eventsData[i].events.length);
+        console.log('    ----        * eventsData[', i, '] :');
+        console.log('    ----            * userId =', eventsData[i].userId);
+        console.log('    ----            * gameSessionId =', eventsData[i].gameSessionId);
+        console.log('    ----            * events[] length =', eventsData[i].events.length);
 
         for (var j = 0; j < eventsData[i].events.length; j++) {
 
