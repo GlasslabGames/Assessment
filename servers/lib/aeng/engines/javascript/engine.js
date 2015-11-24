@@ -47,7 +47,15 @@ return when.promise(function(resolve, reject) {
         got_game = false;
     }
 
-    // got_game = false;   // wip testing
+
+// wip testing
+if ("THRV" == gameId) {
+    got_game = false;
+}
+if ("NSQR" == gameId) {
+    got_game = false;
+}
+
 
     if(got_game) {
 
