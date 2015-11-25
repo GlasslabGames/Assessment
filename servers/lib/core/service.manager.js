@@ -8,6 +8,7 @@
  *  multiparty - https://github.com/superjoe30/node-multiparty
  *
  */
+
 var fs         = require('fs');
 var http       = require('http');
 var path       = require('path');
@@ -27,11 +28,34 @@ process.on('uncaughtException', function(err) {
 });
 
 function ServiceManager(configFiles){
+    // called as:   new ServiceManager("~/hydra.assessment.config.json");
+    // this == {}
+
     Util              = require('../core/util.js');
     var ConfigManager = require('../core/config.manager.js');
 
-    console.log('---------------------------------------------');
-    console.log('Loading Configuration...');
+    var startScript = process.argv[1].split("servers/")[1];
+
+    console.log(" **************************************** ");
+    console.log("        " + startScript);
+    console.log(" **************************************** ");
+
+    console.log("ServiceManager()");
+
+    console.log('    process.pid:         ' + process.pid);
+    console.log('    process.platform:    ' + process.platform);
+    console.log('    process.version:     ' + process.version);
+    console.log('    process.execPath:    ' + process.execPath);
+    console.log('    process.argv[1]:     ' + process.argv[1]);
+
+    console.log('    process.env.SHLVL:   ' + process.env.SHLVL);
+    console.log('    process.env.LOGNAME: ' + process.env.LOGNAME);
+    console.log('    process.env.HOME:    ' + process.env.HOME);
+    console.log('    process.env.PWD:     ' + process.env.PWD);
+    console.log('    process.env._:       ' + process.env._);
+
+    console.log(Util.DateGMTString()+' **** Loading Configuration...');
+
     var config        = new ConfigManager();
     // load config files from first to last until successful
     // if not set, then make array
@@ -44,9 +68,21 @@ function ServiceManager(configFiles){
         configFiles = [configFiles];
     }
 
-    // always add the root config first
+    // Add the base config (./config.json from Platform/servers/) at the front of the list.
+    // Values in ./config.json will be replaced by newer values in eg. ~/hydra.config.json.
+    // [ './config.json', '~/hydra.config.json' ]
     configFiles.unshift("./config.json");
     this.options = config.loadSync(configFiles);
+
+    console.log('Configs loaded');
+    console.log('    env: ' + this.options.env);
+    console.log('    services.port: ' + this.options.services.port);
+    console.log('    services.portSSL: ' + this.options.services.portSSL);
+    console.log('    services.portNonSSL: ' + this.options.services.portNonSSL);
+    console.log('    services.appExternalPort: ' + this.options.services.appExternalPort);
+    console.log('    services.appInternalPort: ' + this.options.services.appInternalPort);
+    console.log('    services.appAssessmentPort: ' + this.options.services.appAssessmentPort);
+    console.log('    services.appArchiverPort: ' + this.options.services.appArchiverPort);
 
     if(!this.options.services) {
         this.options.services = {};
@@ -54,6 +90,17 @@ function ServiceManager(configFiles){
     if(!this.options.services.session) {
         this.options.services.session = {};
     }
+
+/*
+    this.options.services.startScript = startScript;
+
+    global.ENV            = this.options.env || 'dev';
+    process.env.HYDRA_ENV = process.env.HYDRA_ENV || global.ENV;
+    
+    this.stats            = new Util.Stats(this.options, "ServiceManager");
+    this.awss3            = new Util.S3Util(this.options);
+    this.stripe           = new Util.StripeUtil(this.options);
+*/
 
     global.ENV            = this.options.env || 'dev';
     process.env.HYDRA_ENV = global.ENV;
@@ -213,6 +260,7 @@ ServiceManager.prototype.setupStaticRoutes = function() {
 
         _.forEach(s.routes, function(route) {
             var file = "";
+
             if(s.file == 'index') {
                 file = this.routesMap.index;
             } else {
@@ -244,6 +292,7 @@ ServiceManager.prototype.setupStaticRoutes = function() {
 
             } else {
                 console.log("Static Route -", route, "->", file);
+
                 this.app.get(route, function(req, res) {
                     res.sendfile( fullPath );
                 }.bind(this));
@@ -373,11 +422,22 @@ return when.promise(function(resolve, reject) {
 };
 
 ServiceManager.prototype.start = function(port) {
+    console.log(Util.DateGMTString()+' ServiceManager start('+port+')');
+
+    var portArg = port;
+
+    if(!this.options.services.name){
+        console.log('');
+        console.log('****************    Error -- expect serverices.name set in e.g. app-app-assessment.js');
+        console.log('****************             call manager.setName() in ' + this.options.services.startScript);
+        console.log('');
+        return;
+    }
 
     // start express (session store,...), then start services
     this.initExpress()
         .then(function(){
-            console.log('Initilizing Services...');
+            console.log('Initializing Services...');
             return this.initServices();
         }.bind(this))
         .then(function() {
@@ -397,7 +457,7 @@ ServiceManager.prototype.start = function(port) {
             when.all(promiseList)
                 .then(function(){
                     console.log('----------------------------');
-                    console.log('Services Started');
+                    console.log(Util.DateGMTString()+' **** Services Started');
                     console.log("Setting Up Routes...");
                     console.log('----------------------------');
 
