@@ -285,6 +285,10 @@ return when.promise(function(resolve, reject) {
             var dataPromise, enginePromise;
 
             aInfo.forEach(function(ai) {
+
+                //   aborts if gi:<gameId> -> assessment:[] is missing, empty, or
+                //   lacks eg. { enabled: true, trigger: "endSession" }
+
                 // if enabled and engine exists
                 // and trigger matches jobType
                 if( ai.enabled &&
@@ -399,6 +403,7 @@ return when.promise(function(resolve, reject) {
 
     var enginePromise;
     if(this.engines[engine]) {
+        // engine.js
         enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData);
     }
     else {
@@ -488,7 +493,7 @@ AssessmentEngine.prototype.getUserEvents = function(gameId, userId) {
     return this._internalTelemetryRequest("/int/v1/data/game/"+gameId+"/user/"+userId+"/events");
 };
 
-
+// this._games[gameId].info.assessment -- from CBdb -- from info.json ?
 AssessmentEngine.prototype.getGameAssessmentDefinitions = function(gameId) {
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/assessment/definitions");
 };
