@@ -175,6 +175,8 @@ module.exports = {
     PromiseContinue:  promiseContinue,
     GetExpressLogger: getExpressLogger,
     GetTimeStamp:     getTimeStamp,
+    DateString:         dateString,
+    DateGMTString:      dateGmtString,
     BuildURI:         buildUri,
     CreateUUID:       createUUID,
     String: {
