@@ -72,7 +72,7 @@ PVZ_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData)
 
  wo1
  */
-PVZ_SoWo.prototype.wo1 = function(engine, db) {
+PVZ_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -129,7 +129,7 @@ return when.promise(function(resolve, reject) {
 
  wo2
  */
-PVZ_SoWo.prototype.wo2 = function(engine, db) {
+PVZ_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -186,7 +186,7 @@ PVZ_SoWo.prototype.wo2 = function(engine, db) {
 
  wo3
  */
-PVZ_SoWo.prototype.wo3 = function(engine, db) {
+PVZ_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -243,7 +243,7 @@ PVZ_SoWo.prototype.wo3 = function(engine, db) {
 
  wo4
  */
-PVZ_SoWo.prototype.wo4 = function(engine, db) {
+PVZ_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -300,7 +300,7 @@ PVZ_SoWo.prototype.wo4 = function(engine, db) {
 
  wo5
  */
-PVZ_SoWo.prototype.wo5 = function(engine, db) {
+PVZ_SoWo.prototype.wo5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -357,7 +357,7 @@ PVZ_SoWo.prototype.wo5 = function(engine, db) {
 
  wo6
  */
-PVZ_SoWo.prototype.wo6 = function(engine, db) {
+PVZ_SoWo.prototype.wo6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -414,7 +414,7 @@ PVZ_SoWo.prototype.wo6 = function(engine, db) {
 
  wo7
  */
-PVZ_SoWo.prototype.wo7 = function(engine, db) {
+PVZ_SoWo.prototype.wo7 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -471,7 +471,7 @@ PVZ_SoWo.prototype.wo7 = function(engine, db) {
 
  wo8
  */
-PVZ_SoWo.prototype.wo8 = function(engine, db) {
+PVZ_SoWo.prototype.wo8 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -528,7 +528,7 @@ PVZ_SoWo.prototype.wo8 = function(engine, db) {
 
  wo9
  */
-PVZ_SoWo.prototype.wo9 = function(engine, db) {
+PVZ_SoWo.prototype.wo9 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -585,7 +585,7 @@ PVZ_SoWo.prototype.wo9 = function(engine, db) {
 
  wo10
  */
-PVZ_SoWo.prototype.wo10 = function(engine, db) {
+PVZ_SoWo.prototype.wo10 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -642,7 +642,7 @@ PVZ_SoWo.prototype.wo10 = function(engine, db) {
 
  so1
  */
-PVZ_SoWo.prototype.so1 = function(engine, db) {
+PVZ_SoWo.prototype.so1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -699,7 +699,7 @@ PVZ_SoWo.prototype.so1 = function(engine, db) {
 
  so2
  */
-PVZ_SoWo.prototype.so2 = function(engine, db) {
+PVZ_SoWo.prototype.so2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -756,7 +756,7 @@ PVZ_SoWo.prototype.so2 = function(engine, db) {
 
  so3
  */
-PVZ_SoWo.prototype.so3 = function(engine, db) {
+PVZ_SoWo.prototype.so3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -813,7 +813,7 @@ PVZ_SoWo.prototype.so3 = function(engine, db) {
 
  so4
  */
-PVZ_SoWo.prototype.so4 = function(engine, db) {
+PVZ_SoWo.prototype.so4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -870,7 +870,7 @@ PVZ_SoWo.prototype.so4 = function(engine, db) {
 
  so5
  */
-PVZ_SoWo.prototype.so5 = function(engine, db) {
+PVZ_SoWo.prototype.so5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -927,7 +927,7 @@ PVZ_SoWo.prototype.so5 = function(engine, db) {
 
  so6
  */
-PVZ_SoWo.prototype.so6 = function(engine, db) {
+PVZ_SoWo.prototype.so6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -984,7 +984,7 @@ PVZ_SoWo.prototype.so6 = function(engine, db) {
 
  so7
  */
-PVZ_SoWo.prototype.so7 = function(engine, db) {
+PVZ_SoWo.prototype.so7 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1041,7 +1041,7 @@ PVZ_SoWo.prototype.so7 = function(engine, db) {
 
  so8
  */
-PVZ_SoWo.prototype.so8 = function(engine, db) {
+PVZ_SoWo.prototype.so8 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1098,7 +1098,7 @@ PVZ_SoWo.prototype.so8 = function(engine, db) {
 
  so9
  */
-PVZ_SoWo.prototype.so9 = function(engine, db) {
+PVZ_SoWo.prototype.so9 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1155,7 +1155,7 @@ PVZ_SoWo.prototype.so9 = function(engine, db) {
 
  so10
  */
-PVZ_SoWo.prototype.so10 = function(engine, db) {
+PVZ_SoWo.prototype.so10 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1212,7 +1212,7 @@ PVZ_SoWo.prototype.so10 = function(engine, db) {
 
  so11
  */
-PVZ_SoWo.prototype.so11 = function(engine, db) {
+PVZ_SoWo.prototype.so11 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------

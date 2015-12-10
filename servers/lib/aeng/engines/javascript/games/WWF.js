@@ -36,13 +36,14 @@ WWF_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "DictionaryAccess", "WordPlay", "TurnStart", "TurnEnd", "GameStart", "GameEnd", "AcademicWordListView", "AWIC"
     ];
     var filterEventKeys = [
-        "academic_words_looked_up", "academic_words_played", "current_TurnID", "current_gameID",
-        "number_AWIC_correct", "points_scored", "outcome", "AWIC_status", "AWIC_answer"
+        "academic_words_looked_up", "academic_words_played", "current_TurnID", "current_gameID", "points_scored",
+        "number_AWIC_correct", "outcome", "AWIC_status", "AWIC_answer", "double_definition_hints_used"
     ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
         this.wo1.bind(this),
+        this.wo4.bind(this),
         this.wo5.bind(this),
         this.wo10.bind(this),
         this.wo12.bind(this),
@@ -129,7 +130,7 @@ WWF_SoWo.prototype.wo1 = function(db) {
                 reject(err);
                 return;
             }
-            debug && console.log("wo1 results", results[0]);
+            debug && console.log("wo1 results[0]", results[0]);
 
             // no results
             if(!results.length) {
@@ -202,6 +203,72 @@ WWF_SoWo.prototype.wo1 = function(db) {
 
 
 
+// ===============================================
+// Student used a two Definition Hints ("word freebie") and then didn't play the Power Word from the hint
+/*
+ within 1:   Unit Start/End --> Unit Start --> Turn Start
+             Unit Start/End --> Unit End --> Turn End
+ if:         double_definition_hints_used = true             (this info is nested in Turn End event)
+ and:        academic_words_played = NULL (no academic words played)  (this info is nested in Turn End event)
+ */
+WWF_SoWo.prototype.wo4 = function(db) {
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+        var sql;
+        var threshold = 1;
+        var max = 100;
+
+        sql = 'SELECT count(*) as total \
+                FROM (SELECT eventId, eventData_Value as DDHintUsed FROM events \
+                    WHERE \
+                        eventName="TurnEnd" AND \
+                        eventData_Key="double_definition_hints_used" AND\
+                        eventData_Value="true" \
+                    ) double_definition_hints_used \
+                LEFT JOIN (SELECT eventId, eventData_Value AS AWPlayed FROM events \
+                    WHERE \
+                        eventName="TurnEnd" AND \
+                        eventData_Key="academic_words_played" \
+                    ) academic_words_played \
+                    ON double_definition_hints_used.eventId = academic_words_played.eventId \
+                WHERE \
+                    AWPlayed IS NULL OR AWPlayed = "" \
+                LIMIT '+max;
+
+        debug && console.log("wo4 sql:", sql);
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("AssessmentEngine: Javascript_Engine - WWF_SoWo wo4 DB Error:", err);
+                reject(err);
+                return;
+            }
+            debug && console.log("wo4 results:", results);
+
+            // no results
+            if(!results.length) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            var total = results[0].total;
+            if (total > 0) {
+                resolve({
+                    id:   "wo4",
+                    type: "watchout",
+                    total: total
+                });
+            } else {
+                resolve();
+            }
+
+        });
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};
+
 
 
 // ===============================================
@@ -254,7 +321,7 @@ WWF_SoWo.prototype.wo5 = function(db) {
                 reject(err);
                 return;
             }
-            debug && console.log("wo5 results", results[0]);
+            debug && console.log("wo5 results[0]", results[0]);
 
             // no results
             if(!results.length) {
@@ -855,6 +922,7 @@ WWF_SoWo.prototype.so6 = function(db) {
                 reject(err);
                 return;
             }
+            debug && console.log("so6 results:", results);
 
             // no results
             if(!results.length) {
@@ -1257,7 +1325,6 @@ WWF_SoWo.prototype.so12 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 4;
-        var max = 10;
 
         sql = 'SELECT COUNT(*) as total \
                 FROM events \
@@ -1265,8 +1332,7 @@ WWF_SoWo.prototype.so12 = function(db) {
                     eventName="GameEnd" AND \
                     eventData_Key="outcome" AND \
                     eventData_Value="win" \
-                \
-                LIMIT '+max;
+                ';
 
         debug && console.log("so12 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1285,7 +1351,7 @@ WWF_SoWo.prototype.so12 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so12",
                     type: "shoutout",
@@ -1316,15 +1382,12 @@ WWF_SoWo.prototype.so13 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 10;
-        var max = 10;
 
-        sql = 'SELECT COUNT(*) as total \
-                FROM (SELECT DISTINCT eventId, eventData_Value as gameId FROM events \
-                    WHERE \
-                        eventName="GameEnd" AND \
-                        eventData_Key="current_gameID" \
-                    ) game \
-                LIMIT '+max;
+        sql = 'SELECT COUNT(DISTINCT eventData_Value) as total FROM events \
+                WHERE \
+                    eventName="GameEnd" AND \
+                    eventData_Key="current_gameID" \
+                ';
 
         debug && console.log("so13 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1343,7 +1406,7 @@ WWF_SoWo.prototype.so13 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so13",
                     type: "shoutout",
@@ -1374,15 +1437,12 @@ WWF_SoWo.prototype.so14 = function(db) {
 // ------------------------------------------------
         var sql;
         var threshold = 50;
-        var max = 50;
 
-        sql = 'SELECT COUNT(*) as total \
-                FROM (SELECT DISTINCT eventId, eventData_Value as gameId FROM events \
-                    WHERE \
-                        eventName="GameEnd" AND \
-                        eventData_Key="current_gameID" \
-                    ) game \
-                LIMIT '+max;
+        sql = 'SELECT COUNT(DISTINCT eventData_Value) as total FROM events \
+                WHERE \
+                    eventName="GameEnd" AND \
+                    eventData_Key="current_gameID" \
+                ';
 
         debug && console.log("so14 sql:", sql);
         db.all(sql, function(err, results) {
@@ -1401,7 +1461,7 @@ WWF_SoWo.prototype.so14 = function(db) {
             }
 
             var total = results[0].total;
-            if (total > 0) {
+            if (total > threshold) {
                 resolve({
                     id:   "so14",
                     type: "shoutout",

@@ -1,5 +1,5 @@
 /**
- * Wuzzit Trouble ShoutOut and WatchOut Module
+ * ShoutOut and WatchOut Module
  *
  * Module dependencies:
  *  lodash     - https://github.com/lodash/lodash
@@ -11,14 +11,14 @@ var _       = require('lodash');
 var when    = require('when');
 var sqlite3 = require('sqlite3').verbose();
 
-module.exports = WT_SoWo;
+module.exports = NSQR_SoWo;
 
 /*
  ** Source Document **
- WT Shout Out, Watch Out - [link here]
+ NSQR Shout Out, Watch Out - [link here]
 */
 
-function WT_SoWo(engine, aeService, options){
+function NSQR_SoWo(engine, aeService, options){
     this.version = 0.01;
     this.aeService = aeService;
 
@@ -31,10 +31,10 @@ function WT_SoWo(engine, aeService, options){
 }
 
 
-WT_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
+NSQR_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
 
-    var filterEventTypes = [ "so1", "so2", "so3", "so4", "so5", "so6", "so7", "wo1", "wo2", "wo3", "wo4" ];
-    var filterEventKeys = [ "shout_out", "watch_out" ];
+    var filterEventTypes = [ "FAILED_LEVEL", "COMPLETED_LEVEL", "PLACEMENT_DATA", "COMPLETED_BONUS_LEVEL" ];
+    var filterEventKeys = [ "level", "attempts", "cornSilosPlaced", "iceLettuceCorrect", "melonsCorrect", "drillsCorrect", "wheatgrassPlaced", "carrotLaunchersPlaced", "beetTrapsPlaced", "garlicRaysPlaced", "crannonsPlaced" ];
 
     // this is a list of function names that will be ran every time process is called
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -42,40 +42,41 @@ WT_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
         this.wo2.bind(this),
         this.wo3.bind(this),
         this.wo4.bind(this),
+        this.wo5.bind(this),
+        this.wo6.bind(this),
         this.so1.bind(this),
         this.so2.bind(this),
         this.so3.bind(this),
-        this.so4.bind(this),
-        this.so5.bind(this),
-        this.so6.bind(this),
-        this.so7.bind(this)
+        this.so4.bind(this)
     ]);
 };
 
 // ===============================================
-// No negative rotate
+// Struggling with Level
 /*
- Puzzle 1-9 completed but player has not used a negative-rotate.
+ >= 3 failed levels
 
- wo1
+ FAILED_LEVEL
  */
-WT_SoWo.prototype.wo1 = function(db) {
+NSQR_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
     var sql;
     var total = 0;
-    var threshold = 1;
-    var max = 1;
+    var threshold = 3;
+    var max = 3;
     sql = "SELECT COUNT(*) as total FROM events \
             WHERE \
-            eventName=\"wo1\" \
+            eventName=\"FAILED_LEVEL\" \
+            GROUP BY gameLevel \
+            ORDER BY COUNT(*) DESC \
             LIMIT 1";
 
     //console.log("wo1 sql:", sql);
     db.all(sql, function(err, results) {
         if(err) {
-            console.error("AssessmentEngine: Javascript_Engine - WT_SoWo wo1 DB Error:", err);
+            console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo1 DB Error:", err);
             reject(err);
             return;
         }
@@ -110,13 +111,14 @@ return when.promise(function(resolve, reject) {
 
 
 // ===============================================
-// No multi-rotate
+// No Corn Silos
 /*
- Puzzle 1-11 completed but player has not used multi-rotate.
+ >= 5 completed level and total corn silos placed = 0
 
- wo2
+ COMPLETED_LEVEL [ 'level' ]
+ PLACEMENT_DATA [ 'cornSilosPlaced', 'level' ]
  */
-WT_SoWo.prototype.wo2 = function(db) {
+NSQR_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -124,15 +126,27 @@ WT_SoWo.prototype.wo2 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-            WHERE \
-            eventName=\"wo2\" \
-            LIMIT 1";
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
+                INNER JOIN \
+                (SELECT gameSessionId FROM events \
+                    WHERE \
+                    eventName=\"COMPLETED_LEVEL\" AND \
+                    eventData_Key=\"level\" AND \
+                    CAST(eventData_Value as integer)<=5 \
+                    ORDER BY \
+                    serverTimeStamp DESC) AS gsid \
+                ON ev.gameSessionId = gsid.gameSessionId \
+                WHERE \
+                eventName=\"PLACEMENT_DATA\" AND \
+                (eventData_Key=\"cornSilosPlaced\" OR \
+                eventData_Key=\"level\") \
+                ORDER BY \
+                serverTimeStamp DESC";
 
         //console.log("wo2 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo wo2 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo2 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -144,8 +158,21 @@ WT_SoWo.prototype.wo2 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 5
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "5" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -167,13 +194,14 @@ WT_SoWo.prototype.wo2 = function(db) {
 
 
 // ===============================================
-// No strategy
+// No Iceberg Lettuce
 /*
- Puzzle 1-25 completed but player has not earned three stars on 5 or more of the puzzles from 1-15 onward.
+ >= 6 completed level and total ice lettuce correct = 0
 
- wo3
+ COMPLETED_LEVEL [ 'level' ]
+ PLACEMENT_DATA [ 'iceLettuceCorrect', 'level' ]
  */
-WT_SoWo.prototype.wo3 = function(db) {
+NSQR_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -181,15 +209,27 @@ WT_SoWo.prototype.wo3 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-            WHERE \
-            eventName=\"wo3\" \
-            LIMIT 1";
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
+                INNER JOIN \
+                (SELECT gameSessionId FROM events \
+                    WHERE \
+                    eventName=\"COMPLETED_LEVEL\" AND \
+                    eventData_Key=\"level\" AND \
+                    CAST(eventData_Value as integer)<=6 \
+                    ORDER BY \
+                    serverTimeStamp DESC) AS gsid \
+                ON ev.gameSessionId = gsid.gameSessionId \
+                WHERE \
+                eventName=\"PLACEMENT_DATA\" AND \
+                (eventData_Key=\"iceLettuceCorrect\" OR \
+                eventData_Key=\"level\") \
+                ORDER BY \
+                serverTimeStamp DESC";
 
         //console.log("wo3 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo wo3 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo3 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -201,8 +241,21 @@ WT_SoWo.prototype.wo3 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 6
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "6" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -224,13 +277,14 @@ WT_SoWo.prototype.wo3 = function(db) {
 
 
 // ===============================================
-// No combinations
+// No Melon Strike
 /*
- Player unable to solve puzzle 2-2,2-6,2-9.
+ >= 8 completed level and total melons correct = 0
 
- wo4
+ COMPLETED_LEVEL [ 'level' ]
+ PLACEMENT_DATA [ 'melonsCorrect', 'level' ]
  */
-WT_SoWo.prototype.wo4 = function(db) {
+NSQR_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -238,15 +292,27 @@ WT_SoWo.prototype.wo4 = function(db) {
         var total = 0;
         var threshold = 1;
         var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-            WHERE \
-            eventName=\"wo4\" \
-            LIMIT 1";
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
+                INNER JOIN \
+                (SELECT gameSessionId FROM events \
+                    WHERE \
+                    eventName=\"COMPLETED_LEVEL\" AND \
+                    eventData_Key=\"level\" AND \
+                    CAST(eventData_Value as integer)<=8 \
+                    ORDER BY \
+                    serverTimeStamp DESC) AS gsid \
+                ON ev.gameSessionId = gsid.gameSessionId \
+                WHERE \
+                eventName=\"PLACEMENT_DATA\" AND \
+                (eventData_Key=\"melonsCorrect\" OR \
+                eventData_Key=\"level\") \
+                ORDER BY \
+                serverTimeStamp DESC";
 
         //console.log("wo4 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo wo4 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo4 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -258,8 +324,21 @@ WT_SoWo.prototype.wo4 = function(db) {
                 return;
             }
 
-            total = results[0].total;
-            if(total >= threshold) {
+            // Add the totals together and be sure to check for level 8
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "8" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -281,13 +360,96 @@ WT_SoWo.prototype.wo4 = function(db) {
 
 
 // ===============================================
-// Multi-rotate
+// No Wheatgrass Blaster
 /*
- Player scores three stars on puzzle 1-3
+ >= 9 completed level and total wheat grass placed = 0
 
- so1
+ COMPLETED_LEVEL [ 'level' ]
+ PLACEMENT_DATA [ 'wheatgrassPlaced', 'level' ]
  */
-WT_SoWo.prototype.so1 = function(db) {
+NSQR_SoWo.prototype.wo5 = function(db) {
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+        var sql;
+        var total = 0;
+        var threshold = 1;
+        var max = 1;
+        sql = "SELECT eventData_Key as key, eventData_Value as total FROM events AS ev \
+                INNER JOIN \
+                (SELECT gameSessionId FROM events \
+                    WHERE \
+                    eventName=\"COMPLETED_LEVEL\" AND \
+                    eventData_Key=\"level\" AND \
+                    CAST(eventData_Value as integer)<=9 \
+                    ORDER BY \
+                    serverTimeStamp DESC) AS gsid \
+                ON ev.gameSessionId = gsid.gameSessionId \
+                WHERE \
+                eventName=\"PLACEMENT_DATA\" AND \
+                (eventData_Key=\"wheatgrassPlaced\" OR \
+                eventData_Key=\"level\") \
+                ORDER BY \
+                serverTimeStamp DESC";
+
+        //console.log("wo5 sql:", sql);
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo5 DB Error:", err);
+                reject(err);
+                return;
+            }
+
+            // no results
+            if(!results.length) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            // Add the totals together and be sure to check for level 9
+            var completedLevel = false;
+            for( var i = 0; i < results.length; i++ ) {
+                if( results[i].key == "level" ) {
+                    if( results[i].total == "9" ) {
+                        completedLevel = true;
+                    }
+                }
+                else {
+                    total += parseInt( results[i].total );
+                }
+            }
+
+            // Check the final total
+            if(completedLevel && total < threshold) {
+                // over is 0 - 1 float percent of the amount past threshold over max
+                resolve(
+                    {
+                        id:   "wo5",
+                        type: "watchout",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    }
+                );
+            } else {
+                // do nothing
+                resolve();
+            }
+        });
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};
+
+
+// ===============================================
+// Struggling with Challenge Round
+/*
+ >= 10 completed bonus level attempts
+
+ COMPLETED_BONUS_LEVEL [ 'attempts' ]
+ */
+NSQR_SoWo.prototype.wo6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -297,13 +459,74 @@ WT_SoWo.prototype.so1 = function(db) {
         var max = 1;
         sql = "SELECT COUNT(*) as total FROM events \
                 WHERE \
-                eventName=\"so1\" \
+                eventName=\"COMPLETED_BONUS_LEVEL\" AND \
+                eventData_Key=\"attempts\" AND \
+                CAST(eventData_Value as integer)>=10 \
+                LIMIT 1";
+
+        //console.log("wo6 sql:", sql);
+        db.all(sql, function(err, results) {
+            if(err) {
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo wo6 DB Error:", err);
+                reject(err);
+                return;
+            }
+
+            // no results
+            if(!results.length) {
+                // do nothing
+                resolve();
+                return;
+            }
+
+            total = results[0].total;
+            if(total >= threshold) {
+                // over is 0 - 1 float percent of the amount past threshold over max
+                resolve(
+                    {
+                        id:   "wo6",
+                        type: "watchout",
+                        total: total,
+                        overPercent: (total - threshold + 1)/(max - threshold + 1)
+                    }
+                );
+            } else {
+                // do nothing
+                resolve();
+            }
+        });
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};
+
+
+// ===============================================
+// Challenge Round Skill
+/*
+ <= 4 completed bonus level attempts
+
+ COMPLETED_BONUS_LEVEL [ 'attempts' ]
+ */
+NSQR_SoWo.prototype.so1 = function(db) {
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+        var sql;
+        var total = 0;
+        var threshold = 1;
+        var max = 1;
+        sql = "SELECT COUNT(*) as total FROM events \
+                WHERE \
+                eventName=\"COMPLETED_BONUS_LEVEL\" AND \
+                eventData_Key=\"attempts\" AND \
+                CAST(eventData_Value as integer)<=4 \
                 LIMIT 1";
 
         //console.log("so1 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so1 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo so1 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -338,29 +561,39 @@ WT_SoWo.prototype.so1 = function(db) {
 
 
 // ===============================================
-// Negative rotate
+// Tool Expert
 /*
- Player scores three stars on puzzle 1-4
+ player has used all tools
 
- so2
+ PLACEMENT_DATA [ 'iceLettuceCorrect','melonsCorrect','drillsCorrect',
+ 'wheatgrassPlaced','carrotLaunchersPlaced','beetTrapsPlaced',
+ 'garlicRaysPlaced','crannonsPlaced','cornSilosPlaced' ]
  */
-WT_SoWo.prototype.so2 = function(db) {
+NSQR_SoWo.prototype.so2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
         var sql;
         var total = 0;
-        var threshold = 1;
-        var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
+        var threshold = 9;
+        var max = 9;
+        sql = "SELECT DISTINCT eventData_Key FROM events AS ev \
+                INNER JOIN \
+                (SELECT gameSessionId FROM events \
+                    ORDER BY \
+                    serverTimeStamp DESC ) AS gsid \
+                ON ev.gameSessionId = gsid.gameSessionId \
                 WHERE \
-                eventName=\"so2\" \
-                LIMIT 1";
+                eventName=\"PLACEMENT_DATA\" AND \
+                eventData_Key IN (\"iceLettuceCorrect\",\"melonsCorrect\",\"drillsCorrect\",\"wheatgrassPlaced\",\"carrotLaunchersPlaced\",\"beetTrapsPlaced\",\"garlicRaysPlaced\",\"crannonsPlaced\",\"cornSilosPlaced\") AND \
+                CAST(eventData_Value as integer)>=1 \
+                ORDER BY \
+                serverTimeStamp DESC";
 
         //console.log("so2 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so2 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - NSQR_SoWo so2 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -372,7 +605,7 @@ WT_SoWo.prototype.so2 = function(db) {
                 return;
             }
 
-            total = results[0].total;
+            total = results.length;
             if(total >= threshold) {
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
@@ -395,13 +628,13 @@ WT_SoWo.prototype.so2 = function(db) {
 
 
 // ===============================================
-// Multi-negative
+// Challenge Round Expert
 /*
- Player scores three stars on puzzle 1-5
+ >= 4 completed bonus level
 
- so3
+ COMPLETED_BONUS_LEVEL [ 'level' ]
  */
-WT_SoWo.prototype.so3 = function(db) {
+NSQR_SoWo.prototype.so3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -411,13 +644,14 @@ WT_SoWo.prototype.so3 = function(db) {
         var max = 1;
         sql = "SELECT COUNT(*) as total FROM events \
                 WHERE \
-                eventName=\"so3\" \
-                LIMIT 1";
+                eventName=\"COMPLETED_BONUS_LEVEL\" AND \
+                eventData_Key=\"level\" AND \
+                CAST(eventData_Value as integer)>=4";
 
         //console.log("so3 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so3 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - GOG_SoWo so3 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -452,13 +686,13 @@ WT_SoWo.prototype.so3 = function(db) {
 
 
 // ===============================================
-// Positive and negative
+// Game Over Gopher Expert
 /*
- Player scores three stars on puzzle 1-6
+ >= 14 completed level
 
- so4
+ COMPLETED_LEVEL [ 'level' ]
  */
-WT_SoWo.prototype.so4 = function(db) {
+GOG_SoWo.prototype.so4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -468,13 +702,14 @@ WT_SoWo.prototype.so4 = function(db) {
         var max = 1;
         sql = "SELECT COUNT(*) as total FROM events \
                 WHERE \
-                eventName=\"so4\" \
-                LIMIT 1";
+                eventName=\"COMPLETED_LEVEL\" AND \
+                eventData_Key=\"level\" AND \
+                CAST(eventData_Value as integer)>=14";
 
         //console.log("so4 sql:", sql);
         db.all(sql, function(err, results) {
             if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so4 DB Error:", err);
+                console.error("AssessmentEngine: Javascript_Engine - GOG_SoWo so4 DB Error:", err);
                 reject(err);
                 return;
             }
@@ -492,177 +727,6 @@ WT_SoWo.prototype.so4 = function(db) {
                 resolve(
                     {
                         id:   "so4",
-                        type: "shoutout",
-                        total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
-                    }
-                );
-            } else {
-                // do nothing
-                resolve();
-            }
-        });
-// ------------------------------------------------
-    }.bind(this));
-// end promise wrapper
-};
-
-
-// ===============================================
-// Strategy
-/*
- Player scores three stars on puzzle 1-15
-
- so5
- */
-WT_SoWo.prototype.so5 = function(db) {
-// add promise wrapper
-    return when.promise(function(resolve, reject) {
-// ------------------------------------------------
-        var sql;
-        var total = 0;
-        var threshold = 1;
-        var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-                WHERE \
-                eventName=\"so5\" \
-                LIMIT 1";
-
-        //console.log("so5 sql:", sql);
-        db.all(sql, function(err, results) {
-            if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so5 DB Error:", err);
-                reject(err);
-                return;
-            }
-
-            // no results
-            if(!results.length) {
-                // do nothing
-                resolve();
-                return;
-            }
-
-            total = results[0].total;
-            if(total >= threshold) {
-                // over is 0 - 1 float percent of the amount past threshold over max
-                resolve(
-                    {
-                        id:   "so5",
-                        type: "shoutout",
-                        total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
-                    }
-                );
-            } else {
-                // do nothing
-                resolve();
-            }
-        });
-// ------------------------------------------------
-    }.bind(this));
-// end promise wrapper
-};
-
-
-// ===============================================
-// Two cogs
-/*
- Player scores three stars on puzzle 2-2
-
- so6
- */
-WT_SoWo.prototype.so6 = function(db) {
-// add promise wrapper
-    return when.promise(function(resolve, reject) {
-// ------------------------------------------------
-        var sql;
-        var total = 0;
-        var threshold = 1;
-        var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-                WHERE \
-                eventName=\"so6\" \
-                LIMIT 1";
-
-        //console.log("so6 sql:", sql);
-        db.all(sql, function(err, results) {
-            if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so6 DB Error:", err);
-                reject(err);
-                return;
-            }
-
-            // no results
-            if(!results.length) {
-                // do nothing
-                resolve();
-                return;
-            }
-
-            total = results[0].total;
-            if(total >= threshold) {
-                // over is 0 - 1 float percent of the amount past threshold over max
-                resolve(
-                    {
-                        id:   "so6",
-                        type: "shoutout",
-                        total: total,
-                        overPercent: (total - threshold + 1)/(max - threshold + 1)
-                    }
-                );
-            } else {
-                // do nothing
-                resolve();
-            }
-        });
-// ------------------------------------------------
-    }.bind(this));
-// end promise wrapper
-};
-
-
-// ===============================================
-// Better solution
-/*
- Player scores three stars in fewer than the stated threshold. (Any puzzle.)
-
- so7
- */
-WT_SoWo.prototype.so7 = function(db) {
-// add promise wrapper
-    return when.promise(function(resolve, reject) {
-// ------------------------------------------------
-        var sql;
-        var total = 0;
-        var threshold = 1;
-        var max = 1;
-        sql = "SELECT COUNT(*) as total FROM events \
-                WHERE \
-                eventName=\"so7\" \
-                LIMIT 1";
-
-        //console.log("so7 sql:", sql);
-        db.all(sql, function(err, results) {
-            if(err) {
-                console.error("AssessmentEngine: Javascript_Engine - WT_SoWo so7 DB Error:", err);
-                reject(err);
-                return;
-            }
-
-            // no results
-            if(!results.length) {
-                // do nothing
-                resolve();
-                return;
-            }
-
-            total = results[0].total;
-            if(total >= threshold) {
-                // over is 0 - 1 float percent of the amount past threshold over max
-                resolve(
-                    {
-                        id:   "so7",
                         type: "shoutout",
                         total: total,
                         overPercent: (total - threshold + 1)/(max - threshold + 1)

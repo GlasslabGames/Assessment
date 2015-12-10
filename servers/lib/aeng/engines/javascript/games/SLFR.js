@@ -64,7 +64,7 @@ SLFR_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData
  than 95% of all players, as determined by our previous analytics. Each level has
  a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo1 = function(engine, db) {
+SLFR_SoWo.prototype.wo1 = function(db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -130,7 +130,7 @@ return when.promise(function(resolve, reject) {
  than 95% of all players, as determined by our previous analytics. Each level has
  a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo2 = function(engine, db) {
+SLFR_SoWo.prototype.wo2 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -196,7 +196,7 @@ SLFR_SoWo.prototype.wo2 = function(engine, db) {
  95% of all players, as determined by our previous analytics. Each level has a different
  threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo3 = function(engine, db) {
+SLFR_SoWo.prototype.wo3 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -268,7 +268,7 @@ SLFR_SoWo.prototype.wo3 = function(engine, db) {
  tries than 95% of all players, as determined by our previous analytics. Each level
  has a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo4 = function(engine, db) {
+SLFR_SoWo.prototype.wo4 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -334,7 +334,7 @@ SLFR_SoWo.prototype.wo4 = function(engine, db) {
  tries than 95% of all players, as determined by our previous analytics. Each level
  has a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo5 = function(engine, db) {
+SLFR_SoWo.prototype.wo5 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -401,7 +401,7 @@ SLFR_SoWo.prototype.wo5 = function(engine, db) {
  than 95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo6 = function(engine, db) {
+SLFR_SoWo.prototype.wo6 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -468,7 +468,7 @@ SLFR_SoWo.prototype.wo6 = function(engine, db) {
  95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo7 = function(engine, db) {
+SLFR_SoWo.prototype.wo7 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -534,7 +534,7 @@ SLFR_SoWo.prototype.wo7 = function(engine, db) {
  95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo8 = function(engine, db) {
+SLFR_SoWo.prototype.wo8 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -607,7 +607,7 @@ SLFR_SoWo.prototype.wo8 = function(engine, db) {
  95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo9 = function(engine, db) {
+SLFR_SoWo.prototype.wo9 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -676,7 +676,7 @@ SLFR_SoWo.prototype.wo9 = function(engine, db) {
  95% of all players, as determined by our previous analytics. Each level has a different
  threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo10 = function(engine, db) {
+SLFR_SoWo.prototype.wo10 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -745,7 +745,7 @@ SLFR_SoWo.prototype.wo10 = function(engine, db) {
  tries than 95% of all players, as determined by our previous analytics. Each level has
  a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo11 = function(engine, db) {
+SLFR_SoWo.prototype.wo11 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -815,7 +815,7 @@ SLFR_SoWo.prototype.wo11 = function(engine, db) {
  tries than 95% of all players, as determined by our previous analytics. Each level has
  a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo12 = function(engine, db) {
+SLFR_SoWo.prototype.wo12 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -883,7 +883,7 @@ SLFR_SoWo.prototype.wo12 = function(engine, db) {
  than 95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo13 = function(engine, db) {
+SLFR_SoWo.prototype.wo13 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -948,7 +948,7 @@ SLFR_SoWo.prototype.wo13 = function(engine, db) {
  than 95% of all players, as determined by our previous analytics. Each level has a
  different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo14 = function(engine, db) {
+SLFR_SoWo.prototype.wo14 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1015,7 +1015,7 @@ SLFR_SoWo.prototype.wo14 = function(engine, db) {
  than 95% of all players, as determined by our previous analytics. Each level has
  a different threshold retry count, which is provided in the Level List tab.
  */
-SLFR_SoWo.prototype.wo15 = function(engine, db) {
+SLFR_SoWo.prototype.wo15 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1081,7 +1081,7 @@ SLFR_SoWo.prototype.wo15 = function(engine, db) {
  Completed all levels the concept (see Name/ID field) with a retryCount=0. Levels
  per concepts are provided in the Level List tab.
  */
-SLFR_SoWo.prototype.so1 = function(engine, db) {
+SLFR_SoWo.prototype.so1 = function(db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
