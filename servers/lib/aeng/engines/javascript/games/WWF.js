@@ -94,7 +94,7 @@ var exampleRow = {
  with sequental:        current_turn_id
  does NOT contain:      Player Action --> UI Use --> Academic Word List visited
  */
-WWF_SoWo.prototype.wo1 = function(db) {
+WWF_SoWo.prototype.wo1 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -211,7 +211,7 @@ WWF_SoWo.prototype.wo1 = function(db) {
  if:         double_definition_hints_used = true             (this info is nested in Turn End event)
  and:        academic_words_played = NULL (no academic words played)  (this info is nested in Turn End event)
  */
-WWF_SoWo.prototype.wo4 = function(db) {
+WWF_SoWo.prototype.wo4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -278,7 +278,7 @@ WWF_SoWo.prototype.wo4 = function(db) {
  within 5 past sequential:   current_turn_id
  does NOT contain:           Player Action --> Grid Play --> Word Play --> [academic_words_played]: any
  */
-WWF_SoWo.prototype.wo5 = function(db) {
+WWF_SoWo.prototype.wo5 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -406,7 +406,7 @@ WWF_SoWo.prototype.wo5 = function(db) {
                             Player Action --> Grid Play --> Word Play --> [academic_word_played]
  AND contains:  :         Player Action --> UI Use --> AWIC --> [AWIC_status:] fail
  */
-WWF_SoWo.prototype.wo10 = function(db) {
+WWF_SoWo.prototype.wo10 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -502,7 +502,7 @@ WWF_SoWo.prototype.wo10 = function(db) {
  since (last 7):         Unit Start/End --> Unit Start --> Game Start
  with last 7 sequential: current_game_id
  */
-WWF_SoWo.prototype.wo12 = function(db) {
+WWF_SoWo.prototype.wo12 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -607,7 +607,7 @@ WWF_SoWo.prototype.wo12 = function(db) {
  with last 5 sequential:           current_turn_id
  in which every one contains:  Unit Start/End --> Unit Start --> Turn End --> [outcome]: resign, pass, or swap
  */
-WWF_SoWo.prototype.wo14 = function(db) {
+WWF_SoWo.prototype.wo14 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -735,7 +735,7 @@ WWF_SoWo.prototype.wo14 = function(db) {
  with same:         "current_game_id"
  contains 8:        "Player Action --> UI Use --> Dictionary Access --> [academic_words_looked_up]: any"
  */
-WWF_SoWo.prototype.so2 = function(db) {
+WWF_SoWo.prototype.so2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -807,7 +807,7 @@ WWF_SoWo.prototype.so2 = function(db) {
  with same:         "current_game_id"
  contains 5:        "Player Action --> Grid Play --> Word Play --> [academic_words_played]: any"
  */
-WWF_SoWo.prototype.so5 = function(db) {
+WWF_SoWo.prototype.so5 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -879,7 +879,7 @@ WWF_SoWo.prototype.so5 = function(db) {
  contains 3:        "Player Action --> Grid Play --> Word Play --> [academic_words_played]: any"
  with sequential:   "current_turn_id"
  */
-WWF_SoWo.prototype.so6 = function(db) {
+WWF_SoWo.prototype.so6 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -976,7 +976,7 @@ WWF_SoWo.prototype.so6 = function(db) {
  with same:         "current_turn_id"
  contains 2:        "Player Action --> Grid Play --> Word Play --> [academic_words_played]: any"
  */
-WWF_SoWo.prototype.so7 = function(db) {
+WWF_SoWo.prototype.so7 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1041,7 +1041,7 @@ WWF_SoWo.prototype.so7 = function(db) {
  total # of:                Player Action --> Grid Play --> Word Play --> [academic_words_played]: any
  since (very 1st word):     GlassLab Dash --> Learning Event --> Student played first AW
  */
-WWF_SoWo.prototype.so8 = function(db) {
+WWF_SoWo.prototype.so8 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1102,7 +1102,7 @@ WWF_SoWo.prototype.so8 = function(db) {
  total # of:                Player Action --> Grid Play --> Word Play --> [academic_words_played]: any
  since (very 1st word):     GlassLab Dash --> Learning Event --> Student played first AW
  */
-WWF_SoWo.prototype.so9 = function(db) {
+WWF_SoWo.prototype.so9 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1167,7 +1167,7 @@ WWF_SoWo.prototype.so9 = function(db) {
                         Player Action --> UI Use --> Dictionary Access --> [academic_words_looked_up]: any
  with SAME value in:    words_played and words_looked_up, respectively
  */
-WWF_SoWo.prototype.so10 = function(db) {
+WWF_SoWo.prototype.so10 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1255,7 +1255,7 @@ WWF_SoWo.prototype.so10 = function(db) {
  with same:             current_game_id
  contains 3 or more:    Player Action --> Grid Play --> Word Play --> [number_AWIC_correct]: 1
  */
-WWF_SoWo.prototype.so11 = function(db) {
+WWF_SoWo.prototype.so11 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1319,7 +1319,7 @@ WWF_SoWo.prototype.so11 = function(db) {
  totaling 4:                  Unit Start/End --> Unit End --> Game End --> [outcome]: win 
  since (very 1st):         Unit Start/End --> Unit Start --> Game Start
  */
-WWF_SoWo.prototype.so12 = function(db) {
+WWF_SoWo.prototype.so12 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1376,7 +1376,7 @@ WWF_SoWo.prototype.so12 = function(db) {
  totaling 10:                  Unit Start/End --> Unit End --> Game End
  since (very 1st):         Unit Start/End --> Unit Start --> Game Start
  */
-WWF_SoWo.prototype.so13 = function(db) {
+WWF_SoWo.prototype.so13 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -1431,7 +1431,7 @@ WWF_SoWo.prototype.so13 = function(db) {
  totaling 50:                  Unit Start/End --> Unit End --> Game End
  since (very 1st):         Unit Start/End --> Unit Start --> Game Start
  */
-WWF_SoWo.prototype.so14 = function(db) {
+WWF_SoWo.prototype.so14 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------

@@ -58,7 +58,7 @@ NSQR_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData
 
  FAILED_LEVEL
  */
-NSQR_SoWo.prototype.wo1 = function(db) {
+NSQR_SoWo.prototype.wo1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -118,7 +118,7 @@ return when.promise(function(resolve, reject) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'cornSilosPlaced', 'level' ]
  */
-NSQR_SoWo.prototype.wo2 = function(db) {
+NSQR_SoWo.prototype.wo2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -201,7 +201,7 @@ NSQR_SoWo.prototype.wo2 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'iceLettuceCorrect', 'level' ]
  */
-NSQR_SoWo.prototype.wo3 = function(db) {
+NSQR_SoWo.prototype.wo3 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -284,7 +284,7 @@ NSQR_SoWo.prototype.wo3 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'melonsCorrect', 'level' ]
  */
-NSQR_SoWo.prototype.wo4 = function(db) {
+NSQR_SoWo.prototype.wo4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -367,7 +367,7 @@ NSQR_SoWo.prototype.wo4 = function(db) {
  COMPLETED_LEVEL [ 'level' ]
  PLACEMENT_DATA [ 'wheatgrassPlaced', 'level' ]
  */
-NSQR_SoWo.prototype.wo5 = function(db) {
+NSQR_SoWo.prototype.wo5 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -449,7 +449,7 @@ NSQR_SoWo.prototype.wo5 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'attempts' ]
  */
-NSQR_SoWo.prototype.wo6 = function(db) {
+NSQR_SoWo.prototype.wo6 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -508,7 +508,7 @@ NSQR_SoWo.prototype.wo6 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'attempts' ]
  */
-NSQR_SoWo.prototype.so1 = function(db) {
+NSQR_SoWo.prototype.so1 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -569,7 +569,7 @@ NSQR_SoWo.prototype.so1 = function(db) {
  'wheatgrassPlaced','carrotLaunchersPlaced','beetTrapsPlaced',
  'garlicRaysPlaced','crannonsPlaced','cornSilosPlaced' ]
  */
-NSQR_SoWo.prototype.so2 = function(db) {
+NSQR_SoWo.prototype.so2 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -634,7 +634,7 @@ NSQR_SoWo.prototype.so2 = function(db) {
 
  COMPLETED_BONUS_LEVEL [ 'level' ]
  */
-NSQR_SoWo.prototype.so3 = function(db) {
+NSQR_SoWo.prototype.so3 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -692,7 +692,7 @@ NSQR_SoWo.prototype.so3 = function(db) {
 
  COMPLETED_LEVEL [ 'level' ]
  */
-GOG_SoWo.prototype.so4 = function(db) {
+GOG_SoWo.prototype.so4 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------

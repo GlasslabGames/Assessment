@@ -91,7 +91,7 @@ SC_SoWo.prototype.process = function(userId, gameId, gameSessionId, eventsData) 
 
  GL_Scenario_Summary[ 'busStops' ]
  */
-SC_SoWo.prototype.park_wo1 = function(db) {
+SC_SoWo.prototype.park_wo1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -149,7 +149,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Zone [ "type":"residential" ]
  */
-SC_SoWo.prototype.park_so1 = function(db, userId) {
+SC_SoWo.prototype.park_so1 = function(engine, db, userId) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -181,7 +181,7 @@ return when.promise(function(resolve, reject) {
 
         total = results[0].total;
         if(total >= threshold) {
-            this.engine.awardBadge(userId, 9);
+            engine.awardBadge(userId, 9);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
@@ -210,7 +210,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Zone [ "type":"industrial", "type":"commercial" ]
  */
-SC_SoWo.prototype.alex_wo1 = function(db) {
+SC_SoWo.prototype.alex_wo1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -264,7 +264,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Zone [ "type":"commercial" ], GL_Scenario_Summary [ 'jobsScore' ]
  */
-SC_SoWo.prototype.alex_so1 = function(db, userId) {
+SC_SoWo.prototype.alex_so1 = function(engine, db, userId) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -307,7 +307,7 @@ return when.promise(function(resolve, reject) {
         total = results.length;
 
         if(total >= threshold) {
-            this.engine.awardBadge(userId, 10);
+            engine.awardBadge(userId, 10);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
@@ -338,7 +338,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Power_Warning[ 'type': 'Low Power' ], GL_Failure [ 'info': "Power Failure" ]
 */
-SC_SoWo.prototype.sierra_wo1 = function(db, userId, gameId) {
+SC_SoWo.prototype.sierra_wo1 = function(engine, db, userId, gameId) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -440,7 +440,7 @@ return when.promise(function(resolve, reject) {
  AND
  GL_Power_Warning[ 'type': 'Low Power' ], GL_Failure [ 'info': "Power Failure" ]
  */
-SC_SoWo.prototype.sierra_so1 = function(db, userId) {
+SC_SoWo.prototype.sierra_so1 = function(engine, db, userId) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -494,7 +494,7 @@ return when.promise(function(resolve, reject) {
 
         total = results[0].bullTotal;
         if(total >= threshold) {
-            this.engine.awardBadge(userId, 27);
+            engine.awardBadge(userId, 27);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
@@ -525,7 +525,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Zone [ "type":"residential" ]
  */
-SC_SoWo.prototype.jack_wo1 = function(db) {
+SC_SoWo.prototype.jack_wo1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -585,7 +585,7 @@ return when.promise(function(resolve, reject) {
 
  GL_Power_Warning[ 'type': 'Low Power' ],GL_Failure [ 'info': "Power Failure" ]
  */
-SC_SoWo.prototype.jack_so1 = function(db) {
+SC_SoWo.prototype.jack_so1 = function(engine, db) {
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
