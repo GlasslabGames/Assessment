@@ -17,6 +17,14 @@ module.exports = {
             method: {
                 post: "addActivity"
             }
+        },
+        {
+            api: "/int/v1/aeng/processStatus",
+            service: "aeng",
+            controller: "queue",
+            method: {
+                get: "processStatus"
+            }
         }
     ]
 
