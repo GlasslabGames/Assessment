@@ -231,26 +231,30 @@ ServiceManager.prototype.setupWebAppRoutes = function() {
 };
 
 ServiceManager.prototype.setupDefaultRoutes = function() {
+    if( this.options &&
+        this.options.webapp &&
+        this.options.webapp.staticContentPath ) {
 
-    // root
-    this.app.get("/", function(req, res){
-        //console.log("static root:", req.originalUrl);
-        this.stats.increment("info", "Route.Static.Root");
+        // root
+        this.app.get("/", function(req, res){
+            //console.log("static root:", req.originalUrl);
+            this.stats.increment("info", "Route.Static.Root");
 
-        var fullPath = path.resolve(this.options.webapp.staticContentPath + "/" + this.routesMap.index);
-        res.sendfile( fullPath );
-    }.bind(this));
+            var fullPath = path.resolve(this.options.webapp.staticContentPath + "/" + this.routesMap.index);
+            res.sendfile( fullPath );
+        }.bind(this));
 
-    // all others -> DEFAULT
-    this.app.use(function defaultRoute(req, res) {
-        this.stats.increment("info", "Route.Default");
+        // all others -> DEFAULT
+        this.app.use(function defaultRoute(req, res) {
+            this.stats.increment("info", "Route.Default");
 
-        // server up index
-        //console.log("defaultRoute:", req.originalUrl);
-        //res.redirect("/");
-        var fullPath = path.resolve(this.options.webapp.staticContentPath + "/" + this.routesMap.index);
-        res.sendfile( fullPath );
-    }.bind(this));
+            // server up index
+            //console.log("defaultRoute:", req.originalUrl);
+            //res.redirect("/");
+            var fullPath = path.resolve(this.options.webapp.staticContentPath + "/" + this.routesMap.index);
+            res.sendfile( fullPath );
+        }.bind(this));
+    }
 }
 
 

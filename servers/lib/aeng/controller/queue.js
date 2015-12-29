@@ -5,8 +5,9 @@ var when   = require('when');
 var Util   = require('../../core/util.js');
 
 module.exports = {
-    addToQueue:   addToQueue,
-    addActivity:  addActivity
+    addToQueue:     addToQueue,
+    addActivity:    addActivity,
+    processStatus:  processStatus
 };
 
 var exampleInput = {};
@@ -112,4 +113,16 @@ function addActivity(req, res){
         this.requestUtil.errorResponse(res, "Add Activity Error", 500);
     }
 };
+
+function processStatus(req, res){
+    this.queue.getJobCount()
+    .then(function(count) {
+        this.requestUtil.jsonResponse(res, { jobCount: count });
+    }.bind(this))
+    .then(null, function(err) {
+        console.error("Assessment Engine: getJobCount Error:", err);
+        this.requestUtil.errorResponse(res, err, 500);
+    }.bind(this));
+}
+
 
