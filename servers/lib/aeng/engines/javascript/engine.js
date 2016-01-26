@@ -29,7 +29,7 @@ function JavascriptEngine(aeService, engineDir, options){
     this.requestUtil   = new Util.Request(this.options);
 }
 
-JavascriptEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
+JavascriptEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData, aInfo){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -67,7 +67,7 @@ return when.promise(function(resolve, reject) {
     } else {
 
         // auto process SOWO events
-        this._processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData)
+        this._processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData, aInfo)
         .then(resolve, reject);
     }
 
@@ -98,8 +98,10 @@ JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
 /*
  Telemetry can directly trigger Shout Outs and Watch Outs.
 */
-JavascriptEngine.prototype._processAutoSOWOs = function(that, userId, gameId, gameSessionId, eventsData) {
+JavascriptEngine.prototype._processAutoSOWOs = function(that, userId, gameId, gameSessionId, eventsData, aInfo) {
 return when.promise(function (resolve, reject) {
+
+    var rules = aInfo && aInfo.rules;
 
     // // testing - inject fake event ...
     // if (eventsData[0].events) {
@@ -137,6 +139,8 @@ return when.promise(function (resolve, reject) {
             if (!eventsData[i].events[j].eventName) continue;
             if (!eventsData[i].events[j].eventData) continue;
 
+            var eventName = eventsData[i].events[j].eventName;
+
             // var enm = eventsData[i].events[j].eventName || '';
             // var ttp = eventsData[i].events[j].totalTimePlayed || 0;
             // var gmlvl = eventsData[i].events[j].gameLevel || '';
@@ -148,38 +152,52 @@ return when.promise(function (resolve, reject) {
             // console.log('    ----                * eventData :');
 
             // console.log('    xxxx    DBG     This is where trigger_shout_out is checked ...');
-
-            if (!eventsData[i].events[j].eventData.keySOWO) continue;
-
-            var sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // eg. 'so15' or 'wo4'
-
+            var sowo_ID;
             var time = Util.GetTimeStamp();
             var gsid = eventsData[i].gameSessionId;
 
-            if ('trigger_shout_out' == eventsData[i].events[j].eventName) {
+            if (eventsData[i].events[j].eventData.keySOWO) {
 
-                if (!sum) {
-                    sum = { shoutout: {} };
+                sowo_ID = eventsData[i].events[j].eventData.keySOWO;  // eg. 'so15' or 'wo4'
+
+                if ('trigger_shout_out' == eventName) {
+
+                    if (!_.isObject(sum.shoutout)) {
+                        sum.shoutout = {};
+                    }
+
+                    sum.shoutout[sowo_ID] = {total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid};
                 }
 
-                if (!_.isObject(sum.shoutout)) {
-                    sum.shoutout = {};
+                if ('trigger_watch_out' == eventName) {
+
+                    if (!_.isObject(sum.watchout)) {
+                        sum.watchout = {};
+                    }
+
+                    sum.watchout[sowo_ID] = {total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid};
                 }
 
-                sum.shoutout[ sowo_ID ] = { total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid };
-            }
+            } else if (rules[eventName]) {
 
-            if ('trigger_watch_out' == eventsData[i].events[j].eventName) {
+                sowo_ID = eventName;
 
-                if (!sum) {
-                    sum = { watchout: {} };
+                if (sowo_ID.indexOf("so") === 0) {
+
+                    if (!_.isObject(sum.shoutout)) {
+                        sum.shoutout = {};
+                    }
+                    sum.shoutout[sowo_ID] = {total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid};
                 }
 
-                if (!_.isObject(sum.watchout)) {
-                    sum.watchout = {};
-                }
+                if (sowo_ID.indexOf("wo") === 0) {
 
-                sum.watchout[ sowo_ID ] = { total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid };
+                    if (!_.isObject(sum.watchout)) {
+                        sum.watchout = {};
+                    }
+
+                    sum.watchout[sowo_ID] = {total: 1, overPercent: 0, timestamp: time, gameSessionId: gsid};
+                }
             }
         }
     }

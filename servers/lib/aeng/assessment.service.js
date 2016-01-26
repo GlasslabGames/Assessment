@@ -404,7 +404,7 @@ return when.promise(function(resolve, reject) {
     var enginePromise;
     if(this.engines[engine]) {
         // engine.js
-        enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData);
+        enginePromise = this.engines[engine].run(userId, gameId, gameSessionId, eventsData, aInfo);
     }
     else {
         enginePromise = Util.PromiseContinue();
