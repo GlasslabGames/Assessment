@@ -1485,7 +1485,7 @@ WWF_SoWo.prototype.so14 = function(engine, db) {
  updated every:                     Player Action --> Grid Play --> Word Play
  single event exceeding 50 points:  Player Action --> Grid Play --> Word Play --> [points_scored]: 51+
  */
-WWF_SoWo.prototype.so15 = function(db) {
+WWF_SoWo.prototype.so15 = function(engine, db) {
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
