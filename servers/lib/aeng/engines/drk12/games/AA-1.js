@@ -28,9 +28,20 @@ function AA_DRK12(engine, aeService, options) {
 
 
 AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
-    var filterEventTypes = ["Fuse_core", "Launch_attack", "Set_up_battle"];
+    var filterEventTypes = [
+        "Give_schemetrainingevidence",
+        "Fuse_core",
+        "Battle_Select_CoreAttack",
+        "Launch_attack",
+        "Battle_Select_CqAttack",
+        "Use_backing"
+    ];
     // always include one or more keys for a give type above
-    var filterEventKeys = ["weakness", "success", "playerTurn", "attempt"];
+    var filterEventKeys = [
+        "success",  //Give_schemetrainingevidence, Use_backing
+        "weakness", //Fuse_core
+        "attackId"  //Battle_Select_CoreAttack, Launch_attack, Battle_Select_CqAttack
+    ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
         this.connecting_evidence_argument_schemes.bind(this),
