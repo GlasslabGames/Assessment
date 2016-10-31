@@ -70,7 +70,46 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
 AA_DRK12.prototype.connecting_evidence_argument_schemes = function(engine, db) {
 return when.promise(function(resolve, reject) {
 
+    var sql = 'SELECT * FROM events \
+        WHERE \
+            eventName="Give_schemetrainingevidence" \
+            OR eventName="Fuse_core" \
+        ORDER BY \
+            serverTimeStamp DESC, gameSessionEventOrder DESC';
 
+    db.all(sql, function(err, results) {
+        if (err) {
+            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.connecting_evidence DB Error:", err);
+            reject(err);
+            return;
+        }
+
+        var level = "NotAttempted";
+        var total_attempts = results.length;
+        var successful_attempts = 0;
+        if (total_attempts > 0) {
+
+            // count number of successful attempts
+            successful_attempts = _.sum(results, function(row) {
+                if (row.eventName == "Fuse_core" && row.eventData_Key != "success") {
+                    return 0;
+                }
+                return 1;
+            });
+
+            //determine level
+            level = (successful_attempts / total_attempts >= 0.50) ? "Advancing" : "NeedSupport";
+        }
+
+        resolve({
+            "id": "connecting-evidence",
+            "level": level,
+            "score": {
+                "correct": successful_attempts,
+                "attempts": total_attempts
+            }
+        })
+    })
 
 });
 };
