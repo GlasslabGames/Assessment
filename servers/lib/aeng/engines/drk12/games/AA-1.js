@@ -174,10 +174,67 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
  if(count(select(use_backing)=null)){grey}
  */
 AA_DRK12.prototype.using_backing = function(engine, db) {
-    return when.promise(function(resolve, reject) {
+return when.promise(function(resolve, reject) {
+
+    var sql = 'SELECT * FROM events \
+        WHERE \
+            eventName="Quest_start" \
+            OR eventName="Use_backing" \
+        ORDER BY \
+            serverTimeStamp ASC, gameSessionEventOrder ASC';
 
 
-        resolve({})
+    db.all(sql, function(err, results) {
+        if (err) {
+            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.connecting_evidence DB Error:", err);
+            reject(err);
+            return;
+        }
 
-    });
+        var quests = {};
+        var curQuestId = undefined;
+        var i;
+        var total_attempts = 0;
+        var successful_attempts = 0;
+        for (i=0; i < results.length; i++) {
+            var e = results[i];
+            if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
+                curQuestId = e.eventData_Value;
+                quests[curQuestId] = {
+                    'questId': curQuestId,
+                    'score': {
+                        'correct': 0,
+                        'attempts': 0
+                    }
+                }
+            }
+            else if (e.eventName == "Use_backing") {
+                if (curQuestId) {
+                    quests[curQuestId].score.attempts += 1;
+                    total_attempts += 1;
+
+                    if (e.eventData_Key == "success" && e.eventData_Value == "true") {
+                        quests[curQuestId].score.correct += 1;
+                        successful_attempts += 1;
+                    }
+
+                } else {
+                    // ! Use_backing happened outside of Quest_start!
+                }
+            }
+
+        }
+
+        resolve({
+            "id": "usingBacking",
+            "type": "skill",
+            "quests": _.values(quests),
+            "score": {
+                "correct": successful_attempts,
+                "attempts": total_attempts
+            }
+        })
+    }.bind(this))
+
+}.bind(this));
 };
