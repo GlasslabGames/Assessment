@@ -84,26 +84,23 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-        var level = "NotAttempted";
         var total_attempts = results.length;
         var successful_attempts = 0;
         if (total_attempts > 0) {
 
             // count number of successful attempts
-            successful_attempts = _.sum(results, function(row) {
+            successful_attempts = _.reduce(_.map(results, function(row) {
                 if (row.eventName == "Fuse_core" && row.eventData_Key != "success") {
                     return 0;
                 }
                 return 1;
-            });
+            }), function(sum,num) { return sum + num; });
 
-            //determine level
-            level = (successful_attempts / total_attempts >= 0.50) ? "Advancing" : "NeedSupport";
         }
 
         resolve({
-            "id": "connecting-evidence",
-            "level": level,
+            "id": "connectingEvidence",
+            "type": "skill",
             "score": {
                 "correct": successful_attempts,
                 "attempts": total_attempts
@@ -131,7 +128,7 @@ return when.promise(function(resolve, reject) {
 AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
     return when.promise(function(resolve, reject) {
 
-
+        resolve({})
 
     });
 };
@@ -155,6 +152,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
     return when.promise(function(resolve, reject) {
 
 
+        resolve({})
 
     });
 };
@@ -175,6 +173,7 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
     return when.promise(function(resolve, reject) {
 
 
+        resolve({})
 
     });
 };
