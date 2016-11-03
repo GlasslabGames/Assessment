@@ -57,7 +57,7 @@ return when.promise(function(resolve, reject) {
             file = this.engineDir + "games"+path.sep + gameId+".js";
             game = require(file);
 
-            g = new game(this, this.aeService, this.options);
+            g = new game(this, this.aeService, this.options, aInfo);
             g.process(userId, gameId, gameSessionId, eventsData).then(resolve, reject);
 
         } catch(err) {

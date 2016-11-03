@@ -16,14 +16,15 @@ module.exports = AA_DRK12;
  * https://docs.google.com/spreadsheets/d/10YX2G35XzbhaOZqra9n2R8F2LYudy-4o0O3CJtcXJMY/edit#gid=0
  */
 
-function AA_DRK12(engine, aeService, options) {
+function AA_DRK12(engine, aeService, options, aInfo) {
     this.version = 0.1;
     this.aeService = aeService;
     this.options = _.merge({
 
     }, options);
 
-    this.engine = engine
+    this.engine = engine;
+    this.aInfo = aInfo;
 }
 
 
@@ -34,13 +35,15 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "Battle_Select_CoreAttack",
         "Launch_attack",
         "Battle_Select_CqAttack",
-        "Use_backing"
+        "Use_backing",
+        "Quest_start"
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
         "success",  //Give_schemetrainingevidence, Use_backing
         "weakness", //Fuse_core
-        "attackId"  //Battle_Select_CoreAttack, Launch_attack, Battle_Select_CqAttack
+        "attackId", //Battle_Select_CoreAttack, Launch_attack, Battle_Select_CqAttack
+        "questId",  //Quest_start
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -72,7 +75,8 @@ return when.promise(function(resolve, reject) {
 
     var sql = 'SELECT * FROM events \
         WHERE \
-            eventName="Give_schemetrainingevidence" \
+            eventName="Quest_start" \
+            OR eventName="Give_schemetrainingevidence" \
             OR eventName="Fuse_core" \
         ORDER BY \
             serverTimeStamp DESC, gameSessionEventOrder DESC';
@@ -106,9 +110,9 @@ return when.promise(function(resolve, reject) {
                 "attempts": total_attempts
             }
         })
-    })
+    }.bind(this))
 
-});
+}.bind(this));
 };
 
 
