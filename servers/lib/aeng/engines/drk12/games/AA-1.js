@@ -29,7 +29,7 @@ function AA_DRK12(engine, aeService, options, aInfo) {
 
 
 /*
- * callback will be called for each event that is not Quest_start/Quest_end
+ * callback will be called for each event that is not Quest_start/Quest_complete/Quest_cancel
  *  it should return 1/true if it was a successful attempt
  *  0/false if it was an incorrect attempt
  *  -1/undefined if it should not be considered an attempt
@@ -40,6 +40,7 @@ var _collate_events_by_quest = function(events, callback) {
     var quests = {};
     var curQuestId = undefined;
     var i;
+    var unclaimedScore = {'correct': 0, 'attempts': 0};
     for (i=0; i < events.length; i++) {
         var e = events[i];
         if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
@@ -53,20 +54,23 @@ var _collate_events_by_quest = function(events, callback) {
                     }
                 }
             }
+            if (unclaimedScore.attempts) {
+                quests[curQuestId].score.correct += unclaimedScore.correct;
+                quests[curQuestId].score.attempts += unclaimedScore.attempts;
+                unclaimedScore.correct = 0;
+                unclaimedScore.attempts = 0;
+            }
         }
-        else if (e.eventName == "Quest_end") {
+        else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
             curQuestId = undefined;
         }
         else {
-            if (curQuestId) {
-                var attempt = callback(e);
-                if (attempt != null && attempt != -1) {
-                    quests[curQuestId].score.attempts += 1;
-                    quests[curQuestId].score.correct += 1 ? Boolean(attempt) : 0;
-                }
-            }
-            else {
-                // event happened outside of quest
+            // attempts that occur outside of a quest get attributed to the consequent quest
+            var attempt = callback(e);
+            var s = curQuestId ? quests[curQuestId].score : unclaimedScore;
+            if (attempt != null && attempt != -1) {
+                s.attempts += 1;
+                s.correct += 1 ? Boolean(attempt) : 0;
             }
         }
     }
@@ -94,7 +98,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "Launch_attack",
         "Battle_Select_CqAttack",
         "Use_backing",
-        "Quest_start"
+        "Quest_start", "Quest_complete", "Quest_cancel"
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
@@ -133,11 +137,11 @@ return when.promise(function(resolve, reject) {
 
     var sql = 'SELECT * FROM events \
         WHERE \
-            eventName="Quest_start" \
+            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Give_schemetrainingevidence" \
             OR eventName="Fuse_core" \
         ORDER BY \
-            serverTimeStamp DESC, gameSessionEventOrder DESC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC';
 
     db.all(sql, function(err, results) {
         if (err) {
@@ -146,27 +150,24 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-        var total_attempts = results.length;
-        var successful_attempts = 0;
-        if (total_attempts > 0) {
 
-            // count number of successful attempts
-            successful_attempts = _.reduce(_.map(results, function(row) {
-                if (row.eventName == "Fuse_core" && row.eventData_Key != "success") {
-                    return 0;
-                }
-                return 1;
-            }), function(sum,num) { return sum + num; });
+        var quests = _collate_events_by_quest(results, function(e) {
 
-        }
+            if (e.eventName == "Give_schemetrainingevidence") {
+                return (e.eventData_Key == "success" && e.eventData_Value == "true");
+            }
+            else if (e.eventName == "Fuse_core") {
+                return (e.eventData_Key == "weakness" && e.eventData_Value == "none");
+            }
+
+        });
+        var questList = _.values(quests);
 
         resolve({
             "id": "connectingEvidence",
             "type": "skill",
-            "score": {
-                "correct": successful_attempts,
-                "attempts": total_attempts
-            }
+            "quests": questList,
+            "score": _sum_scores(questList)
         })
     }.bind(this))
 
@@ -236,7 +237,7 @@ return when.promise(function(resolve, reject) {
 
     var sql = 'SELECT * FROM events \
         WHERE \
-            eventName="Quest_start" \
+            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Use_backing" \
         ORDER BY \
             serverTimeStamp ASC, gameSessionEventOrder ASC';
