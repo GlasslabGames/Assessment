@@ -28,6 +28,64 @@ function AA_DRK12(engine, aeService, options, aInfo) {
 }
 
 
+/*
+ * callback will be called for each event that is not Quest_start/Quest_end
+ *  it should return 1/true if it was a successful attempt
+ *  0/false if it was an incorrect attempt
+ *  -1/undefined if it should not be considered an attempt
+ *
+ */
+var _collate_events_by_quest = function(events, callback) {
+
+    var quests = {};
+    var curQuestId = undefined;
+    var i;
+    for (i=0; i < events.length; i++) {
+        var e = events[i];
+        if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
+            curQuestId = e.eventData_Value;
+            if (!(curQuestId in quests)) {
+                quests[curQuestId] = {
+                    'questId': curQuestId,
+                    'score': {
+                        'correct': 0,
+                        'attempts': 0
+                    }
+                }
+            }
+        }
+        else if (e.eventName == "Quest_end") {
+            curQuestId = undefined;
+        }
+        else {
+            if (curQuestId) {
+                var attempt = callback(e);
+                if (attempt != null && attempt != -1) {
+                    quests[curQuestId].score.attempts += 1;
+                    quests[curQuestId].score.correct += 1 ? Boolean(attempt) : 0;
+                }
+            }
+            else {
+                // event happened outside of quest
+            }
+        }
+    }
+    return quests;
+};
+
+
+var _sum_scores = function(quests) {
+    return quests.reduce(function(score, q) {
+        return {
+            'correct': score.correct + q.score.correct,
+            'attempts': score.attempts + q.score.attempts
+        };
+    }, {
+        'correct': 0,
+        'attempts': 0
+    });
+};
+
 AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
     var filterEventTypes = [
         "Give_schemetrainingevidence",
@@ -191,49 +249,20 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-        var quests = {};
-        var curQuestId = undefined;
-        var i;
-        var total_attempts = 0;
-        var successful_attempts = 0;
-        for (i=0; i < results.length; i++) {
-            var e = results[i];
-            if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
-                curQuestId = e.eventData_Value;
-                if (!(curQuestId in quests)) {
-                    quests[curQuestId] = {
-                        'questId': curQuestId,
-                        'score': {
-                            'correct': 0,
-                            'attempts': 0
-                        }
-                    }
-                }
-            }
-            else if (e.eventName == "Use_backing") {
-                if (curQuestId) {
-                    quests[curQuestId].score.attempts += 1;
-                    total_attempts += 1;
+        var quests = _collate_events_by_quest(results, function(e) {
 
-                    if (e.eventData_Key == "success" && e.eventData_Value == "true") {
-                        quests[curQuestId].score.correct += 1;
-                        successful_attempts += 1;
-                    }
-
-                } else {
-                    // ! Use_backing happened outside of Quest_start!
-                }
+            if (e.eventName == "Use_backing") {
+                return (e.eventData_Key == "success" && e.eventData_Value == "true");
             }
-        }
+
+        });
+        var questList = _.values(quests);
 
         resolve({
             "id": "usingBacking",
             "type": "skill",
-            "quests": _.values(quests),
-            "score": {
-                "correct": successful_attempts,
-                "attempts": total_attempts
-            }
+            "quests": questList,
+            "score": _sum_scores(questList)
         })
     }.bind(this))
 
