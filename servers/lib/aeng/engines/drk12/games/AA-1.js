@@ -200,11 +200,13 @@ return when.promise(function(resolve, reject) {
             var e = results[i];
             if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
                 curQuestId = e.eventData_Value;
-                quests[curQuestId] = {
-                    'questId': curQuestId,
-                    'score': {
-                        'correct': 0,
-                        'attempts': 0
+                if (!(curQuestId in quests)) {
+                    quests[curQuestId] = {
+                        'questId': curQuestId,
+                        'score': {
+                            'correct': 0,
+                            'attempts': 0
+                        }
                     }
                 }
             }
@@ -222,7 +224,6 @@ return when.promise(function(resolve, reject) {
                     // ! Use_backing happened outside of Quest_start!
                 }
             }
-
         }
 
         resolve({
