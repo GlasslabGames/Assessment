@@ -234,7 +234,15 @@ AssessmentEngine.prototype.getJob = function() {
                         ", gameId:", jobData.gameId,
                         ", jobType:", jobData.jobType);
                 }
-                return this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType)
+
+                var p;
+                if (data.jobType == "activity") {
+                    p = this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType);
+                } else if (data.jobType == "reprocess") {
+                    p = this.reprocessSessions(data.gameId)
+                }
+
+                return p
                     .then( function(){
                         // TODO: use assessment DS for queue
                         return this.endQSession(data.gameSessionId)
@@ -261,6 +269,15 @@ AssessmentEngine.prototype.getJob = function() {
             console.error("AssessmentEngine: getJob - Error:", err);
             this.stats.increment("error", "getJob");
         }.bind(this));
+};
+
+
+AssessmentEngine.prototype.reprocessSessions = function(gameId){
+// add promise wrapper
+return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+// ------------------------------------------------
+}.bind(this));
 };
 
 // session, game, engine, message

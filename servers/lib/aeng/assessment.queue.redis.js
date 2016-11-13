@@ -39,20 +39,19 @@ function AE_Queue(options){
     }
 }
 
-AE_Queue.prototype.pushJob = function(jobType, userId, gameId, gameSessionId){
+AE_Queue.prototype.pushJob = function(jobType, jobData){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
+    //common payload properties
+    var payload = {
+        jobType: jobType,
+        qType:   aeConst.queue.end
+    };
+    _.merge(payload, jobData);
 
     // all ok, now add end to
-    this.q.lpush(this.keyQIn,
-        JSON.stringify({
-            gameSessionId: gameSessionId,
-            gameId:  gameId,
-            userId:  userId,
-            jobType: jobType,
-            qType:   aeConst.queue.end
-        }),
+    this.q.lpush(this.keyQIn, JSON.stringify(payload),
         function(err) {
             if(err) {
                 console.error("Queue: End Error -", err);

@@ -12,6 +12,43 @@ module.exports = {
 
 var exampleInput = {};
 
+var QueueJobTypes = {
+    'activity': {
+        validate: function(req, res) {
+            var data = {};
+            if(!req.body.userId) {
+                this.requestUtil.errorResponse(res, "missing userId");
+                return;
+            }
+            data.userId = req.body.userId;
+
+            if(!req.body.gameSessionId) {
+                this.requestUtil.errorResponse(res, "missing gameSessionId");
+                return;
+            }
+            data.gameSessionId = req.body.gameSessionId;
+
+            if(!req.body.gameId) {
+                this.requestUtil.errorResponse(res, "missing gameId");
+                return;
+            }
+            data.gameId = req.body.gameId;
+            return data;
+        }
+    },
+    'reprocess': {
+        validate: function(req, res) {
+            var data = {};
+            if(!req.body.gameId) {
+                this.requestUtil.errorResponse(res, "missing gameId");
+                return;
+            }
+            data.gameId = req.body.gameId;
+            return data;
+        }
+    }
+};
+
 exampleInput.addToQueue = {
     jobType:  "endSession",
     userId: 25,
@@ -27,28 +64,22 @@ function addToQueue(req, res){
         }
         var jobType = req.body.jobType;
 
-        if(!req.body.userId) {
-            this.requestUtil.errorResponse(res, "missing userId");
+        if (!jobType in QueueJobTypes) {
+            this.requestUtil.errorResponse(res, "unknown jobType");
             return;
         }
-        var userId = req.body.userId;
 
-        if(!req.body.gameSessionId) {
-            this.requestUtil.errorResponse(res, "missing gameSessionId");
+        var jobData = QueueJobTypes[jobType].validate.bind(this)(req, res);
+        if (!jobData) {
             return;
         }
-        var gameSessionId = req.body.gameSessionId;
-
-        if(!req.body.gameId) {
-            this.requestUtil.errorResponse(res, "missing gameId");
-            return;
+        if ('gameId' in jobData) {
+            // gameId is not case sensitive
+            jobData.gameId = jobData.gameId.toUpperCase();
         }
-        var gameId = req.body.gameId;
-        // gameId is not case sensitive
-        gameId = gameId.toUpperCase();
 
         //console.log("Collector: pushJob gameSessionId:", jdata.gameSessionId, ", score:", score);
-        this.queue.pushJob(jobType, userId, gameId, gameSessionId)
+        this.queue.pushJob(jobType, jobData)
             // all done
             .then( function() {
                 this.requestUtil.jsonResponse(res, {});
