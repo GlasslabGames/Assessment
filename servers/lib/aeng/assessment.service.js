@@ -158,7 +158,11 @@ AssessmentEngine.prototype.checkActivity = function() {
 
                 // executes this "1" at a time
                 var guardedAsyncOperation = guard(guard.n(1), function(activity){
-                    return this.queue.pushJob("activity", activity.userId, activity.gameId, activity.gameSessionId);
+                    return this.queue.pushJob("activity", {
+                        userId: activity.userId,
+                        gameId: activity.gameId,
+                        gameSessionId: activity.gameSessionId
+                    });
                 }.bind(this));
 
                 when.map(activity, guardedAsyncOperation)
@@ -276,6 +280,15 @@ AssessmentEngine.prototype.reprocessSessions = function(gameId){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
+    this.getLatestGameSessions(gameId).then(function(sessions) {
+        _.forEach(sessions, function (session) {
+            this.queue.pushJob("activity", {
+                gameId: gameId,
+                userId: session.userId,
+                gameSessionId: session.gameSessionId
+            });
+        }.bind(this));
+    }.bind(this));
 // ------------------------------------------------
 }.bind(this));
 };
@@ -523,7 +536,9 @@ AssessmentEngine.prototype.saveAEResults = function(userId, gameId, assessmentId
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/user/"+userId+"/assessment/"+assessmentId+"/results", data);
 };
 
-
+AssessmentEngine.prototype.getLatestGameSessions = function(gameId, callback) {
+    return this._internalTelemetryRequest('/int/v1/data/game/'+gameId+'/latestSessions');
+};
 
 // TODO: move this to core service routing
 AssessmentEngine.prototype._internalTelemetryRequest = function(route, data) {
