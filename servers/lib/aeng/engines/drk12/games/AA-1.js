@@ -173,7 +173,7 @@ return when.promise(function(resolve, reject) {
 
     db.all(sql, function(err, results) {
         if (err) {
-            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.connecting_evidence DB Error:", err);
+            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.using_backing DB Error:", err);
             reject(err);
             return;
         }
