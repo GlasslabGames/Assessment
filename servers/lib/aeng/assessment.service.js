@@ -243,7 +243,7 @@ AssessmentEngine.prototype.getJob = function() {
                 if (data.jobType == "activity") {
                     p = this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType);
                 } else if (data.jobType == "reprocess") {
-                    p = this.reprocessSessions(data.gameId)
+                    p = this.reprocessSessions(data.gameId, data.assessmentId, data.onlyMissing || false)
                 }
 
                 return p
@@ -276,18 +276,49 @@ AssessmentEngine.prototype.getJob = function() {
 };
 
 
-AssessmentEngine.prototype.reprocessSessions = function(gameId){
+AssessmentEngine.prototype.reprocessSessions = function(gameId, assessmentId, onlyMissing){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
     this.getLatestGameSessions(gameId).then(function(sessions) {
-        _.forEach(sessions, function (session) {
-            this.queue.pushJob("activity", {
-                gameId: gameId,
-                userId: session.userId,
-                gameSessionId: session.gameSessionId
-            });
+        var promises = _.map(sessions, function (session) {
+            return when.promise(function(resolve, reject) {
+
+                var job = {
+                    gameId: gameId,
+                    userId: session.userId,
+                    gameSessionId: session.gameSessionId
+                };
+                if (assessmentId && onlyMissing) {
+                    job[assessmentId] = assessmentId;
+                    this.getAssessmentResults(session.userId, gameId, assessmentId).then(
+                        function(assessment) {
+                            if (assessment.assessmentId) {
+                                //assessment already exists
+                                resolve();
+                            } else {
+                                //assessment missing
+                                resolve(job)
+                            }
+                        }
+                    )
+                }
+                else {
+                    resolve(job);
+                }
+
+            }.bind(this));
         }.bind(this));
+
+        when.all(promises).then(
+            function(promiseRows) {
+                _.forEach(promiseRows, function(job) {
+                    if (job) {
+                        this.queue.pushJob("activity", job);
+                    }
+                }.bind(this))
+            }.bind(this)
+        );
     }.bind(this));
 // ------------------------------------------------
 }.bind(this));

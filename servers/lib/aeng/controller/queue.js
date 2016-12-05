@@ -44,6 +44,8 @@ var QueueJobTypes = {
                 return;
             }
             data.gameId = req.body.gameId;
+            data.assessmentId = req.body.assessmentId;
+            data.onlyMissing = req.body.onlyMissing;
             return data;
         }
     }
