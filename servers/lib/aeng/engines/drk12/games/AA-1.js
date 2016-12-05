@@ -93,7 +93,7 @@ return when.promise(function(resolve, reject) {
             if (e.eventName == "Give_schemetrainingevidence") {
                 return (e.eventData_Key == "success" && e.eventData_Value == "true");
             }
-            else if (e.eventName == "Fuse_core" && e.eventData_key == "weakness") {
+            else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
                 return e.eventData_Value == "none";
             }
 
