@@ -9,6 +9,7 @@
  */
 // Third-party libs
 var _     = require('lodash');
+var path  = __dirname;
 var redis = require('redis');
 var when  = require('when');
 // Glasslab libs
@@ -17,7 +18,7 @@ var aeConst;
 module.exports = AE_Queue;
 
 function AE_Queue(options){
-    aeConst = require('./assessment.js').Const;
+    aeConst = require(path + '/assessment.js').Const;
 
     this.options = _.merge(
         {

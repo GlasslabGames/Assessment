@@ -10,6 +10,7 @@
 // Third-party libs
 var _         = require('lodash');
 var when      = require('when');
+var path      = __dirname;
 var couchbase = require('couchbase');
 // load at runtime
 var aeConst;
@@ -18,7 +19,7 @@ module.exports = AE_DS_Couchbase;
 
 function AE_DS_Couchbase(options){
     // Glasslab libs
-    aeConst = require('./assessment.const.js');
+    aeConst = require(path + '/assessment.const.js');
 
     this.options = _.merge(
         {

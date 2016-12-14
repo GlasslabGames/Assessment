@@ -8,6 +8,7 @@
  *
  */
 var fs      = require('fs');
+var dirname = __dirname;
 var path    = require('path');
 // Third-party libs
 var _       = require('lodash');
@@ -23,8 +24,8 @@ function AssessmentEngine(options){
     var Assessment;
 
     // Glasslab libs
-    Util       = require('../core/util.js');
-    Assessment = require('./assessment.js');
+    Util       = require(dirname + '/../core/util.js');
+    Assessment = require(dirname + '/assessment.js');
 
     this.options = _.merge(
         {
@@ -102,7 +103,7 @@ AssessmentEngine.prototype.loadEngines = function() {
     // loop thought all the engines
     try{
         //console.log("AssessmentEngine - loadEngines cwd:", process.cwd());
-        var dir = path.resolve("./lib/aeng/engines");
+        var dir = dirname + "/engines";
         var files = fs.readdirSync(dir);
 
         console.log("AssessmentEngine: Loading Engines...");
@@ -445,7 +446,7 @@ return when.promise(function(resolve, reject) {
     }
 
     // check if engine path exists
-    var p = path.resolve("lib/aeng/engines/"+engine);
+    var p = dirname + "/engines/" + engine;
     if( !fs.existsSync(p) ) {
         console.log("AssessmentEngine: Execute Assessment - No Engine Path - Engine:", engine, ", gameSessionId:", gameSessionId, ", gameId:", gameId);
         // nothing to process

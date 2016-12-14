@@ -1,8 +1,9 @@
 /**
  * App Server
  */
-var ServiceManager = require('./lib/core/service.manager.js');
-var Aeng           = require('./lib/aeng/assessment.js');
+var path           = __dirname;
+var ServiceManager = require(path + '/lib/core/service.manager.js');
+var Aeng           = require(path + '/lib/aeng/assessment.js');
 
 var manager        = new ServiceManager("~/hydra.assessment.config.json");
 
