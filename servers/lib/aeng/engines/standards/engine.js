@@ -4,6 +4,7 @@
  */
 var fs            = require('fs');
 var path          = require('path');
+var dirname       = __dirname;
 var child_process = require('child_process');
 // Third-party libs
 var _       = require('lodash');
@@ -17,7 +18,7 @@ function StandardsEngine(aeService, engineDir, options) {
     this.engineDir = engineDir;
     this.aeService = aeService;
 
-    Util = require( path.resolve(engineDir, '../../../core/util.js') );
+    Util = require(dirname + '/../../../core/util.js')
 
     this.options = _.merge(
         { },

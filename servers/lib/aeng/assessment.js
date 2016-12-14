@@ -3,19 +3,20 @@
  *
  *
  */
+var path       = __dirname;
 module.exports = {
     LongName:    "Assessment-Engine",
     ServiceName: "aeng",
     Controller: {
-        queue: require('./controller/queue.js')
+        queue: require(path + '/controller/queue.js')
     },
-    Service:     require('./assessment.service.js'),
-    Const:      require('./assessment.const.js'),
+    Service:     require(path + '/assessment.service.js'),
+    Const:      require(path + '/assessment.const.js'),
 
     Datastore: {
-        Couchbase: require('./assessment.datastore.couchbase.js')
+        Couchbase: require(path + '/assessment.datastore.couchbase.js')
     },
     Queue: {
-        Redis: require('./assessment.queue.redis.js')
+        Redis: require(path + '/assessment.queue.redis.js')
     }
 };

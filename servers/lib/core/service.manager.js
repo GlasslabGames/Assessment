@@ -12,6 +12,7 @@
 var fs         = require('fs');
 var http       = require('http');
 var path       = require('path');
+var dirname    = __dirname;
 // Third-party libs
 var _          = require('lodash');
 var when       = require('when');
@@ -31,10 +32,11 @@ function ServiceManager(configFiles){
     // called as:   new ServiceManager("~/hydra.assessment.config.json");
     // this == {}
 
-    Util              = require('../core/util.js');
-    var ConfigManager = require('../core/config.manager.js');
+    Util              = require(dirname + '/util.js');
+    var ConfigManager = require(dirname + '/config.manager.js');
 
-    var startScript = process.argv[1].split("servers/")[1];
+    var path_parts = process.argv[1].split("/")
+    var startScript = path_parts[path_parts.length-1];
 
     console.log(" **************************************** ");
     console.log("        " + startScript);
@@ -71,7 +73,7 @@ function ServiceManager(configFiles){
     // Add the base config (./config.json from Platform/servers/) at the front of the list.
     // Values in ./config.json will be replaced by newer values in eg. ~/hydra.config.json.
     // [ './config.json', '~/hydra.config.json' ]
-    configFiles.unshift("./config.json");
+    configFiles.unshift(dirname + '/../../config.json');
     this.options = config.loadSync(configFiles);
 
     console.log('Configs loaded');
@@ -107,7 +109,8 @@ function ServiceManager(configFiles){
     this.stats            = new Util.Stats(this.options, "ServiceManager");
 
     try{
-        this.routesMap = require('../routes.map.js');
+        this.routesMap = require(dirname + '/../routes.map.js');
+        
     } catch(err){
         console.log("ServiceManager: Could not find default routes map.");
     }
@@ -135,7 +138,7 @@ return when.promise(function(resolve, reject) {
 
     var connectPromise;
     if(this.options.services.session.store) {
-        var CouchbaseStore = require('./sessionstore.couchbase.js')(express);
+        var CouchbaseStore = require(dirname + '/sessionstore.couchbase.js')(express);
         this.exsStore      = new CouchbaseStore(this.options.services.session.store);
         connectPromise = this.exsStore.glsConnect();
     } else {
