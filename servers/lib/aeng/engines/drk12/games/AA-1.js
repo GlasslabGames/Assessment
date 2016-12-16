@@ -31,7 +31,7 @@ function AA_DRK12(engine, aeService, options, aInfo) {
 
 AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
     var filterEventTypes = [
-        "Give_schemetrainingevidence",
+        "Give_schemeTrainingEvidence",
         "Fuse_core",
         "Launch_attack",
         "Use_backing",
@@ -75,7 +75,7 @@ return when.promise(function(resolve, reject) {
     var sql = 'SELECT * FROM events \
         WHERE \
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
-            OR eventName="Give_schemetrainingevidence" \
+            OR eventName="Give_schemeTrainingEvidence" \
             OR eventName="Fuse_core" \
         ORDER BY \
             serverTimeStamp ASC, gameSessionEventOrder ASC';
@@ -90,7 +90,7 @@ return when.promise(function(resolve, reject) {
 
         var quests = this.collate_events_by_quest(results, function(e) {
 
-            if (e.eventName == "Give_schemetrainingevidence") {
+            if (e.eventName == "Give_schemeTrainingEvidence") {
                 return (e.eventData_Key == "success" && e.eventData_Value == "true");
             }
             else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
