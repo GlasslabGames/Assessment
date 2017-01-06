@@ -13,7 +13,7 @@ module.exports = {
 var exampleInput = {};
 
 var QueueJobTypes = {
-    'activity': {
+    'default': {
         validate: function(req, res) {
             var data = {};
             if(!req.body.userId) {
@@ -65,13 +65,8 @@ function addToQueue(req, res){
             return;
         }
         var jobType = req.body.jobType;
-
-        if (!jobType in QueueJobTypes) {
-            this.requestUtil.errorResponse(res, "unknown jobType");
-            return;
-        }
-
-        var jobData = QueueJobTypes[jobType].validate.bind(this)(req, res);
+        var jobTypeDef = QueueJobTypes[jobType] || QueueJobTypes['default'];
+        var jobData = jobTypeDef.validate.bind(this)(req, res);
         if (!jobData) {
             return;
         }
