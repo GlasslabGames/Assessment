@@ -39,13 +39,10 @@ var QueueJobTypes = {
     'reprocess': {
         validate: function(req, res) {
             var data = {};
-            if(!req.body.gameId) {
-                this.requestUtil.errorResponse(res, "missing gameId");
-                return;
-            }
             data.gameId = req.body.gameId;
             data.assessmentId = req.body.assessmentId;
             data.onlyMissing = req.body.onlyMissing;
+            data.since = req.body.since;
             return data;
         }
     }
@@ -70,7 +67,7 @@ function addToQueue(req, res){
         if (!jobData) {
             return;
         }
-        if ('gameId' in jobData) {
+        if (jobData.gameId) {
             // gameId is not case sensitive
             jobData.gameId = jobData.gameId.toUpperCase();
         }

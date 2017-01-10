@@ -241,10 +241,15 @@ AssessmentEngine.prototype.getJob = function() {
                 }
 
                 var p;
-                if (data.jobType == "activity") {
+                if (data.jobType == "reprocess") {
+                    var sinceTimestamp = data.since;
+                    if (sinceTimestamp) {
+                        p = this.reprocessSessionsSince(sinceTimestamp, data.gameId)
+                    } else {
+                        p = this.reprocessSessions(data.gameId, data.assessmentId, data.onlyMissing || false)
+                    }
+                } else {
                     p = this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType);
-                } else if (data.jobType == "reprocess") {
-                    p = this.reprocessSessions(data.gameId, data.assessmentId, data.onlyMissing || false)
                 }
 
                 return p
@@ -277,6 +282,32 @@ AssessmentEngine.prototype.getJob = function() {
 };
 
 
+AssessmentEngine.prototype.reprocessSessionsSince = function(earliestTimeStamp, gameId){
+// add promise wrapper
+return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+    this.getGameSessionsSince(earliestTimeStamp, gameId).then(
+        function(sessions) {
+            _.forEach(sessions, function(session) {
+                if (session.userId && session.gameSessionId) {
+                    var job = {
+                        gameId: session.gameId,
+                        userId: session.userId,
+                        gameSessionId: session.gameSessionId,
+                    };
+                    this.queue.pushJob("activity", job);
+                }
+            })
+        }.bind(this),
+        function() {
+
+        }.bind(this)
+    );
+// ------------------------------------------------
+}.bind(this));
+};
+
+
 AssessmentEngine.prototype.reprocessSessions = function(gameId, assessmentId, onlyMissing){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
@@ -288,7 +319,7 @@ return when.promise(function(resolve, reject) {
                 var job = {
                     gameId: gameId,
                     userId: session.userId,
-                    gameSessionId: session.gameSessionId
+                    gameSessionId: session.gameSessionId,
                 };
                 if (assessmentId && onlyMissing) {
                     job[assessmentId] = assessmentId;
@@ -570,6 +601,9 @@ AssessmentEngine.prototype.saveAEResults = function(userId, gameId, assessmentId
 
 AssessmentEngine.prototype.getLatestGameSessions = function(gameId, callback) {
     return this._internalTelemetryRequest('/int/v1/data/game/'+gameId+'/latestSessions');
+};
+AssessmentEngine.prototype.getGameSessionsSince = function(earliestTimeStamp, gameId, callback) {
+    return this._internalTelemetryRequest('/int/v1/data/game/sessionsSince/'+earliestTimeStamp+(gameId ? "?gameId="+gameId : ""));
 };
 
 // TODO: move this to core service routing
