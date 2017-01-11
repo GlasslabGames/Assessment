@@ -297,7 +297,7 @@ return when.promise(function(resolve, reject) {
                     };
                     this.queue.pushJob("activity", job);
                 }
-            })
+            }.bind(this))
         }.bind(this),
         function() {
 
