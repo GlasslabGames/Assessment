@@ -286,23 +286,47 @@ AssessmentEngine.prototype.reprocessSessionsSince = function(earliestTimeStamp, 
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
-    this.getGameSessionsSince(earliestTimeStamp, gameId).then(
-        function(sessions) {
-            _.forEach(sessions, function(session) {
+    this.getGameSessionsSince(earliestTimeStamp, gameId).then(function(sessions) {
+        var promises = _.map(sessions, function(session) {
+            return when.promise(function(resolve, reject) {
                 if (session.userId && session.gameSessionId) {
                     var job = {
                         gameId: session.gameId,
                         userId: session.userId,
                         gameSessionId: session.gameSessionId,
                     };
-                    this.queue.pushJob("activity", job);
+                    resolve(job);
                 }
             }.bind(this))
-        }.bind(this),
-        function() {
+        }.bind(this));
 
-        }.bind(this)
-    );
+        var gameTriggers = {};
+
+        when.all(promises).then(function(promiseRows) {
+            var gameIds = _.uniq(_.map(promiseRows, function(job) { return job.gameId; }));
+
+            //lookup the games assessment triggers
+            var aInfoPromises = _.map(gameIds, function(gameId) {
+                return this.getGameAssessmentDefinitions(gameId).then(function(aInfos) {
+                    gameTriggers[gameId] = _.uniq(_.map(aInfos, function (ai) { return ai.trigger; }));
+                    resolve();
+                })
+            }.bind(this));
+            when.all(aInfoPromises).then(function() {
+
+                _.forEach(promiseRows, function(job) {
+                    if (job) {
+                        var triggers = gameTriggers[job.gameId];
+                        _.forEach(triggers, function(trigger) {
+                            this.queue.pushJob(trigger, job);
+                        }.bind(this));
+                    }
+                }.bind(this))
+
+            }.bind(this));
+        }.bind(this));
+
+    }.bind(this));
 // ------------------------------------------------
 }.bind(this));
 };
