@@ -33,6 +33,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
     var filterEventTypes = [
         "Give_schemeTrainingEvidence",
         "Fuse_core",
+        "CoreConstruction_complete",
         "Launch_attack",
         "Use_backing",
         "Quest_start", "Quest_complete", "Quest_cancel"
@@ -43,6 +44,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "weakness", //Fuse_core
         "type",     //Launch_attack
         "questId",  //Quest_start
+        "quest",    //CoreConstruction_complete
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -77,6 +79,7 @@ return when.promise(function(resolve, reject) {
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Give_schemeTrainingEvidence" \
             OR eventName="Fuse_core" \
+            OR eventName="CoreConstruction_complete" \
         ORDER BY \
             serverTimeStamp ASC, gameSessionEventOrder ASC';
 
@@ -90,7 +93,13 @@ return when.promise(function(resolve, reject) {
 
         var quests = this.collate_events_by_quest(results, function(e) {
 
-            if (e.eventName == "Give_schemeTrainingEvidence") {
+	        if (e.eventData_Key == "quest") {
+	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
+                // events that are not the special Quest11 type (CoreConstruction_complete), so return null in all
+                // other cases
+		        return ((e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") || null);
+	        }
+            else if (e.eventName == "Give_schemeTrainingEvidence") {
                 return (e.eventData_Key == "success" && e.eventData_Value == "true");
             }
             else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
