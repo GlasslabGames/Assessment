@@ -90,7 +90,6 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-
         var quests = this.collate_events_by_quest(results, function(e) {
 
 	        if (e.eventData_Key == "quest") {
@@ -177,7 +176,7 @@ return when.promise(function(resolve, reject) {
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Use_backing" \
         ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
 
     db.all(sql, function(err, results) {
@@ -187,10 +186,18 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
+        var eventIdx = {};
         var quests = this.collate_events_by_quest(results, function(e) {
 
-            if (e.eventName == "Use_backing" && e.eventData_key == "success") {
-                return e.eventData_Value == "true";
+            if (e.eventName == "Use_backing" && e.eventData_key == "playerTurn") {
+                eventIdx[e.eventId] = e.eventData_Value;
+            } else if (e.eventName == "Use_backing" && e.eventData_Key == "success") {
+                return {
+                    correct: e.eventData_value == "true",
+                    detail: {
+                        playerTurn: eventIdx[e.eventId] == "true"
+                    }
+                };
             }
 
         });
@@ -221,7 +228,14 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
     var quests = {};
     var curQuestId = undefined;
     var i;
-    var unclaimedScore = {'correct': 0, 'attempts': 0};
+    // var unclaimedScore = {'correct': 0, 'attempts': 0};
+    var unclaimedSkills = {
+        'score': {
+            'correct': 0,
+            'attempts': 0
+        },
+        'detail': {}
+    };
     for (i=0; i < events.length; i++) {
         var e = events[i];
         if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
@@ -232,14 +246,17 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                     'score': {
                         'correct': 0,
                         'attempts': 0
-                    }
+                    },
+                    'detail': {}
                 }
             }
-            if (unclaimedScore.attempts) {
-                quests[curQuestId].score.correct += unclaimedScore.correct;
-                quests[curQuestId].score.attempts += unclaimedScore.attempts;
-                unclaimedScore.correct = 0;
-                unclaimedScore.attempts = 0;
+            if (unclaimedSkills.score.attempts) {
+                quests[curQuestId].score.correct += unclaimedSkills.score.correct;
+                quests[curQuestId].score.attempts += unclaimedSkills.score.attempts;
+                quests[curQuestId].detail = unclaimedSkills.detail;
+                unclaimedSkills.score.correct = 0;
+                unclaimedSkills.score.attempts = 0;
+                unclaimedSkills.detail = {};
             }
         }
         else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
@@ -248,10 +265,16 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
         else {
             // attempts that occur outside of a quest get attributed to the consequent quest
             var attempt = callback(e);
-            var s = curQuestId ? quests[curQuestId].score : unclaimedScore;
+            // var s = curQuestId ? quests[curQuestId].score : unclaimedScore;
+            var q = curQuestId ? quests[curQuestId] : unclaimedSkills;
             if (attempt != null && attempt != -1) {
-                s.attempts += 1;
-                s.correct += 1 ? Boolean(attempt) : 0;
+                q.score.attempts += 1;
+                if ('correct' in attempt) {
+                    q.score.correct += 1 ? Boolean(attempt.correct) : 0;
+                    q.detail = attempt.detail;
+                } else {
+                    q.score.correct += 1 ? Boolean(attempt) : 0;
+                }
             }
         }
     }
