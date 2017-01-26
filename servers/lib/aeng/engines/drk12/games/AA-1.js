@@ -41,6 +41,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
     // always include one or more keys for a give type above
     var filterEventKeys = [
         "success",  //Give_schemetrainingevidence, Use_backing, Fuse_core, Launch_attack
+        "dataScheme", //Give_schemeTrainingEvidence
         "weakness", //Fuse_core
         "type",     //Launch_attack
         "questId",  //Quest_start
@@ -81,7 +82,7 @@ return when.promise(function(resolve, reject) {
             OR eventName="Fuse_core" \
             OR eventName="CoreConstruction_complete" \
         ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
     db.all(sql, function(err, results) {
         if (err) {
@@ -90,6 +91,7 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
+        var eventIdx = {};
         var quests = this.collate_events_by_quest(results, function(e) {
 
 	        if (e.eventData_Key == "quest") {
@@ -99,7 +101,16 @@ return when.promise(function(resolve, reject) {
 		        return ((e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") || null);
 	        }
             else if (e.eventName == "Give_schemeTrainingEvidence") {
-                return (e.eventData_Key == "success" && e.eventData_Value == "true");
+                if (e.eventData_Key == "dataScheme") {
+                    eventIdx[e.eventId] = e.eventData_Value;
+                }
+                else if (e.eventData_Key == "success") {
+                    var correct = (e.eventData_Key == "success" && e.eventData_Value == "true");
+                    return {
+                        'correct': correct,
+                        'detail': eventIdx[e.eventId]
+                    };
+                }
             }
             else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
                 return e.eventData_Value == "none";
@@ -194,9 +205,7 @@ return when.promise(function(resolve, reject) {
             } else if (e.eventName == "Use_backing" && e.eventData_Key == "success") {
                 return {
                     correct: e.eventData_value == "true",
-                    detail: {
-                        playerTurn: eventIdx[e.eventId] == "true"
-                    }
+                    detail: "CREATED" ? eventIdx[e.eventId] == "true" : "DEFENDED"
                 };
             }
 
@@ -253,7 +262,7 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
             if (unclaimedSkills.score.attempts) {
                 quests[curQuestId].score.correct += unclaimedSkills.score.correct;
                 quests[curQuestId].score.attempts += unclaimedSkills.score.attempts;
-                quests[curQuestId].detail = unclaimedSkills.detail;
+                quests[curQuestId].detail = _.clone(unclaimedSkills.detail);
                 unclaimedSkills.score.correct = 0;
                 unclaimedSkills.score.attempts = 0;
                 unclaimedSkills.detail = {};
@@ -264,14 +273,24 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
         }
         else {
             // attempts that occur outside of a quest get attributed to the consequent quest
-            var attempt = callback(e);
-            // var s = curQuestId ? quests[curQuestId].score : unclaimedScore;
             var q = curQuestId ? quests[curQuestId] : unclaimedSkills;
+
+            var attempt = callback(e);
             if (attempt != null && attempt != -1) {
                 q.score.attempts += 1;
-                if ('correct' in attempt) {
-                    q.score.correct += 1 ? Boolean(attempt.correct) : 0;
-                    q.detail = attempt.detail;
+                if (typeof attempt === 'object' && 'correct' in attempt) {
+                    var is_correct = Boolean(attempt.correct);
+                    q.score.correct += 1 ? is_correct : 0;
+                    if (attempt.detail) {
+                        if (!(attempt.detail in q.detail)) {
+                            q.detail[attempt.detail] = {
+                                'correct': 0,
+                                'attempts': 0,
+                            }
+                        }
+                        q.detail[attempt.detail].correct += 1 ? is_correct : 0;
+                        q.detail[attempt.detail].attempts += 1 ? is_correct : 0;
+                    }
                 } else {
                     q.score.correct += 1 ? Boolean(attempt) : 0;
                 }
@@ -280,7 +299,6 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
     }
     return quests;
 };
-
 
 AA_DRK12.prototype.sum_scores = function(quests) {
     return quests.reduce(function(score, q) {
