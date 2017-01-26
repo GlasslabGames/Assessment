@@ -288,8 +288,8 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                                 'attempts': 0,
                             }
                         }
+                        q.detail[attempt.detail].attempts += 1;
                         q.detail[attempt.detail].correct += 1 ? is_correct : 0;
-                        q.detail[attempt.detail].attempts += 1 ? is_correct : 0;
                     }
                 } else {
                     q.score.correct += 1 ? Boolean(attempt) : 0;
@@ -337,7 +337,10 @@ AA_DRK12.prototype.distill_launch_attack_skill = function(engine, db, skillId, a
                 if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
                     eventIdx[e.eventId] = e.eventData_Value;
                 } else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
-                    return eventIdx[e.eventId] == "true";
+                    return {
+                        correct: eventIdx[e.eventId] == "true",
+                        detail: attack_type
+                    };
                 }
 
             });
