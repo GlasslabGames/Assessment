@@ -243,10 +243,18 @@ AssessmentEngine.prototype.getJob = function() {
                 var p;
                 if (data.jobType == "reprocess") {
                     var sinceTimestamp = data.since;
+                    var courseId = data.courseId;
                     if (sinceTimestamp) {
-                        p = this.reprocessSessionsSince(sinceTimestamp, data.gameId)
+                        p = this.reprocessSessionsSince(sinceTimestamp, data.gameId);
+                    } else if (courseId) {
+                        p = this.reprocessSessions(data.gameId, {
+                            courseId: data.courseId
+                        });
                     } else {
-                        p = this.reprocessSessions(data.gameId, data.assessmentId, data.onlyMissing || false)
+                        p = this.reprocessSessions(data.gameId, {
+                            assessmentId: data.assessmentId,
+                            onlyMissing: data.onlyMissing || false
+                        });
                     }
                 } else {
                     p = this.runAssessment(data.userId, data.gameId, data.gameSessionId, data.jobType);
@@ -332,11 +340,11 @@ return when.promise(function(resolve, reject) {
 };
 
 
-AssessmentEngine.prototype.reprocessSessions = function(gameId, assessmentId, onlyMissing){
+AssessmentEngine.prototype.reprocessSessions = function(gameId, options){
 // add promise wrapper
 return when.promise(function(resolve, reject) {
 // ------------------------------------------------
-    this.getLatestGameSessions(gameId).then(function(sessions) {
+    this.getLatestGameSessions(gameId, options.courseId).then(function(sessions) {
         var promises = _.map(sessions, function (session) {
             return when.promise(function(resolve, reject) {
 
@@ -345,9 +353,9 @@ return when.promise(function(resolve, reject) {
                     userId: session.userId,
                     gameSessionId: session.gameSessionId,
                 };
-                if (assessmentId && onlyMissing) {
-                    job[assessmentId] = assessmentId;
-                    this.getAssessmentResults(session.userId, gameId, assessmentId).then(
+                if (options.assessmentId && options.onlyMissing) {
+                    job[options.assessmentId] = options.assessmentId;
+                    this.getAssessmentResults(session.userId, gameId, options.assessmentId).then(
                         function(assessment) {
                             if (assessment.assessmentId) {
                                 //assessment already exists
@@ -623,10 +631,10 @@ AssessmentEngine.prototype.saveAEResults = function(userId, gameId, assessmentId
     return this._internalTelemetryRequest("/int/v1/dash/game/"+gameId+"/user/"+userId+"/assessment/"+assessmentId+"/results", data);
 };
 
-AssessmentEngine.prototype.getLatestGameSessions = function(gameId, callback) {
-    return this._internalTelemetryRequest('/int/v1/data/game/'+gameId+'/latestSessions');
+AssessmentEngine.prototype.getLatestGameSessions = function(gameId, courseId) {
+    return this._internalTelemetryRequest('/int/v1/data/game/'+gameId+'/latestSessions'+(courseId ? "?courseId="+courseId:""));
 };
-AssessmentEngine.prototype.getGameSessionsSince = function(earliestTimeStamp, gameId, callback) {
+AssessmentEngine.prototype.getGameSessionsSince = function(earliestTimeStamp, gameId) {
     return this._internalTelemetryRequest('/int/v1/data/game/sessionsSince/'+earliestTimeStamp+(gameId ? "?gameId="+gameId : ""));
 };
 
