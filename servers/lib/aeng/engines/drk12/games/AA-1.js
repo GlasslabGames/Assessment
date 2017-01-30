@@ -36,7 +36,8 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "CoreConstruction_complete",
         "Launch_attack",
         "Use_backing",
-        "Quest_start", "Quest_complete", "Quest_cancel"
+        "Quest_start", "Quest_complete", "Quest_cancel",
+        "Open_equip"
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
@@ -46,6 +47,9 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "type",     //Launch_attack
         "questId",  //Quest_start
         "quest",    //CoreConstruction_complete
+        "botType",  //Open_equip
+        "claimId",  //Fuse_core
+        "dataId",   //Fuse_core
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -81,6 +85,7 @@ return when.promise(function(resolve, reject) {
             OR eventName="Give_schemeTrainingEvidence" \
             OR eventName="Fuse_core" \
             OR eventName="CoreConstruction_complete" \
+            OR eventName="Open_equip" \
         ORDER BY \
             serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
@@ -91,7 +96,9 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
+        var fuseCoreIdx = {};
         var eventIdx = {};
+        var currentBotType;
         var quests = this.collate_events_by_quest(results, function(e) {
 
 	        if (e.eventData_Key == "quest") {
@@ -112,8 +119,31 @@ return when.promise(function(resolve, reject) {
                     };
                 }
             }
-            else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
-                return e.eventData_Value == "none";
+            else if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
+                currentBotType = e.eventData_Value;
+            }
+            else if (e.eventName == "Fuse_core") {
+                if (e.eventData_Key == "claimId") {
+                    fuseCoreIdx[e.eventId] = {
+                        claimId: e.eventData_Value
+                    }
+                } else if (e.eventData_Key == "dataId") {
+                    fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
+                } else if (e.eventData_Key == "weakness") {
+                    var correct = e.eventData_Value == "none";
+                    if (currentBotType) {
+                        var ret = {
+                            'correct': correct,
+                            'detail': currentBotType
+                        };
+                        currentBotType = undefined;
+                        return ret
+                    } else {
+                        /* Fuse_core that had no previous open_equip */
+                        var ret = _lookup_fusecore_bottype(fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId)
+                        return ret;
+                    }
+                }
             }
 
         });
@@ -128,6 +158,37 @@ return when.promise(function(resolve, reject) {
     }.bind(this))
 
 }.bind(this));
+};
+
+
+var _lookup_fusecore_bottype = function(claimId, dataId) {
+    var map = {
+        3353: {
+            4490: { correct: true, detail: "AUTHORITRON" },
+            4486: { correct: false, detail: "OBSERVATRON" },
+            4489: { correct: false, detail: "OBSERVATRON" },
+            4491: { correct: false, detail: "OBSERVATRON" },
+            4487: { correct: true, detail: "CONSEBOT" },
+        },
+        3354: {
+            4493: { correct: true, detail: "AUTHORITRON" },
+            4495: { correct: false, detail: "AUTHORITRON" },
+            4492: { correct: false, detail: "OBSERVATRON" },
+            4494: { correct: false, detail: "OBSERVATRON" },
+            4496: { correct: false, detail: "CONSEBOT" },
+        },
+        3357: {
+            4510: { correct: true, detail: "AUTHORITRON" },
+            4509: { correct: false, detail: "OBSERVATRON" },
+            4507: { correct: false, detail: "CONSEBOT" },
+            4508: { correct: false, detail: "CONSEBOT" },
+            4485: { correct: true, detail: "CONSEBOT" },
+        }
+    };
+
+    if (claimId in map && dataId in map[claimId]) {
+        return map[claimId][dataId];
+    }
 };
 
 
