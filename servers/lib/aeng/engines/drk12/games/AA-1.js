@@ -139,8 +139,8 @@ return when.promise(function(resolve, reject) {
                         currentBotType = undefined;
                         return ret
                     } else {
-                        /* Fuse_core that had no previous open_equip */
-                        var ret = _lookup_fusecore_bottype(fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId)
+                        /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
+                        var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId);
                         return ret;
                     }
                 }
@@ -161,30 +161,8 @@ return when.promise(function(resolve, reject) {
 };
 
 
-var _lookup_fusecore_bottype = function(claimId, dataId) {
-    var map = {
-        3353: {
-            4490: { correct: true, detail: "AUTHORITRON" },
-            4486: { correct: false, detail: "OBSERVATRON" },
-            4489: { correct: false, detail: "OBSERVATRON" },
-            4491: { correct: false, detail: "OBSERVATRON" },
-            4487: { correct: true, detail: "CONSEBOT" },
-        },
-        3354: {
-            4493: { correct: true, detail: "AUTHORITRON" },
-            4495: { correct: false, detail: "AUTHORITRON" },
-            4492: { correct: false, detail: "OBSERVATRON" },
-            4494: { correct: false, detail: "OBSERVATRON" },
-            4496: { correct: false, detail: "CONSEBOT" },
-        },
-        3357: {
-            4510: { correct: true, detail: "AUTHORITRON" },
-            4509: { correct: false, detail: "OBSERVATRON" },
-            4507: { correct: false, detail: "CONSEBOT" },
-            4508: { correct: false, detail: "CONSEBOT" },
-            4485: { correct: true, detail: "CONSEBOT" },
-        }
-    };
+var _lookup_fusecore_bottype = function(aInfo, claimId, dataId) {
+    var map = aInfo.fuseCoreMapping;
 
     if (claimId in map && dataId in map[claimId]) {
         return map[claimId][dataId];
