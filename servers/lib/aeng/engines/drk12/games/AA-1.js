@@ -134,7 +134,7 @@ return when.promise(function(resolve, reject) {
                     if (currentBotType) {
                         var ret = {
                             'correct': correct,
-                            'detail': currentBotType
+                            'detail': [currentBotType, "FUSE_CORE"]
                         };
                         currentBotType = undefined;
                         return ret
@@ -146,7 +146,7 @@ return when.promise(function(resolve, reject) {
                 }
             }
 
-        });
+        }.bind(this));
         var questList = _.values(quests);
 
         resolve({
@@ -321,14 +321,17 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                     var is_correct = Boolean(attempt.correct);
                     q.score.correct += 1 ? is_correct : 0;
                     if (attempt.detail) {
-                        if (!(attempt.detail in q.detail)) {
-                            q.detail[attempt.detail] = {
-                                'correct': 0,
-                                'attempts': 0,
+                        var details = Array.isArray(attempt.detail) ? attempt.detail  : [attempt.detail];
+                        _.forEach(details, function(detail) {
+                            if (!(detail in q.detail)) {
+                                q.detail[detail] = {
+                                    'correct': 0,
+                                    'attempts': 0,
+                                }
                             }
-                        }
-                        q.detail[attempt.detail].attempts += 1;
-                        q.detail[attempt.detail].correct += 1 ? is_correct : 0;
+                            q.detail[detail].attempts += 1;
+                            q.detail[detail].correct += 1 ? is_correct : 0;
+                        }.bind(this));
                     }
                 } else {
                     q.score.correct += 1 ? Boolean(attempt) : 0;
