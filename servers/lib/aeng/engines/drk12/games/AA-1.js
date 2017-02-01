@@ -99,7 +99,7 @@ return when.promise(function(resolve, reject) {
         var fuseCoreIdx = {};
         var eventIdx = {};
         var currentBotType;
-        var quests = this.collate_events_by_quest(results, function(e) {
+        var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
 	        if (e.eventData_Key == "quest") {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
@@ -140,7 +140,7 @@ return when.promise(function(resolve, reject) {
                         return ret
                     } else {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
-                        var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId);
+                        var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
                         return ret;
                     }
                 }
@@ -160,12 +160,19 @@ return when.promise(function(resolve, reject) {
 }.bind(this));
 };
 
-
-var _lookup_fusecore_bottype = function(aInfo, claimId, dataId) {
+var _lookup_fusecore_bottype = function(aInfo, claimId, dataId, currentQuestId) {
     var map = aInfo.fuseCoreMapping;
 
-    if (claimId in map && dataId in map[claimId]) {
-        return map[claimId][dataId];
+    if (currentQuestId in map.quests) {
+        // map based on dataId only
+        if (dataId in map.quests[currentQuestId]) {
+            return map.quests[currentQuestId][dataId];
+        }
+    }
+
+    // map on both claimId and dataId
+    if (claimId in map['claimIds'] && dataId in map['claimIds'][claimId]) {
+        return map['claimIds'][claimId][dataId];
     }
 };
 
@@ -314,7 +321,7 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
             // attempts that occur outside of a quest get attributed to the consequent quest
             var q = curQuestId ? quests[curQuestId] : unclaimedSkills;
 
-            var attempt = callback(e);
+            var attempt = callback(e, q, curQuestId);
             if (attempt != null && attempt != -1) {
                 q.score.attempts += 1;
                 if (typeof attempt === 'object' && 'correct' in attempt) {
