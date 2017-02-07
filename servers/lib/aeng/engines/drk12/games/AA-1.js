@@ -105,7 +105,12 @@ return when.promise(function(resolve, reject) {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
                 // events that are not the special Quest11 type (CoreConstruction_complete), so return null in all
                 // other cases
-		        return ((e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") || null);
+		        if (e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") {
+		            return {
+		                'correct': true,
+                        'detail': ['OBSERVATRON', "CORECONSTRUCTION_COMPLETE"]
+                    }
+                }
 	        }
             else if (e.eventName == "Give_schemeTrainingEvidence") {
                 if (e.eventData_Key == "dataScheme") {
