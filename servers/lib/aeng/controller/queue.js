@@ -40,6 +40,7 @@ var QueueJobTypes = {
         validate: function(req, res) {
             var data = {};
             data.gameId = req.body.gameId;
+            data.courseId = req.body.courseId;
             data.assessmentId = req.body.assessmentId;
             data.onlyMissing = req.body.onlyMissing;
             data.since = req.body.since;

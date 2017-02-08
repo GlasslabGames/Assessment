@@ -36,15 +36,20 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "CoreConstruction_complete",
         "Launch_attack",
         "Use_backing",
-        "Quest_start", "Quest_complete", "Quest_cancel"
+        "Quest_start", "Quest_complete", "Quest_cancel",
+        "Open_equip"
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
         "success",  //Give_schemetrainingevidence, Use_backing, Fuse_core, Launch_attack
+        "dataScheme", //Give_schemeTrainingEvidence
         "weakness", //Fuse_core
         "type",     //Launch_attack
         "questId",  //Quest_start
         "quest",    //CoreConstruction_complete
+        "botType",  //Open_equip
+        "claimId",  //Fuse_core
+        "dataId",   //Fuse_core
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -80,8 +85,9 @@ return when.promise(function(resolve, reject) {
             OR eventName="Give_schemeTrainingEvidence" \
             OR eventName="Fuse_core" \
             OR eventName="CoreConstruction_complete" \
+            OR eventName="Open_equip" \
         ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
     db.all(sql, function(err, results) {
         if (err) {
@@ -90,23 +96,62 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-
-        var quests = this.collate_events_by_quest(results, function(e) {
+        var fuseCoreIdx = {};
+        var eventIdx = {};
+        var currentBotType;
+        var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
 	        if (e.eventData_Key == "quest") {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
                 // events that are not the special Quest11 type (CoreConstruction_complete), so return null in all
                 // other cases
-		        return ((e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") || null);
+		        if (e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") {
+		            return {
+		                'correct': true,
+                        'detail': ['OBSERVATRON', "CORECONSTRUCTION_COMPLETE"]
+                    }
+                }
 	        }
             else if (e.eventName == "Give_schemeTrainingEvidence") {
-                return (e.eventData_Key == "success" && e.eventData_Value == "true");
+                if (e.eventData_Key == "dataScheme") {
+                    eventIdx[e.eventId] = e.eventData_Value;
+                }
+                else if (e.eventData_Key == "success") {
+                    var correct = (e.eventData_Key == "success" && e.eventData_Value == "true");
+                    return {
+                        'correct': correct,
+                        'detail': eventIdx[e.eventId]
+                    };
+                }
             }
-            else if (e.eventName == "Fuse_core" && e.eventData_Key == "weakness") {
-                return e.eventData_Value == "none";
+            else if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
+                currentBotType = e.eventData_Value;
+            }
+            else if (e.eventName == "Fuse_core") {
+                if (e.eventData_Key == "claimId") {
+                    fuseCoreIdx[e.eventId] = {
+                        claimId: e.eventData_Value
+                    }
+                } else if (e.eventData_Key == "dataId") {
+                    fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
+                } else if (e.eventData_Key == "weakness") {
+                    var correct = e.eventData_Value == "none";
+                    if (currentBotType) {
+                        var ret = {
+                            'correct': correct,
+                            'detail': [currentBotType, "FUSE_CORE"]
+                        };
+                        currentBotType = undefined;
+                        return ret
+                    } else {
+                        /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
+                        var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
+                        return ret;
+                    }
+                }
             }
 
-        });
+        }.bind(this));
         var questList = _.values(quests);
 
         resolve({
@@ -118,6 +163,22 @@ return when.promise(function(resolve, reject) {
     }.bind(this))
 
 }.bind(this));
+};
+
+var _lookup_fusecore_bottype = function(aInfo, claimId, dataId, currentQuestId) {
+    var map = aInfo.fuseCoreMapping;
+
+    if (currentQuestId in map.quests) {
+        // map based on dataId only
+        if (dataId in map.quests[currentQuestId]) {
+            return map.quests[currentQuestId][dataId];
+        }
+    }
+
+    // map on both claimId and dataId
+    if (claimId in map['claimIds'] && dataId in map['claimIds'][claimId]) {
+        return map['claimIds'][claimId][dataId];
+    }
 };
 
 
@@ -177,7 +238,7 @@ return when.promise(function(resolve, reject) {
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Use_backing" \
         ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
 
     db.all(sql, function(err, results) {
@@ -187,10 +248,16 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
+        var eventIdx = {};
         var quests = this.collate_events_by_quest(results, function(e) {
 
-            if (e.eventName == "Use_backing" && e.eventData_key == "success") {
-                return e.eventData_Value == "true";
+            if (e.eventName == "Use_backing" && e.eventData_key == "playerTurn") {
+                eventIdx[e.eventId] = e.eventData_Value;
+            } else if (e.eventName == "Use_backing" && e.eventData_Key == "success") {
+                return {
+                    correct: e.eventData_value == "true",
+                    detail: "CREATED" ? eventIdx[e.eventId] == "true" : "DEFENDED"
+                };
             }
 
         });
@@ -221,7 +288,14 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
     var quests = {};
     var curQuestId = undefined;
     var i;
-    var unclaimedScore = {'correct': 0, 'attempts': 0};
+    // var unclaimedScore = {'correct': 0, 'attempts': 0};
+    var unclaimedSkills = {
+        'score': {
+            'correct': 0,
+            'attempts': 0
+        },
+        'detail': {}
+    };
     for (i=0; i < events.length; i++) {
         var e = events[i];
         if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
@@ -232,14 +306,17 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                     'score': {
                         'correct': 0,
                         'attempts': 0
-                    }
+                    },
+                    'detail': {}
                 }
             }
-            if (unclaimedScore.attempts) {
-                quests[curQuestId].score.correct += unclaimedScore.correct;
-                quests[curQuestId].score.attempts += unclaimedScore.attempts;
-                unclaimedScore.correct = 0;
-                unclaimedScore.attempts = 0;
+            if (unclaimedSkills.score.attempts) {
+                quests[curQuestId].score.correct += unclaimedSkills.score.correct;
+                quests[curQuestId].score.attempts += unclaimedSkills.score.attempts;
+                quests[curQuestId].detail = _.clone(unclaimedSkills.detail);
+                unclaimedSkills.score.correct = 0;
+                unclaimedSkills.score.attempts = 0;
+                unclaimedSkills.detail = {};
             }
         }
         else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
@@ -247,17 +324,35 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
         }
         else {
             // attempts that occur outside of a quest get attributed to the consequent quest
-            var attempt = callback(e);
-            var s = curQuestId ? quests[curQuestId].score : unclaimedScore;
+            var q = curQuestId ? quests[curQuestId] : unclaimedSkills;
+
+            var attempt = callback(e, q, curQuestId);
             if (attempt != null && attempt != -1) {
-                s.attempts += 1;
-                s.correct += 1 ? Boolean(attempt) : 0;
+                q.score.attempts += 1;
+                if (typeof attempt === 'object' && 'correct' in attempt) {
+                    var is_correct = Boolean(attempt.correct);
+                    q.score.correct += 1 ? is_correct : 0;
+                    if (attempt.detail) {
+                        var details = Array.isArray(attempt.detail) ? attempt.detail  : [attempt.detail];
+                        _.forEach(details, function(detail) {
+                            if (!(detail in q.detail)) {
+                                q.detail[detail] = {
+                                    'correct': 0,
+                                    'attempts': 0,
+                                }
+                            }
+                            q.detail[detail].attempts += 1;
+                            q.detail[detail].correct += 1 ? is_correct : 0;
+                        }.bind(this));
+                    }
+                } else {
+                    q.score.correct += 1 ? Boolean(attempt) : 0;
+                }
             }
         }
     }
     return quests;
 };
-
 
 AA_DRK12.prototype.sum_scores = function(quests) {
     return quests.reduce(function(score, q) {
@@ -296,7 +391,10 @@ AA_DRK12.prototype.distill_launch_attack_skill = function(engine, db, skillId, a
                 if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
                     eventIdx[e.eventId] = e.eventData_Value;
                 } else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
-                    return eventIdx[e.eventId] == "true";
+                    return {
+                        correct: eventIdx[e.eventId] == "true",
+                        detail: attack_type
+                    };
                 }
 
             });
