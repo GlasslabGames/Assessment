@@ -556,9 +556,6 @@ PRIMA_SoWo.prototype.so1 = function(engine, db, userId) {
 
             total = results[0].total;
             if(total >= threshold) {
-
-                engine.awardBadge(userId, 9);
-
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -616,7 +613,6 @@ PRIMA_SoWo.prototype.so2 = function(engine, db, userId) {
 
             total = results[0].total;
             if(total >= threshold) {
-                engine.awardBadge(userId, 10);
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {
@@ -674,7 +670,6 @@ PRIMA_SoWo.prototype.so3 = function(engine, db, userId) {
 
             total = results[0].total;
             if(total >= threshold) {
-                engine.awardBadge(userId, 27);
                 // over is 0 - 1 float percent of the amount past threshold over max
                 resolve(
                     {

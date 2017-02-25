@@ -181,7 +181,6 @@ return when.promise(function(resolve, reject) {
 
         total = results[0].total;
         if(total >= threshold) {
-            engine.awardBadge(userId, 9);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
@@ -307,7 +306,6 @@ return when.promise(function(resolve, reject) {
         total = results.length;
 
         if(total >= threshold) {
-            engine.awardBadge(userId, 10);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {
@@ -494,7 +492,6 @@ return when.promise(function(resolve, reject) {
 
         total = results[0].bullTotal;
         if(total >= threshold) {
-            engine.awardBadge(userId, 27);
             // over is 0 - 1 float percent of the amount past threshold over max
             resolve(
                 {

@@ -76,25 +76,6 @@ return when.promise(function(resolve, reject) {
 // end promise wrapper
 };
 
-JavascriptEngine.prototype.awardBadge = function(userId, badgeId) {
-    var addr = this.options.sdk.connect;
-    if ( ! addr ) {
-        addr = "localhost";
-    }
-    var url = "http://" + this.options.sdk.connect + ":" + this.options.services.appExternalPort + "/api/v2/dash/badge/" + badgeId + "/generateCode/" + userId;
-
-    console.log("awardBadge ", url);
-
-    this.requestUtil.postRequest( url, null, null,
-        function( err, result, data ) {
-            if ( data ) {
-                console.log("Awarded");
-            } else if ( err ) {
-                console.log("Failed to award ", err);
-            }
-        }.bind(this) );
-}
-
 /*
  Telemetry can directly trigger Shout Outs and Watch Outs.
 */
