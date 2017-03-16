@@ -49,7 +49,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "quest",    //CoreConstruction_complete
         "botType",  //Open_equip
         "claimId",  //Fuse_core
-        "dataId",   //Fuse_core
+        "dataId"   //Fuse_core
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -256,7 +256,7 @@ return when.promise(function(resolve, reject) {
             } else if (e.eventName == "Use_backing" && e.eventData_Key == "success") {
                 return {
                     correct: e.eventData_value == "true",
-                    detail: "CREATED" ? eventIdx[e.eventId] == "true" : "DEFENDED"
+                    detail: eventIdx[e.eventId] == "true" ? "CREATED" : "DEFENDED"
                 };
             }
 
@@ -331,22 +331,22 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                 q.score.attempts += 1;
                 if (typeof attempt === 'object' && 'correct' in attempt) {
                     var is_correct = Boolean(attempt.correct);
-                    q.score.correct += 1 ? is_correct : 0;
+                    is_correct ? q.score.correct += 1 : 0;
                     if (attempt.detail) {
                         var details = Array.isArray(attempt.detail) ? attempt.detail  : [attempt.detail];
                         _.forEach(details, function(detail) {
                             if (!(detail in q.detail)) {
                                 q.detail[detail] = {
                                     'correct': 0,
-                                    'attempts': 0,
+                                    'attempts': 0
                                 }
                             }
                             q.detail[detail].attempts += 1;
-                            q.detail[detail].correct += 1 ? is_correct : 0;
+                            is_correct ? q.detail[detail].correct += 1 : 0;
                         }.bind(this));
                     }
                 } else {
-                    q.score.correct += 1 ? Boolean(attempt) : 0;
+                    Boolean(attempt) ? q.score.correct += 1 : 0;
                 }
             }
         }
