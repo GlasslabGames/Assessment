@@ -267,7 +267,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Launch_attack"\
         ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
+            serverTimeStamp ASC, gameSessionEventOrder ASC, eventName ASC, eventData_Key ASC';
 
 
 		db.all(sql, function(err, results) {
@@ -288,7 +288,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
 
-				    var detail = [attack_type];
+				    var detail = [];
 
 				    // These are the attackId -> bot type mappings given to us by Paula
 					if (eventIdx[e.eventId]) {
@@ -307,7 +307,9 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 						    eventIdx[e.eventId]['attackId'] >= 107 &&
                             eventIdx[e.eventId]['attackId'] <= 108) {
 							detail.push("COMPARIDROID");
-						}
+						} else {
+					        detail.push(attack_type);
+                        }
                     }
 
 					return {
