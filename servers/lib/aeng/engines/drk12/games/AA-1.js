@@ -49,7 +49,8 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "quest",    //CoreConstruction_complete
         "botType",  //Open_equip
         "claimId",  //Fuse_core
-        "dataId"   //Fuse_core
+        "dataId",   //Fuse_core
+        "attackId"  //Launch_attack
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
@@ -196,7 +197,50 @@ var _lookup_fusecore_bottype = function(aInfo, claimId, dataId, currentQuestId) 
 
  */
 AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
-    return this.distill_launch_attack_skill(engine, db, "supportingClaims", "CORE_ATTACK");
+	return when.promise(function(resolve, reject) {
+		var skillId = "supportingClaims";
+		var attack_type = "CORE_ATTACK";
+
+		var sql = 'SELECT * FROM events \
+        WHERE \
+            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
+            OR eventName="Launch_attack"\
+        ORDER BY \
+            serverTimeStamp ASC, gameSessionEventOrder ASC';
+
+
+		db.all(sql, function(err, results) {
+			if (err) {
+				console.error("AssessmentEngine: DRK12_Engine - AA_DRK12."+skillId+" DB Error:", err);
+				reject(err);
+				return;
+			}
+
+			var eventIdx = {};
+
+			var quests = this.collate_events_by_quest(results, function(e) {
+
+				if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
+					eventIdx[e.eventId] = e.eventData_Value;
+				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
+					return {
+						correct: eventIdx[e.eventId] == "true",
+						detail: attack_type
+					};
+				}
+
+			});
+			var questList = _.values(quests);
+
+			resolve({
+				"id": skillId,
+				"type": "skill",
+				"quests": questList,
+				"score": this.sum_scores(questList)
+			})
+		}.bind(this));
+
+	}.bind(this));
 };
 
 
@@ -214,7 +258,76 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 
  */
 AA_DRK12.prototype.using_critical_questions = function(engine, db) {
-    return this.distill_launch_attack_skill(engine, db, "criticalQuestions", "CRITICAL_QUESTION_ATTACK");
+	return when.promise(function(resolve, reject) {
+		var skillId = "criticalQuestions";
+		var attack_type = "CRITICAL_QUESTION_ATTACK";
+
+		var sql = 'SELECT * FROM events \
+        WHERE \
+            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
+            OR eventName="Launch_attack"\
+        ORDER BY \
+            serverTimeStamp ASC, gameSessionEventOrder ASC';
+
+
+		db.all(sql, function(err, results) {
+			if (err) {
+				console.error("AssessmentEngine: DRK12_Engine - AA_DRK12."+skillId+" DB Error:", err);
+				reject(err);
+				return;
+			}
+
+			var eventIdx = {};
+
+			var quests = this.collate_events_by_quest(results, function(e) {
+
+				if (e.eventName == "Launch_attack" && (e.eventData_Key == "success" || e.eventData_Key == "attackId")) {
+					if (!eventIdx[e.eventId]) {
+						eventIdx[e.eventId] = {};
+					}
+                    eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
+
+				    var detail = [attack_type];
+
+				    // These are the attackId -> bot type mappings given to us by Paula
+					if (eventIdx[e.eventId]) {
+					    if (eventIdx[e.eventId]['attackId'] >= 101 &&
+                            eventIdx[e.eventId]['attackId'] <= 102) {
+						    detail.push("AUTHORITRON");
+                        } else if (
+                            eventIdx[e.eventId]['attackId'] >= 103 &&
+                            eventIdx[e.eventId]['attackId'] <= 104) {
+							detail.push("OBSERVATRON");
+						} else if (
+						    eventIdx[e.eventId]['attackId'] >= 105 &&
+                            eventIdx[e.eventId]['attackId'] <= 106) {
+							detail.push("CONSEBOT");
+						} else if (
+						    eventIdx[e.eventId]['attackId'] >= 107 &&
+                            eventIdx[e.eventId]['attackId'] <= 108) {
+							detail.push("COMPARIDROID");
+						}
+                    }
+
+					return {
+						correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'] == "true",
+						detail: detail
+					};
+				}
+
+			});
+			var questList = _.values(quests);
+
+			resolve({
+				"id": skillId,
+				"type": "skill",
+				"quests": questList,
+				"score": this.sum_scores(questList)
+			})
+		}.bind(this));
+
+	}.bind(this));
 };
 
 
@@ -364,49 +477,4 @@ AA_DRK12.prototype.sum_scores = function(quests) {
         'correct': 0,
         'attempts': 0
     });
-};
-
-AA_DRK12.prototype.distill_launch_attack_skill = function(engine, db, skillId, attack_type) {
-    return when.promise(function(resolve, reject) {
-
-        var sql = 'SELECT * FROM events \
-        WHERE \
-            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
-            OR eventName="Launch_attack"\
-        ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC';
-
-
-        db.all(sql, function(err, results) {
-            if (err) {
-                console.error("AssessmentEngine: DRK12_Engine - AA_DRK12."+skillId+" DB Error:", err);
-                reject(err);
-                return;
-            }
-
-            var eventIdx = {};
-
-            var quests = this.collate_events_by_quest(results, function(e) {
-
-                if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
-                    eventIdx[e.eventId] = e.eventData_Value;
-                } else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
-                    return {
-                        correct: eventIdx[e.eventId] == "true",
-                        detail: attack_type
-                    };
-                }
-
-            });
-            var questList = _.values(quests);
-
-            resolve({
-                "id": skillId,
-                "type": "skill",
-                "quests": questList,
-                "score": this.sum_scores(questList)
-            })
-        }.bind(this));
-
-    }.bind(this));
 };
