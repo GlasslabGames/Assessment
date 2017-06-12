@@ -153,7 +153,6 @@ return when.promise(function(resolve, reject) {
                             'correct': correct,
                             'detail': [currentBotType, "FUSE_CORE"],
 	                        'attemptInfo': {
-		                        'tableIndex': 0,
                                 'botType': currentBotType,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
                                 'success': fuseCoreIdx[e.eventId].schemeMismatch == false
@@ -166,7 +165,6 @@ return when.promise(function(resolve, reject) {
                         var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
                         if (ret) {
 	                        ret.attemptInfo = {
-	                            'tableIndex': 0,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
 		                        'success': fuseCoreIdx[e.eventId].schemeMismatch == false
 	                        };
@@ -255,7 +253,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 			var quests = this.collate_events_by_quest(results, function(e) {
 
 				if (!eventIdx[e.eventId]) {
-					eventIdx[e.eventId] = {'tableIndex': 1};
+					eventIdx[e.eventId] = {'attemptType': 'OFFENSE'};
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
@@ -285,7 +283,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 							'correct': correct,
 							'detail': ["FUSE_CORE"],
 							'attemptInfo': {
-								'tableIndex': 0,
+								'attemptType': 'DEFENSE',
 								'claimId': fuseCoreIdx[e.eventId].claimId,
 								'dataId': fuseCoreIdx[e.eventId].dataId,
 								'success': correct
@@ -358,7 +356,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 			var quests = this.collate_events_by_quest(results, function(e) {
 
 				if (!eventIdx[e.eventId]) {
-					eventIdx[e.eventId] = {'tableIndex': 0};
+					eventIdx[e.eventId] = {};
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
