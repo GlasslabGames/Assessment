@@ -163,10 +163,12 @@ return when.promise(function(resolve, reject) {
                     } else {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
                         var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
-                        ret.attemptInfo = {
-                            'dataId': fuseCoreIdx[e.eventId].dataId,
-	                        'success': fuseCoreIdx[e.eventId].schemeMismatch == false
-	                    };
+                        if (ret) {
+	                        ret.attemptInfo = {
+		                        'dataId': fuseCoreIdx[e.eventId].dataId,
+		                        'success': fuseCoreIdx[e.eventId].schemeMismatch == false
+	                        };
+                        }
                         return ret;
                     }
                 }
