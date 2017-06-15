@@ -145,9 +145,7 @@ return when.promise(function(resolve, reject) {
                 } else if (e.eventData_Key == "dataId") {
                     fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
                 } else if (e.eventData_Key == "schemeMismatch") {
-	                fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
-                } else if (e.eventData_Key == "weakness") {
-                    var correct = e.eventData_Value == "none";
+                    var correct = e.eventData_Value == false;
                     if (currentBotType) {
                         var ret = {
                             'correct': correct,
@@ -155,7 +153,7 @@ return when.promise(function(resolve, reject) {
 	                        'attemptInfo': {
                                 'botType': currentBotType,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
-                                'success': fuseCoreIdx[e.eventId].schemeMismatch == false
+                                'success': correct
 	                        }
                         };
                         currentBotType = undefined;
@@ -165,8 +163,9 @@ return when.promise(function(resolve, reject) {
                         var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
                         if (ret) {
 	                        ret.attemptInfo = {
+	                        	'botType': ret.detail,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
-		                        'success': fuseCoreIdx[e.eventId].schemeMismatch == false
+		                        'success': ret.correct
 	                        };
                         }
                         return ret;
@@ -424,64 +423,116 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
  if(count(select(use_backing)=null)){grey}
  */
 AA_DRK12.prototype.using_backing = function(engine, db) {
-return when.promise(function(resolve, reject) {
+	return when.promise(function(resolve, reject) {
 
-    var sql = 'SELECT * FROM events \
-        WHERE \
-            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
-            OR eventName="Use_backing" \
-            OR eventName="Open_equip" \
-            OR eventName="Set_up_battle" \
-        ORDER BY \
-            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
+	    var sql = 'SELECT * FROM events \
+	        WHERE \
+	            eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
+	            OR eventName="Use_backing" \
+	            OR eventName="Open_equip" \
+	            OR eventName="Set_up_battle" \
+	            OR eventName="Launch_attack"\
+	        ORDER BY \
+	            serverTimeStamp ASC, gameSessionEventOrder ASC, eventData_key ASC';
 
 
-    db.all(sql, function(err, results) {
-        if (err) {
-            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.using_backing DB Error:", err);
-            reject(err);
-            return;
-        }
-
-        var eventIdx = {};
-        var quests = this.collate_events_by_quest(results, function(e) {
-
-	        if (!eventIdx[e.eventId]) {
-		        eventIdx[e.eventId] = {};
+	    db.all(sql, function(err, results) {
+	        if (err) {
+	            console.error("AssessmentEngine: DRK12_Engine - AA_DRK12.using_backing DB Error:", err);
+	            reject(err);
+	            return;
 	        }
 
-	        // TODO: implement attempt details for Using Backing -- this will be complicated
-	        if (e.eventName == "Open_equip"  && e.eventData_key == "botType") {
-		        //eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
-	        }
+		    var playerBotDataIdKeys = [
+			    "playerBot1DataId",
+			    "playerBot2DataId",
+			    "playerBot3DataId"
+		    ];
 
-	        if (e.eventName == "Set_up_battle") {
-		        //eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
-	        }
+		    var playerBotNumBackingsKeys = [
+			    "playerBot1NumBackings",
+			    "playerBot2NumBackings",
+			    "playerBot3NumBackings"
+		    ];
 
-            if (e.eventName == "Use_backing" && e.eventData_key == "playerTurn") {
-                eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
-            } else if (e.eventName == "Use_backing" && e.eventData_Key == "success") {
-                return {
-                    correct: e.eventData_value == "true",
-                    detail: eventIdx[e.eventId]["playerTurn"] == "true" ? "CREATED" : "DEFENDED"
-                };
-            }
+	        var eventIdx = {};
+		    var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
-        });
-        var questList = _.values(quests);
+		        if (!eventIdx[e.eventId]) {
+			        eventIdx[e.eventId] = {};
+		        }
 
-        resolve({
-            "id": "usingBacking",
-            "type": "skill",
-            "quests": questList,
-            "score": this.sum_scores(questList)
-        })
-    }.bind(this))
+		        if (e.eventName == "Open_equip" && e.eventData_key == "botType") {
+			        eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
+		        }
 
-}.bind(this));
+			    if (e.eventName == "Launch_attack" && e.eventData_key == "attackId") {
+				    eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
+			    }
+
+		        if (e.eventName == "Set_up_battle" &&
+			        (playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
+			        playerBotNumBackingsKeys.indexOf(e.eventData_Key) >= 0)
+		        ) {
+			        eventIdx[e.eventId][e.eventData_key] = e.eventData_Value;
+		        }
+
+	            if (e.eventName == "Use_backing" && e.eventData_key == "playerTurn") {
+		            var playerTurn = eventIdx[e.eventId]["playerTurn"] == "true";
+
+		        	var success = true;
+		        	var dataId;
+		            for (playerBotDataIdKey in playerBotDataIdKeys) {
+			            success = success && _lookup_usingbacking_success(this.aInfo, eventIdx[e.eventId][playerBotDataIdKey], currentQuestId);
+			            dataId = eventIdx[e.eventId][playerBotDataIdKey];
+		            }
+		            for (playerBotNumBackingsKey in playerBotNumBackingsKeys) {
+			            success = success && (eventIdx[e.eventId][playerBotNumBackingsKey] > 0);
+		            }
+
+		            if (playerTurn) {
+			            return {
+				            correct: success,
+				            detail: "CREATED",
+				            attemptInfo: {
+					            botType: eventIdx[e.eventId]["botType"],
+					            dataId: dataId,
+					            success: success,
+					            attemptType: "DEFENSE"
+				            }
+			            };
+		            } else {
+			            return {
+				            correct: success,
+				            detail: "DEFENDED",
+				            attemptInfo: {
+					            attackId: eventIdx[e.eventId]["attackId"],
+					            dataId: dataId,
+					            success: success,
+					            attemptType: "OFFENSE"
+				            }
+			            };
+		            }
+	            }
+
+	        });
+	        var questList = _.values(quests);
+
+	        resolve({
+	            "id": "usingBacking",
+	            "type": "skill",
+	            "quests": questList,
+	            "score": this.sum_scores(questList)
+	        })
+	    }.bind(this))
+
+	}.bind(this));
 };
 
+var _lookup_usingbacking_success = function(aInfo, dataId, currentQuestId) {
+	var map = aInfo.useBackingDataIds;
+	return (currentQuestId in map.quests) && (dataId in map.quests[currentQuestId]);
+};
 
 
 /*
