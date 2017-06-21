@@ -51,6 +51,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "questId",              //Quest_start
         "quest",                //CoreConstruction_complete
         "botType",              //Open_equip
+        "botEvo",               //Open_equip
         "claimId",              //Fuse_core
         "dataId",               //Fuse_core, Generate_backing
         "schemeMismatch",       //Fuse_core
@@ -112,9 +113,13 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
+        var CQ_BOT_EVO = 2;
+        var CQ_MISSION = 8;
+
         var fuseCoreIdx = {};
         var eventIdx = {};
         var currentBotType;
+	    var currentBotEvo;
         var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
 	        if (e.eventData_Key == "quest") {
@@ -143,6 +148,9 @@ return when.promise(function(resolve, reject) {
             else if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
                 currentBotType = e.eventData_Value;
             }
+            else if (e.eventName == "Open_equip" && e.eventData_Key == "botEvo") {
+                currentBotEvo = e.eventData_Value;
+            }
             else if (e.eventName == "Fuse_core") {
                 if (e.eventData_Key == "claimId") {
                     fuseCoreIdx[e.eventId] = {
@@ -156,6 +164,10 @@ return when.promise(function(resolve, reject) {
                         var ret = {
                             'correct': correct,
                             'detail': [currentBotType, "FUSE_CORE"],
+	                        'criticalQuestionsEnabled':
+	                            currentBotEvo >= CQ_BOT_EVO &&
+	                            this.aInfo.quests[currentQuestId] &&
+	                            this.aInfo.quests[currentQuestId].mission >= CQ_MISSION,
 	                        'attemptInfo': {
                                 'botType': currentBotType,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
@@ -163,6 +175,7 @@ return when.promise(function(resolve, reject) {
 	                        }
                         };
                         currentBotType = undefined;
+	                    currentBotEvo = undefined;
                         return ret
                     } else {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
@@ -473,10 +486,6 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			        eventIdx[e.eventId] = {};
 		        }
 
-		        if (e.eventName != 'Quest_start' && e.eventName != 'Quest_complete' && e.eventName != 'Quest_cancel') {
-		        	console.log(e.eventName + " " + e.eventData_Key);
-		        }
-
 		        if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
 			        eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 		        }
@@ -581,16 +590,12 @@ AA_DRK12.prototype.unlock_bot = function(engine, db) {
 				return;
 			}
 
-			var unlockedBots = [];
-			for (var i=0; i < results.length; i++) {
-				var e = results[i];
+			var unlockedBots = {};
+			this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 				if (e.eventName == "Unlock_botScheme" && e.eventData_Key == "scheme") {
-					var scheme = e.eventData_Value;
-					if (unlockedBots.indexOf(scheme) < 0) {
-						unlockedBots.push(scheme);
-					}
+					unlockedBots[e.eventData_Value] = currentQuestId;
 				}
-			}
+			}.bind(this));
 
 			resolve({
 				"id": "argubotsUnlocked",
@@ -674,6 +679,10 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
                             }
                             q.detail[detail].attempts += 1;
                             is_correct ? q.detail[detail].correct += 1 : 0;
+
+                            if (attempt.criticalQuestionsEnabled) {
+                            	q.detail[detail]['criticalQuestionsEnabled'] = attempt.criticalQuestionsEnabled;
+                            }
                         }.bind(this));
                     }
                     if (attempt.attemptInfo) {
