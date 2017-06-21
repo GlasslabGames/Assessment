@@ -268,24 +268,31 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 			var fuseCoreIdx = {};
 			var eventIdx = {};
 
+			var currentOpponentClaimCore = {};
+
 			var quests = this.collate_events_by_quest(results, function(e) {
 
 				if (!eventIdx[e.eventId]) {
-					eventIdx[e.eventId] = {'attemptType': 'OFFENSE'};
+					eventIdx[e.eventId] = {};
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
-					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
 					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "attackId") {
 					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
-					return {
-						correct: eventIdx[e.eventId]['success'] == "true",
+					currentOpponentClaimCore["attackId"] = eventIdx[e.eventId]['attackId'];
+					currentOpponentClaimCore["success"] = eventIdx[e.eventId]['success'];
+					currentOpponentClaimCore["attemptType"] = "OFFENSE";
+					var ret = {
+						correct: eventIdx[e.eventId]['success'],
 						detail: attack_type,
-                        attemptInfo: eventIdx[e.eventId]
+                        attemptInfo: currentOpponentClaimCore
 					};
+					currentOpponentClaimCore = {};
+					return ret;
 				}
 
 				if (e.eventName == "Fuse_core") {
@@ -346,6 +353,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 		var sql = 'SELECT * FROM events \
         WHERE \
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
+            OR eventName="Open_equip"\
             OR eventName="Launch_attack"\
             OR eventName="Set_up_battle" \
         ORDER BY \
@@ -369,16 +377,28 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
                 "opponentBot3DataId"
             ];
 
+			var CQ_BOT_EVO = 2;
+			var CQ_MISSION = 8;
+
 			var eventIdx = {};
 
-			var quests = this.collate_events_by_quest(results, function(e) {
+			var currentOpponentClaimCore = {};
+			var currentBotTypeToEvoMap = {};
+
+			var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
-					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
+				} else if (e.eventName == "Open_equip") {
+					if (!currentBotTypeToEvoMap[e.eventId]) {
+						currentBotTypeToEvoMap[e.eventId] = {};
+					}
+
+					currentBotTypeToEvoMap[e.eventId][e.eventData_Key] = e.eventData_Value;
 				}
 
 				// TODO: add 'does player have access to matching CQ's? (see spec)
@@ -389,33 +409,57 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
 
+					var CQEnabledBots = {};
+					var botEventId;
+					for (var botEventId in currentBotTypeToEvoMap) {
+						var botInfo = currentBotTypeToEvoMap[botEventId];
+						CQEnabledBots[botInfo['botType']] = botInfo['botEvo']
+					}
 				    var detail = [];
+
+					var botType;
 
 				    // These are the attackId -> bot type mappings given to us by Paula
 					if (eventIdx[e.eventId]) {
 					    if (eventIdx[e.eventId]['attackId'] >= 101 &&
                             eventIdx[e.eventId]['attackId'] <= 102) {
-						    detail.push("AUTHORITRON");
+						    botType = "AUTHORITRON";
+						    detail.push(botType);
                         } else if (
                             eventIdx[e.eventId]['attackId'] >= 103 &&
                             eventIdx[e.eventId]['attackId'] <= 104) {
-							detail.push("OBSERVATRON");
+						    botType = "OBSERVATRON";
+							detail.push(botType);
 						} else if (
 						    eventIdx[e.eventId]['attackId'] >= 105 &&
                             eventIdx[e.eventId]['attackId'] <= 106) {
-							detail.push("CONSEBOT");
+					    	botType = "CONSEBOT";
+							detail.push(botType);
 						} else if (
 						    eventIdx[e.eventId]['attackId'] >= 107 &&
                             eventIdx[e.eventId]['attackId'] <= 108) {
-							detail.push("COMPARIDROID");
+					    	botType = "COMPARIDROID";
+							detail.push(botType);
 						}
                     }
 
-					return {
+					var criticalQuestionsEnabled =
+						CQEnabledBots[botType] >= CQ_BOT_EVO &&
+						this.aInfo.quests[currentQuestId] &&
+						this.aInfo.quests[currentQuestId].mission >= CQ_MISSION;
+
+					currentOpponentClaimCore["attackId"] = eventIdx[e.eventId]['attackId'];
+					currentOpponentClaimCore["success"] = eventIdx[e.eventId]['success'];
+					currentOpponentClaimCore["criticalQuestionsEnabled"] = criticalQuestionsEnabled;
+					var ret = {
 						correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'],
 						detail: detail,
-                        attemptInfo: eventIdx[e.eventId]
+						criticalQuestionsEnabled: criticalQuestionsEnabled,
+                        attemptInfo: currentOpponentClaimCore
 					};
+					currentOpponentClaimCore = {};
+					currentBotTypeToEvoMap = {};
+					return ret;
 				}
 
 			}.bind(this));
@@ -479,74 +523,72 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			    "playerBot3NumBackings"
 		    ];
 
-	        var eventIdx = {};
+	        var currentEventData = {};
 		    var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
 
-		        if (!eventIdx[e.eventId]) {
-			        eventIdx[e.eventId] = {};
-		        }
-
-		        if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
-			        eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+			    if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
+				    currentEventData[e.eventData_Key] = e.eventData_Value;
 		        }
 
 			    if (e.eventName == "Launch_attack" && e.eventData_Key == "attackId") {
-				    eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+				    currentEventData[e.eventData_Key] = e.eventData_Value;
 			    }
 
 		        if (e.eventName == "Set_up_battle" &&
 			        (playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
 			        playerBotNumBackingsKeys.indexOf(e.eventData_Key) >= 0)
 		        ) {
-			        eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+			        currentEventData[e.eventData_Key] = e.eventData_Value;
 		        }
 
 			    if (e.eventName == "Generate_backing" && (e.eventData_Key == "dataId" || e.eventData_Key == "numBackings")) {
-				    eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+				    currentEventData[e.eventData_Key] = e.eventData_Value;
 			    }
 
 	            if (e.eventName == "Use_backing" && e.eventData_Key == "playerTurn") {
-		            eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
-		            var playerTurn = eventIdx[e.eventId]["playerTurn"] == "true";
+		            var playerTurn = e.eventData_Value == "true";
 
 		        	var success = true;
-		        	var dataId = eventIdx[e.eventId]["dataId"];
-		        	var numBackings = eventIdx[e.eventId]["numBackings"];
+		        	var dataId = currentEventData["dataId"];
+		        	var numBackings = currentEventData["numBackings"];
 		        	if (!dataId) {
-				        for (playerBotDataIdKey in playerBotDataIdKeys) {
-					        success = success && _lookup_usingbacking_success(this.aInfo, eventIdx[e.eventId][playerBotDataIdKey], currentQuestId);
-					        dataId = eventIdx[e.eventId][playerBotDataIdKey];
+				        for (var playerBotDataIdKey in playerBotDataIdKeys) {
+					        success = success && _lookup_usingbacking_success(this.aInfo, currentEventData[playerBotDataIdKey], currentQuestId);
+					        dataId = currentEventData[playerBotDataIdKey];
 				        }
-			            for (playerBotNumBackingsKey in playerBotNumBackingsKeys) {
-				            success = success && (eventIdx[e.eventId][playerBotNumBackingsKey] > 0);
+			            for (var playerBotNumBackingsKey in playerBotNumBackingsKeys) {
+				            success = success && (currentEventData[playerBotNumBackingsKey] > 0);
 			            }
 		            } else {
 		        		success = _lookup_usingbacking_success(this.aInfo, dataId, currentQuestId) && numBackings > 0;
 			        }
 
+			        var ret;
 		            if (playerTurn) {
-			            return {
+			            ret = {
 				            correct: success,
 				            detail: "CREATED",
 				            attemptInfo: {
-					            botType: eventIdx[e.eventId]["botType"],
+					            botType: currentEventData["botType"],
 					            dataId: dataId,
 					            success: success,
 					            attemptType: "DEFENSE"
 				            }
 			            };
 		            } else {
-			            return {
+			            ret = {
 				            correct: success,
 				            detail: "DEFENDED",
 				            attemptInfo: {
-					            attackId: eventIdx[e.eventId]["attackId"],
+					            attackId: currentEventData["attackId"],
 					            dataId: dataId,
 					            success: success,
 					            attemptType: "OFFENSE"
 				            }
 			            };
 		            }
+		            currentEventData = {};
+		        	return ret;
 	            }
 
 		    }.bind(this));
