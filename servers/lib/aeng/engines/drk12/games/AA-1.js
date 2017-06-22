@@ -120,7 +120,17 @@ return when.promise(function(resolve, reject) {
         var eventIdx = {};
         var currentBotType;
 	    var currentBotEvo;
-        var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
+
+	    /* We expect to read events in any of the following sequences:
+	        1.  Quest11
+
+	        2.  Give_schemeTrainingEvidence
+
+	        3.  Open_equip
+	            Fuse_core
+        */
+
+        var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
 
 	        if (e.eventData_Key == "quest") {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
@@ -270,7 +280,14 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 
 			var currentOpponentClaimCore = {};
 
-			var quests = this.collate_events_by_quest(results, function(e) {
+			/* We expect to read events in any of the following sequences:
+				1.  Set_up_battle
+				    Launch_attack
+
+				2.  Fuse_core
+			 */
+
+			var quests = this.collate_events_by_quest(results, this.aInfo, function(e) {
 
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
@@ -385,7 +402,13 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 			var currentOpponentClaimCore = {};
 			var currentBotTypeToEvoMap = {};
 
-			var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
+			/* We expect to read events in any of the following sequences:
+			    1.  Open_equip
+			        Set_up_battle
+				    Launch_attack
+			 */
+
+			var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
 
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
@@ -523,16 +546,20 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			    "playerBot3NumBackings"
 		    ];
 
+		    /* We expect to read events in any of the following sequences:
+		        1.  Open_equip
+		            Set_up_battle
+			        Launch_attack
+			        Generate_backing
+			        Use_backing
+		     */
+
 	        var currentEventData = {};
-		    var quests = this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
+		    var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
 
 			    if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
 				    currentEventData[e.eventData_Key] = e.eventData_Value;
 		        }
-
-			    if (e.eventName == "Launch_attack" && e.eventData_Key == "attackId") {
-				    currentEventData[e.eventData_Key] = e.eventData_Value;
-			    }
 
 		        if (e.eventName == "Set_up_battle" &&
 			        (playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
@@ -540,6 +567,10 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 		        ) {
 			        currentEventData[e.eventData_Key] = e.eventData_Value;
 		        }
+
+			    if (e.eventName == "Launch_attack" && e.eventData_Key == "attackId") {
+				    currentEventData[e.eventData_Key] = e.eventData_Value;
+			    }
 
 			    if (e.eventName == "Generate_backing" && (e.eventData_Key == "dataId" || e.eventData_Key == "numBackings")) {
 				    currentEventData[e.eventData_Key] = e.eventData_Value;
@@ -633,7 +664,7 @@ AA_DRK12.prototype.unlock_bot = function(engine, db) {
 			}
 
 			var unlockedBots = {};
-			this.collate_events_by_quest(results, function(e, currentQuest, currentQuestId) {
+			this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
 				if (e.eventName == "Unlock_botScheme" && e.eventData_Key == "scheme") {
 					unlockedBots[e.eventData_Value] = currentQuestId;
 				}
@@ -657,7 +688,7 @@ AA_DRK12.prototype.unlock_bot = function(engine, db) {
  *  -1/undefined if it should not be considered an attempt
  *
  */
-AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
+AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
 
     var quests = {};
     var curQuestId = undefined;
@@ -675,6 +706,11 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, callback) {
         var e = events[i];
         if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
             curQuestId = e.eventData_Value;
+            // Sometimes multiple quests map to the same mission, and the simplest way to handle this is to merge
+	        // them before saving attempt data.
+            if (aInfo.duplicateQuestMapping[curQuestId]) {
+	            curQuestId = aInfo.duplicateQuestMapping[curQuestId];
+            }
             if (!(curQuestId in quests)) {
                 quests[curQuestId] = {
                     'questId': curQuestId,
