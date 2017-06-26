@@ -144,7 +144,7 @@ return when.promise(function(resolve, reject) {
                 }
 	        }
             else if (e.eventName == "Give_schemeTrainingEvidence") {
-                if (e.eventData_Key == "dataScheme") {
+                if (e.eventData_Key == "dataScheme" || e.eventData_Key == "dataId") {
                     eventIdx[e.eventId] = e.eventData_Value;
                 }
                 else if (e.eventData_Key == "success") {
@@ -423,8 +423,6 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 
 					currentBotTypeToEvoMap[e.eventId][e.eventData_Key] = e.eventData_Value;
 				}
-
-				// TODO: add 'does player have access to matching CQ's? (see spec)
 
 				if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
 					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
@@ -725,7 +723,16 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
             if (unclaimedSkills.score.attempts) {
                 quests[curQuestId].score.correct += unclaimedSkills.score.correct;
                 quests[curQuestId].score.attempts += unclaimedSkills.score.attempts;
-                quests[curQuestId].detail = _.clone(unclaimedSkills.detail);
+	            for (var skillDetail in unclaimedSkills.detail) {
+		            if(!(skillDetail in quests[curQuestId].detail)){
+			            quests[curQuestId].detail[skillDetail] = {
+			            	'correct': 0,
+				            'attempts': 0
+			            }
+		            }
+		            quests[curQuestId].detail[skillDetail].correct += unclaimedSkills.detail[skillDetail].correct;
+		            quests[curQuestId].detail[skillDetail].attempts += unclaimedSkills.detail[skillDetail].attempts;
+	            }
                 quests[curQuestId].attemptList = quests[curQuestId].attemptList.concat(unclaimedSkills.attemptList);
                 unclaimedSkills.score.correct = 0;
                 unclaimedSkills.score.attempts = 0;
