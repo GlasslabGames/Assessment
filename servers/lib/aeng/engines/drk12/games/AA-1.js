@@ -295,6 +295,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 			var fuseCoreIdx = {};
 			var eventIdx = {};
 
+			var currentBattleEventId;
 			var currentOpponentClaimCore = {};
 
 			/* We expect to read events in any of the following sequences:
@@ -311,6 +312,10 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
+					if (e.eventId != currentBattleEventId) {
+						currentBattleEventId = e.eventId;
+						currentOpponentClaimCore = {"attemptType": "OFFENSE"};
+					}
 					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "success") {
 					eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
@@ -319,13 +324,11 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
 					currentOpponentClaimCore["attackId"] = eventIdx[e.eventId]['attackId'];
 					currentOpponentClaimCore["success"] = eventIdx[e.eventId]['success'];
-					currentOpponentClaimCore["attemptType"] = "OFFENSE";
 					var ret = {
 						correct: eventIdx[e.eventId]['success'],
 						detail: attack_type,
                         attemptInfo: currentOpponentClaimCore
 					};
-					currentOpponentClaimCore = {};
 					return ret;
 				}
 
@@ -416,6 +419,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 
 			var eventIdx = {};
 
+			var currentBattleEventId;
 			var currentOpponentClaimCore = {};
 			var currentBotTypeToEvoMap = {};
 
@@ -432,6 +436,10 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
+					if (e.eventId != currentBattleEventId) {
+						currentBattleEventId = e.eventId;
+						currentOpponentClaimCore = {};
+					}
 					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Open_equip") {
 					if (!currentBotTypeToEvoMap[e.eventId]) {
@@ -494,7 +502,6 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 						criticalQuestionsEnabled: criticalQuestionsEnabled,
                         attemptInfo: currentOpponentClaimCore
 					};
-					currentOpponentClaimCore = {};
 					currentBotTypeToEvoMap = {};
 					return ret;
 				}
@@ -576,6 +583,8 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			        Use_backing
 		     */
 
+		    var currentBattleEventId;
+		    var currentPlayerBotInfo = {};
 	        var currentEventData = {};
 		    var currentBotTypeToEvoMap = {};
 
@@ -594,7 +603,11 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			        playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
 			        playerBotNumBackingsKeys.indexOf(e.eventData_Key) >= 0)
 		        ) {
-			        currentEventData[e.eventData_Key] = e.eventData_Value;
+			        if (e.eventId != currentBattleEventId) {
+				        currentBattleEventId = e.eventId;
+				        currentPlayerBotInfo = {};
+			        }
+			        currentPlayerBotInfo[e.eventData_Key] = e.eventData_Value;
 		        }
 
 			    if (e.eventName == "Launch_attack" && e.eventData_Key == "attackId") {
@@ -617,8 +630,8 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 		            for (var i=1; i<=3; i++) {
 		            	var playerBotPrefix = "playerBot"+i;
 		            	var botName;
-		            	if (currentEventData[playerBotPrefix+"Name"]) {
-		            		botName = currentEventData[playerBotPrefix+"Name"];
+		            	if (currentPlayerBotInfo[playerBotPrefix+"Name"]) {
+		            		botName = currentPlayerBotInfo[playerBotPrefix+"Name"];
 		            		if (botInfoMap[botName] &&
 					            botInfoMap[botName].type &&
 					            botInfoMap[botName].evo >= 2) {
@@ -629,13 +642,13 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 					            };
 
 					            var dataId;
-					            if (currentEventData[playerBotPrefix+"DataId"]) {
-						            dataId = currentEventData[playerBotPrefix+"DataId"];
+					            if (currentPlayerBotInfo[playerBotPrefix+"DataId"]) {
+						            dataId = currentPlayerBotInfo[playerBotPrefix+"DataId"];
 						            currentAttemptInfo.dataId = dataId;
 					            }
 					            var numBackings;
-					            if (currentEventData[playerBotPrefix+"NumBackings"]) {
-						            numBackings = currentEventData[playerBotPrefix+"NumBackings"];
+					            if (currentPlayerBotInfo[playerBotPrefix+"NumBackings"]) {
+						            numBackings = currentPlayerBotInfo[playerBotPrefix+"NumBackings"];
 					            }
 
 					            currentAttemptInfo.success = (numBackings > 0 &&
