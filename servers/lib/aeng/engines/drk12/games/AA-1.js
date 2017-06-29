@@ -827,7 +827,7 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
 					            q.detail[detail].attempts += 1;
 					            is_correct ? q.detail[detail].correct += 1 : 0;
 
-					            if (attempt.criticalQuestionsEnabled) {
+					            if (typeof(attempt.criticalQuestionsEnabled) !== "undefined" && attempt.criticalQuestionsEnabled != null) {
 						            q.detail[detail]['criticalQuestionsEnabled'] = attempt.criticalQuestionsEnabled;
 					            }
 				            }.bind(this));
