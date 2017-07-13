@@ -186,7 +186,7 @@ return when.promise(function(resolve, reject) {
                 } else if (e.eventData_Key == "dataId") {
                     fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
                 } else if (e.eventData_Key == "schemeMismatch") {
-                    var correct = e.eventData_Value == false;
+                    var correct = (e.eventData_Value === "false");
                     if (currentBotType) {
                         var ret = {
                             'correct': correct,
@@ -203,7 +203,7 @@ return when.promise(function(resolve, reject) {
                         };
                         currentBotType = undefined;
 	                    currentBotEvo = undefined;
-                        return ret
+                        return ret;
                     } else {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
                         var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
