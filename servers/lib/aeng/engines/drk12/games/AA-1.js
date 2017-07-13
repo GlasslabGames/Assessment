@@ -324,10 +324,16 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				} else if (e.eventName == "Launch_attack" && e.eventData_Key == "type" && e.eventData_Value == attack_type) {
 					currentOpponentClaimCore["attackId"] = eventIdx[e.eventId]['attackId'];
 					currentOpponentClaimCore["success"] = eventIdx[e.eventId]['success'];
+
+					var attemptInfo = {};
+					for (var key in currentOpponentClaimCore) {
+						attemptInfo[key] = currentOpponentClaimCore[key];
+					}
+
 					var ret = {
-						correct: eventIdx[e.eventId]['success'],
+						correct: currentOpponentClaimCore["success"],
 						detail: attack_type,
-                        attemptInfo: currentOpponentClaimCore
+                        attemptInfo: attemptInfo
 					};
 					return ret;
 				}
@@ -496,11 +502,17 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 					currentOpponentClaimCore["attackId"] = eventIdx[e.eventId]['attackId'];
 					currentOpponentClaimCore["success"] = eventIdx[e.eventId]['success'];
 					currentOpponentClaimCore["criticalQuestionsEnabled"] = criticalQuestionsEnabled;
+
+					var attemptInfo = {};
+					for (var key in currentOpponentClaimCore) {
+						attemptInfo[key] = currentOpponentClaimCore[key];
+					}
+
 					var ret = {
 						correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'],
 						detail: detail,
 						criticalQuestionsEnabled: criticalQuestionsEnabled,
-                        attemptInfo: currentOpponentClaimCore
+                        attemptInfo: attemptInfo
 					};
 					currentBotTypeToEvoMap = {};
 					return ret;
