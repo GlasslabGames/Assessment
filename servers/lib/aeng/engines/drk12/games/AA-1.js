@@ -151,7 +151,12 @@ return when.promise(function(resolve, reject) {
 		        if (e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") {
 		            return {
 		                'correct': true,
-                        'detail': ['OBSERVATRON', "CORECONSTRUCTION_COMPLETE"]
+                        'detail': ['OBSERVATRON', "CORECONSTRUCTION_COMPLETE"],
+			            'attemptInfo': {
+				            'botType': 'OBSERVATRON',
+				            'dataId': 4974, // This dataId provided by Paula
+				            'success': true
+			            }
                     }
                 }
 	        }
