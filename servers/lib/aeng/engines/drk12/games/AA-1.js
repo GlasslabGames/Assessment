@@ -471,11 +471,13 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 					}
 					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Open_equip") {
-					if (!currentBotTypeToEvoMap[e.eventId]) {
-						currentBotTypeToEvoMap[e.eventId] = {};
+					if (!currentBotTypeToEvoMap[currentQuestId]) {
+						currentBotTypeToEvoMap[currentQuestId] = {};
 					}
-
-					currentBotTypeToEvoMap[e.eventId][e.eventData_Key] = e.eventData_Value;
+					if (!currentBotTypeToEvoMap[currentQuestId][e.eventId]) {
+						currentBotTypeToEvoMap[currentQuestId][e.eventId] = {};
+					}
+					currentBotTypeToEvoMap[currentQuestId][e.eventId][e.eventData_Key] = e.eventData_Value;
 				}
 
 				if (e.eventName == "Launch_attack") {
@@ -488,8 +490,8 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 					}
 					if (e.eventData_Key == "type" && e.eventData_Value == attack_type) {
 						var CQEnabledBots = {};
-						for (var botEventId in currentBotTypeToEvoMap) {
-							var botInfo = currentBotTypeToEvoMap[botEventId];
+						for (var botEventId in currentBotTypeToEvoMap[currentQuestId]) {
+							var botInfo = currentBotTypeToEvoMap[currentQuestId][botEventId];
 							CQEnabledBots[botInfo['botType']] = botInfo['botEvo'];
 						}
 						var detail = [];
@@ -524,7 +526,6 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 							CQEnabledBots[botType] >= CQ_BOT_EVO &&
 							this.aInfo.quests[currentQuestId] &&
 							this.aInfo.quests[currentQuestId].mission >= CQ_MISSION;
-
 						var target = eventIdx[e.eventId]['target'];
 						var targetedDataId;
 
@@ -534,7 +535,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 							}
 						}
 
-						var ret = {
+						return {
 							correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'],
 							detail: detail,
 							criticalQuestionsEnabled: criticalQuestionsEnabled,
@@ -547,8 +548,6 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 								'success': eventIdx[e.eventId]['success']
 							}
 						};
-						currentBotTypeToEvoMap = {};
-						return ret;
 					}
 				}
 			}.bind(this));
