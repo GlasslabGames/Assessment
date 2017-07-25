@@ -39,6 +39,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "Use_backing",
 	    "Unlock_botScheme",
         "Quest_start", "Quest_complete", "Quest_cancel",
+	    "Select_bot",
         "Open_equip"
     ];
     // always include one or more keys for a give type above
@@ -336,7 +337,12 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 						e.eventData_Key == "target") {
 						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 					}
-					if (e.eventData_Key == "type" && e.eventData_Value == attack_type) {
+					if (e.eventData_Key == "playerTurn") {
+						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
+					}
+					if (e.eventData_Key == "type" &&
+						e.eventData_Value == attack_type &&
+						eventIdx[e.eventId]['playerTurn']) {
 						var target = eventIdx[e.eventId]['target'];
 						var targetedDataId;
 
@@ -420,6 +426,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
         WHERE \
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Open_equip"\
+            OR eventName="Select_bot"\
             OR eventName="Launch_attack"\
             OR eventName="Set_up_battle" \
         ORDER BY \
@@ -470,7 +477,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 						currentOpponentClaimCore = {};
 					}
 					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
-				} else if (e.eventName == "Open_equip") {
+				} else if (e.eventName == "Open_equip" || e.eventName == "Select_bot") {
 					if (!currentBotTypeToEvoMap[currentQuestId]) {
 						currentBotTypeToEvoMap[currentQuestId] = {};
 					}
@@ -488,7 +495,12 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 						e.eventData_Key == "target") {
 						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
 					}
-					if (e.eventData_Key == "type" && e.eventData_Value == attack_type) {
+					if (e.eventData_Key == "playerTurn") {
+						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
+					}
+					if (e.eventData_Key == "type" &&
+						e.eventData_Value == attack_type &&
+						eventIdx[e.eventId]['playerTurn']) {
 						var CQEnabledBots = {};
 						for (var botEventId in currentBotTypeToEvoMap[currentQuestId]) {
 							var botInfo = currentBotTypeToEvoMap[currentQuestId][botEventId];
