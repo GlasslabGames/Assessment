@@ -35,6 +35,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "Fuse_core",
         "CoreConstruction_complete",
         "Set_up_battle",
+		"Set_up_cqTrainingRound",
         "Launch_attack",
         "Use_backing",
 	    "Unlock_botScheme",
@@ -54,7 +55,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
 	    "botName",              //Open_equip
         "botEvo",               //Open_equip
         "claimId",              //Fuse_core
-        "dataId",               //Fuse_core
+        "dataId",               //Fuse_core, Set_up_cqTrainingRound
         "schemeMismatch",       //Fuse_core
         "attackId",             //Launch_attack
 	    "target",               //Launch_attack
@@ -317,18 +318,21 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				2.  Fuse_core
 			 */
 
-			var quests = this.collate_events_by_quest(results, this.aInfo, function(e) {
+			var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
 
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
 
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
-					if (e.eventId != currentBattleEventId) {
-						currentBattleEventId = e.eventId;
-						currentOpponentClaimCore = {};
-					}
-					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
+                    if (e.eventId != currentBattleEventId) {
+                        currentBattleEventId = e.eventId;
+                        currentOpponentClaimCore[currentQuestId] = {};
+                    }
+                    if (!currentOpponentClaimCore[currentQuestId]) {
+                        currentOpponentClaimCore[currentQuestId] = {};
+                    }
+                    currentOpponentClaimCore[currentQuestId][e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack") {
 					if (e.eventData_Key == "success") {
 						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
@@ -345,19 +349,23 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 						eventIdx[e.eventId]['playerTurn']) {
 						var target = eventIdx[e.eventId]['target'];
 						var targetedDataId;
+                        var opponentClaimId;
 
-						for (var i=1; i<=num_bots; i++) {
-							if (currentOpponentClaimCore['opponentBot'+i+'Name'] == target) {
-								targetedDataId = currentOpponentClaimCore['opponentBot'+i+'DataId'];
-							}
-						}
+                        if (currentOpponentClaimCore[currentQuestId]) {
+                            opponentClaimId = currentOpponentClaimCore[currentQuestId]['opponentClaimId'];
+                            for (var i = 1; i <= num_bots; i++) {
+                                if (currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'Name'] == target) {
+                                    targetedDataId = currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'DataId'];
+                                }
+                            }
+                        }
 
 						return {
 							correct: eventIdx[e.eventId]['success'],
 							detail: attack_type,
 							attemptInfo: {
 								'attemptType': 'OFFENSE',
-								'opponentClaimId': currentOpponentClaimCore['opponentClaimId'],
+								'opponentClaimId': opponentClaimId,
 								'opponentBotDataId': targetedDataId,
 								'attackId': eventIdx[e.eventId]['attackId'],
 								'success': eventIdx[e.eventId]['success']
@@ -429,6 +437,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
             OR eventName="Select_bot"\
             OR eventName="Launch_attack"\
             OR eventName="Set_up_battle" \
+            OR eventName="Set_up_cqTrainingRound" \
         ORDER BY \
             serverTimeStamp ASC, gameSessionEventOrder ASC, eventName ASC, eventData_Key ASC';
 
@@ -458,6 +467,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 			var currentBattleEventId;
 			var currentOpponentClaimCore = {};
 			var currentBotTypeToEvoMap = {};
+			var currentCqTrainingDataId;
 
 			/* We expect to read events in any of the following sequences:
 			    1.  Open_equip
@@ -470,13 +480,17 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
-
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
-					if (e.eventId != currentBattleEventId) {
-						currentBattleEventId = e.eventId;
-						currentOpponentClaimCore = {};
-					}
-					currentOpponentClaimCore[e.eventData_Key] = e.eventData_Value;
+                    if (e.eventId != currentBattleEventId) {
+                        currentBattleEventId = e.eventId;
+                        currentOpponentClaimCore[currentQuestId] = {};
+                    }
+                    if (!currentOpponentClaimCore[currentQuestId]) {
+                        currentOpponentClaimCore[currentQuestId] = {};
+                    }
+                    currentOpponentClaimCore[currentQuestId][e.eventData_Key] = e.eventData_Value;
+                } else if (e.eventName == "Set_up_cqTrainingRound" && e.eventData_Key == "dataId") {
+                	currentCqTrainingDataId = e.eventData_Value;
 				} else if (e.eventName == "Open_equip" || e.eventName == "Select_bot") {
 					if (!currentBotTypeToEvoMap[currentQuestId]) {
 						currentBotTypeToEvoMap[currentQuestId] = {};
@@ -540,19 +554,25 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
 							this.aInfo.quests[currentQuestId].mission >= CQ_MISSION;
 						var target = eventIdx[e.eventId]['target'];
 						var targetedDataId;
+						var opponentClaimId;
 
-						for (var i=1; i<=num_bots; i++) {
-							if (currentOpponentClaimCore['opponentBot'+i+'Name'] == target) {
-								targetedDataId = currentOpponentClaimCore['opponentBot'+i+'DataId'];
-							}
+						if (currentOpponentClaimCore[currentQuestId]) {
+							opponentClaimId = currentOpponentClaimCore[currentQuestId]['opponentClaimId'];
+                            for (var i = 1; i <= num_bots; i++) {
+                                if (currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'Name'] == target) {
+                                    targetedDataId = currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'DataId'];
+                                }
+                            }
+                        } else {
+                            targetedDataId = currentCqTrainingDataId;
 						}
-
+                        
 						return {
 							correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'],
 							detail: detail,
 							criticalQuestionsEnabled: criticalQuestionsEnabled,
 							attemptInfo: {
-								'opponentClaimId': currentOpponentClaimCore['opponentClaimId'],
+								'opponentClaimId': opponentClaimId,
 								'opponentBotName': target,
 								'opponentBotDataId': targetedDataId,
 								'attackId': eventIdx[e.eventId]['attackId'],
@@ -780,7 +800,7 @@ AA_DRK12.prototype.unlock_bot = function(engine, db) {
 
 			var unlockedBots = {};
 			this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
-				if (e.eventName == "Unlock_botScheme" && e.eventData_Key == "scheme") {
+				if (e.eventName == "Unlock_botScheme" && e.eventData_Key == "scheme" && !unlockedBots[e.eventData_Value]) {
 					unlockedBots[e.eventData_Value] = currentQuestId;
 				}
 			}.bind(this));
