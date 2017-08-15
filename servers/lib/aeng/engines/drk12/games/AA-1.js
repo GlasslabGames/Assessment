@@ -566,7 +566,7 @@ AA_DRK12.prototype.using_critical_questions = function(engine, db) {
                         } else {
                             targetedDataId = currentCqTrainingDataId;
 						}
-                        
+
 						return {
 							correct: eventIdx[e.eventId] && eventIdx[e.eventId]['success'],
 							detail: detail,
@@ -656,7 +656,6 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 
 		    var currentBattleEventId;
 		    var currentPlayerBotInfo = {};
-	        var currentEventData = {};
 		    var currentBotTypeToEvoMap = {};
 
 		    var eventIdx = {};
@@ -745,8 +744,6 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 						    attemptInfo: attemptInfo[j]
 					    });
 				    }
-				    currentEventData = {};
-				    currentBotTypeToEvoMap = {};
 				    return ret;
 			    }
 		    }.bind(this));
