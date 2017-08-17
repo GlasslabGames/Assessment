@@ -76,6 +76,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
 	    "playerBot2NumBackings",   //Set_up_battle
 	    "playerBot3NumBackings",   //Set_up_battle
 	    "targetCqId",           //Use_backing
+        "backingId",            //Use_backing
 	    "playerTurn",           //Use_backing
 	    "scheme"                //Unlock_botScheme
     ];
@@ -665,7 +666,7 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 			    if (!eventIdx[e.eventId]) {
 				    eventIdx[e.eventId] = {};
 			    }
-
+			    
 			    if (e.eventName == "Open_equip") {
 				    if (!currentBotTypeToEvoMap[e.eventId]) {
 					    currentBotTypeToEvoMap[e.eventId] = {};
@@ -690,8 +691,13 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 				    eventIdx[e.eventId][e.eventData_Key] = (e.eventData_Value == "true");
 			    }
 
+                if (e.eventName == "Use_backing" && e.eventData_Key == "backingId") {
+                    eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+                }
+
 			    if (e.eventName == "Use_backing" && e.eventData_Key == "targetCqId") {
 				    var playerTurn = eventIdx[e.eventId]['playerTurn'];
+                    var backingId = eventIdx[e.eventId]['backingId'];
 				    var attackId = e.eventData_Value;
 
 				    var botInfoMap = {};
@@ -728,9 +734,13 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 								    numBackings = currentPlayerBotInfo[playerBotPrefix+"NumBackings"];
 							    }
 
+							    if (!playerTurn) {
+                                    currentAttemptInfo.backingId = backingId;
+								}
+
 							    currentAttemptInfo.success = (numBackings > 0 &&
 							    dataId &&
-							    _lookup_usingbacking_success(this.aInfo, dataId, currentQuestId));
+							    _lookup_usingbacking_success(this.aInfo, dataId, backingId, attackId, playerTurn, currentQuestId));
 							    attemptInfo.push(currentAttemptInfo);
 						    }
 					    }
@@ -760,13 +770,20 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 	}.bind(this));
 };
 
-var _lookup_usingbacking_success = function(aInfo, dataId, currentQuestId) {
+var _lookup_usingbacking_success = function(aInfo, dataId, backingId, attackId, playerTurn, currentQuestId) {
 	var map = aInfo.useBackingDataIds;
+	var backingMap = aInfo.useBackingDataIdsToBackingIdAttackIdMap;
 	if (currentQuestId in map.quests) {
 		// The type of the JSON array is object rather than array, so we need to do this rather than indexOf
 		for (var i=0; i<map.quests[currentQuestId].length; i++) {
 			if (map.quests[currentQuestId][i] == dataId) {
-				return true;
+				if (playerTurn) {
+                    return true;
+                } else {
+                    if (backingMap[""+dataId][""+backingId] && backingMap[""+dataId][""+backingId] == attackId) {
+                    	return true;
+                    }
+				}
 			}
 		}
 	}
