@@ -21,5 +21,58 @@ function DRK12Engine(aeService, engineDir, options) {
 }
 util.inherits(DRK12Engine, JavascriptEngine);
 
+DRK12Engine.prototype.gameMap = {
+    "AA-1": "argubots",
+    "MGOWEB": "argubots"
+};
+
+DRK12Engine.prototype.run = function(userId, gameId, gameSessionId, eventsData, aInfo){
+// add promise wrapper
+    return when.promise(function(resolve, reject) {
+// ------------------------------------------------
+
+        var g;
+        var file;
+        var game;
+        var got_game;
+        var distiller_path = this.engineDir + "distillers"+path.sep + this.gameMap[gameId]+".js";
+
+        try {
+            if (!this.gameMap[gameId]) {
+                got_game = false;
+            } else {
+                game = require(distiller_path);
+                got_game = true;
+            }
+        } catch(err) {
+            got_game = false;
+        }
+
+        // got_game = false;   // wip testing
+
+        if(got_game) {
+
+            // load file and run
+            try {
+                game = require(distiller_path);
+
+                g = new game(this, this.aeService, this.options, aInfo);
+                g.process(userId, gameId, gameSessionId, eventsData).then(resolve, reject);
+
+            } catch(err) {
+                console.error("AssessmentEngine: DRK12_Engine - Get Distiller Function Error -", err);
+                reject(err);
+            }
+        } else {
+
+            // auto process SOWO events
+            this._processAutoSOWOs(this, userId, gameId, gameSessionId, eventsData, aInfo)
+                .then(resolve, reject);
+        }
+
+// ------------------------------------------------
+    }.bind(this));
+// end promise wrapper
+};
 
 module.exports = DRK12Engine;
