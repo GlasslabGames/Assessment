@@ -324,7 +324,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
-                console.log(currentQuestId + " " + e.eventId + " " + e.eventName + " " + e.eventData_Key + " " + e.eventData_Value);
+                
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
                     if (e.eventId != currentBattleEventId) {
                         currentBattleEventId = e.eventId;
