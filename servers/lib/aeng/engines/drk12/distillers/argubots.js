@@ -324,7 +324,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
-                
+
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
                     if (e.eventId != currentBattleEventId) {
                         currentBattleEventId = e.eventId;
@@ -335,9 +335,9 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
                     }
                     currentOpponentClaimCore[currentQuestId][e.eventData_Key] = e.eventData_Value;
 				} else if (e.eventName == "Launch_attack") {
-					if (e.eventData_Key == "success") {
-						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
-					}
+                    if (e.eventData_Key == "success") {
+                        eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value == "true";
+                    }
 					if (e.eventData_Key == "attackId" ||
 						e.eventData_Key == "target") {
 						eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
@@ -361,15 +361,21 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
                             }
                         }
 
+                        var correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataId, opponentClaimId, eventIdx[e.eventId]['attackId']);
+
+                        if (typeof(correct) === "undefined") {
+                        	correct = eventIdx[e.eventId]['success'];
+						}
+                        
 						return {
-							correct: eventIdx[e.eventId]['success'],
+							correct: correct,
 							detail: attack_type,
 							attemptInfo: {
 								'attemptType': 'OFFENSE',
 								'opponentClaimId': opponentClaimId,
 								'opponentBotDataId': targetedDataId,
 								'attackId': eventIdx[e.eventId]['attackId'],
-								'success': eventIdx[e.eventId]['success']
+								'success': correct
 							}
 						};
 					}
@@ -409,6 +415,17 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 		}.bind(this));
 
 	}.bind(this));
+};
+
+var _lookup_data_claim_attack_correctness = function(aInfo, dataId, claimId, attackId) {
+    var map = aInfo.dataClaimAttackMap;
+
+    var strDataId = ""+dataId;
+    var strClaimId = ""+claimId;
+
+    if (strDataId in map && strClaimId in map[strDataId]) {
+        return map[strDataId][strClaimId] === parseInt(attackId);
+    }
 };
 
 
