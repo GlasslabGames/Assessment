@@ -218,10 +218,11 @@ return when.promise(function(resolve, reject) {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
                         var ret = _lookup_fusecore_bottype(this.aInfo, fuseCoreIdx[e.eventId].claimId, fuseCoreIdx[e.eventId].dataId, currentQuestId);
                         if (ret) {
+                        	ret.correct = correct;
 	                        ret.attemptInfo = {
 	                        	'botType': ret.detail,
 		                        'dataId': fuseCoreIdx[e.eventId].dataId,
-		                        'success': ret.correct
+		                        'success': correct
 	                        };
                         }
                         return ret;
@@ -361,12 +362,12 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
                             }
                         }
 
-                        var correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataId, opponentClaimId, eventIdx[e.eventId]['attackId']);
+                        //var correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataId, opponentClaimId, eventIdx[e.eventId]['attackId']);
 
-                        if (typeof(correct) === "undefined") {
+                        //if (typeof(correct) === "undefined") {
                         	correct = eventIdx[e.eventId]['success'];
-						}
-                        
+						//}
+                        //console.log(currentQuestId + " " + targetedDataId + " " + opponentClaimId + " " + eventIdx[e.eventId]['attackId'] + " " + correct);
 						return {
 							correct: correct,
 							detail: attack_type,
