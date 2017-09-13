@@ -32,6 +32,7 @@ function AA_DRK12(engine, aeService, options, aInfo) {
 AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData) {
     var filterEventTypes = [
         "Give_schemeTrainingEvidence",
+        "give_schemetrainingevidence",
         "Fuse_core",
         "CoreConstruction_complete",
         "Set_up_battle",
@@ -47,6 +48,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
     var filterEventKeys = [
         "success",              //Give_schemetrainingevidence, Use_backing, Fuse_core, Launch_attack
         "dataScheme",           //Give_schemeTrainingEvidence
+        "targetScheme",         //Give_schemeTrainingEvidence
         "weakness",             //Fuse_core
         "type",                 //Launch_attack
         "questId",              //Quest_start
@@ -113,6 +115,7 @@ return when.promise(function(resolve, reject) {
         WHERE \
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Give_schemeTrainingEvidence" \
+            OR eventName="give_schemetrainingevidence" \
             OR eventName="Fuse_core" \
             OR eventName="CoreConstruction_complete" \
             OR eventName="Open_equip" \
@@ -165,7 +168,8 @@ return when.promise(function(resolve, reject) {
                     }
                 }
 	        }
-            else if (e.eventName == "Give_schemeTrainingEvidence") {
+	        // Per slack conversation with Paula, there is a bug that causes this event name to appear in lower case sometimes.
+            else if (e.eventName.toLowerCase() == "give_schemetrainingevidence") {
                 if (e.eventData_Key == "dataScheme" || e.eventData_Key == "dataId") {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
                 }
@@ -174,11 +178,11 @@ return when.promise(function(resolve, reject) {
                     return {
                         'correct': correct,
                         'detail': eventIdx[e.eventId]['dataScheme'],
-	                    'attemptInfo': {
-		                    'botType': eventIdx[e.eventId]['dataScheme'],
-		                    'dataId': eventIdx[e.eventId]['dataId'],
-		                    'success': correct
-	                    }
+                        'attemptInfo': {
+                            'botType': eventIdx[e.eventId]['dataScheme'],
+                            'dataId': eventIdx[e.eventId]['dataId'],
+                            'success': correct
+                        }
                     };
                 }
             }

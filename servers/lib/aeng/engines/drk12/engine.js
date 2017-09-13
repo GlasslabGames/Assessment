@@ -21,11 +21,6 @@ function DRK12Engine(aeService, engineDir, options) {
 }
 util.inherits(DRK12Engine, JavascriptEngine);
 
-DRK12Engine.prototype.gameMap = {
-    "AA-1": "argubots",
-    "MGOWEB": "argubots"
-};
-
 DRK12Engine.prototype.run = function(userId, gameId, gameSessionId, eventsData, aInfo){
 // add promise wrapper
     return when.promise(function(resolve, reject) {
@@ -35,10 +30,11 @@ DRK12Engine.prototype.run = function(userId, gameId, gameSessionId, eventsData, 
         var file;
         var game;
         var got_game;
-        var distiller_path = this.engineDir + "distillers"+path.sep + this.gameMap[gameId]+".js";
+        var distiller = aInfo.engine;
+        var distiller_path = this.engineDir + "distillers"+path.sep + distiller+".js";
 
         try {
-            if (!this.gameMap[gameId]) {
+            if (!distiller) {
                 got_game = false;
             } else {
                 game = require(distiller_path);
