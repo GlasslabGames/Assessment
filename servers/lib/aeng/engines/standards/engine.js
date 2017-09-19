@@ -26,7 +26,7 @@ function StandardsEngine(aeService, engineDir, options) {
     );
 }
 
-StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData){
+StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsData, aInfo){
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
@@ -43,7 +43,7 @@ StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsDa
                 }
 
                 // get the distiller function
-                return this.getDistillerFunction(gameId);
+                return this.getDistillerFunction(gameId, aInfo);
             }.bind(this))
 
             // distiller function loaded
@@ -82,13 +82,17 @@ StandardsEngine.prototype.run = function(userId, gameId, gameSessionId, eventsDa
 // end promise wrapper
 };
 
-StandardsEngine.prototype.getDistillerFunction = function(gameId){
+StandardsEngine.prototype.getDistillerFunction = function(gameId, aInfo){
 // add promise wrapper
     return when.promise(function(resolve, reject) {
 // ------------------------------------------------
         try{
             console.log("AssessmentEngine: StandardsEngine - getDistillerFunction cwd:", process.cwd());
+
             var file = this.engineDir + "games"+path.sep + gameId + path.sep+"distiller.js";
+            if (aInfo && aInfo.distiller) {
+                file = this.engineDir + "distillers"+path.sep + aInfo.distiller + path.sep+"distiller.js";
+            }
             var sc = require(file);
 
             resolve( new sc() );
