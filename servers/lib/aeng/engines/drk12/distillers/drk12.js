@@ -33,6 +33,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
     var filterEventTypes = [
         "Give_schemeTrainingEvidence",
         "give_schemetrainingevidence",
+		"Examine_object",
         "Fuse_core",
         "CoreConstruction_complete",
         "Set_up_battle",
@@ -53,6 +54,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "type",                 //Launch_attack
         "questId",              //Quest_start
         "quest",                //CoreConstruction_complete
+        "name",              	//Examine_object
         "botType",              //Open_equip
 	    "botName",              //Open_equip
         "botEvo",               //Open_equip
@@ -116,7 +118,9 @@ return when.promise(function(resolve, reject) {
             eventName="Quest_start" OR eventName="Quest_complete" OR eventName="Quest_cancel" \
             OR eventName="Give_schemeTrainingEvidence" \
             OR eventName="give_schemetrainingevidence" \
+            OR eventName="Examine_object" \
             OR eventName="Fuse_core" \
+            OR eventName="Select_bot" \
             OR eventName="CoreConstruction_complete" \
             OR eventName="Open_equip" \
         ORDER BY \
@@ -142,7 +146,14 @@ return when.promise(function(resolve, reject) {
 
 	        2.  Give_schemeTrainingEvidence
 
-	        3.  Open_equip
+	        3.  Select_bot
+	        	Give_schemeTrainingEvidence
+
+			4.	Quest_start
+				Examine_object
+				Give_schemeTrainingEvidence
+
+	        4.  Open_equip
 	            Fuse_core
         */
 
@@ -168,21 +179,31 @@ return when.promise(function(resolve, reject) {
                     }
                 }
 	        }
+	        else if (e.eventName == "Select_bot" && e.eventData_Key == "botType" && currentQuestId == "Quest13") {
+                currentBotType = e.eventData_Value;
+            }
+            else if (	e.eventName == "Examine_object" && e.eventData_Key == "name" &&
+						(currentQuestId == "Quest0-3" || currentQuestId == "MCreateBot" || currentQuestId == "MLevelUpBot")) {
+	        	if (e.eventData_Value.substr(0, "SchemeTraining ".length) == "SchemeTraining ") {
+                    currentBotType = e.eventData_Value.substr("SchemeTraining ".length).toUpperCase();
+				}
+            }
 	        // Per slack conversation with Paula, there is a bug that causes this event name to appear in lower case sometimes.
             else if (e.eventName.toLowerCase() == "give_schemetrainingevidence") {
-                if (e.eventData_Key == "dataScheme" || e.eventData_Key == "dataId") {
+                if (e.eventData_Key == "dataId" || e.eventData_Key == "success") {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
                 }
-                else if (e.eventData_Key == "success") {
-                    var correct = (e.eventData_Key == "success" && e.eventData_Value == "true");
+                else if (e.eventData_Key == "dataScheme") {
+                	var dataScheme = e.eventData_Value;
+                    var correct = currentBotType ? (dataScheme == currentBotType) : (eventIdx[e.eventId]['success'] == "true");
                     return {
                         'correct': correct,
-                        'detail': eventIdx[e.eventId]['dataScheme'],
-                        'attemptInfo': {
-                            'botType': eventIdx[e.eventId]['dataScheme'],
-                            'dataId': eventIdx[e.eventId]['dataId'],
-                            'success': correct
-                        }
+                        'detail': currentBotType,
+	                    'attemptInfo': {
+		                    'botType': currentBotType,
+		                    'dataId': eventIdx[e.eventId]['dataId'],
+		                    'success': correct
+	                    }
                     };
                 }
             }
@@ -354,14 +375,14 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 						e.eventData_Value == attack_type &&
 						eventIdx[e.eventId]['playerTurn']) {
 						var target = eventIdx[e.eventId]['target'];
-						var targetedDataId;
+						var targetedDataIds = [];
                         var opponentClaimId;
 
                         if (currentOpponentClaimCore[currentQuestId]) {
                             opponentClaimId = currentOpponentClaimCore[currentQuestId]['opponentClaimId'];
                             for (var i = 1; i <= num_bots; i++) {
                                 if (currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'Name'] == target) {
-                                    targetedDataId = currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'DataId'];
+                                    targetedDataIds.push(currentOpponentClaimCore[currentQuestId]['opponentBot' + i + 'DataId']);
                                 }
                             }
                         }
@@ -378,7 +399,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 							attemptInfo: {
 								'attemptType': 'OFFENSE',
 								'opponentClaimId': opponentClaimId,
-								'opponentBotDataId': targetedDataId,
+								'opponentBotDataId': (targetedDataIds.length == 1 ? targetedDataIds[0] : null),
 								'attackId': eventIdx[e.eventId]['attackId'],
 								'success': correct
 							}
@@ -684,7 +705,6 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 		    var eventIdx = {};
 
 		    var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
-
 			    if (!eventIdx[e.eventId]) {
 				    eventIdx[e.eventId] = {};
 			    }
@@ -697,16 +717,68 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 				    currentBotTypeToEvoMap[e.eventId][e.eventData_Key] = e.eventData_Value;
 		        }
 
-		        if (e.eventName == "Set_up_battle" &&
-			        (playerBotNames.indexOf(e.eventData_Key) >= 0 ||
-			        playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
-			        playerBotNumBackingsKeys.indexOf(e.eventData_Key) >= 0)
-		        ) {
-			        if (e.eventId != currentBattleEventId) {
-				        currentBattleEventId = e.eventId;
-				        currentPlayerBotInfo = {};
-			        }
-			        currentPlayerBotInfo[e.eventData_Key] = e.eventData_Value;
+		        if (e.eventName == "Set_up_battle") {
+			    	if (playerBotNames.indexOf(e.eventData_Key) >= 0 ||
+                        playerBotDataIdKeys.indexOf(e.eventData_Key) >= 0 ||
+                        playerBotNumBackingsKeys.indexOf(e.eventData_Key) >= 0) {
+                        if (e.eventId != currentBattleEventId) {
+                            currentBattleEventId = e.eventId;
+                            currentPlayerBotInfo = {};
+                        }
+                        currentPlayerBotInfo[e.eventData_Key] = e.eventData_Value;
+					} else if (e.eventData_Key == "quest") {
+                        var botInfoMap = {};
+                        for (var botEventId in currentBotTypeToEvoMap) {
+                            var botInfo = currentBotTypeToEvoMap[botEventId];
+                            botInfoMap[botInfo['botName']] = {
+                                type: botInfo['botType'],
+                                evo: botInfo['botEvo']
+                            };
+                        }
+
+                        var attemptInfo = [];
+                        for (var i = 1; i <= 3; i++) {
+                            var playerBotPrefix = "playerBot" + i;
+                            var botName;
+                            if (currentPlayerBotInfo[playerBotPrefix + "Name"]) {
+                                botName = currentPlayerBotInfo[playerBotPrefix + "Name"];
+                                if (botInfoMap[botName] &&
+                                    botInfoMap[botName].type &&
+                                    botInfoMap[botName].evo >= 2) {
+                                    var currentAttemptInfo = {
+                                        "botType": botInfoMap[botName].type,
+                                        "attemptType": "DEFENSE"
+                                    };
+
+                                    var dataId;
+                                    if (currentPlayerBotInfo[playerBotPrefix + "DataId"]) {
+                                        dataId = currentPlayerBotInfo[playerBotPrefix + "DataId"];
+                                        currentAttemptInfo.dataId = dataId;
+                                    }
+                                    var numBackings;
+                                    if (currentPlayerBotInfo[playerBotPrefix + "NumBackings"]) {
+                                        numBackings = currentPlayerBotInfo[playerBotPrefix + "NumBackings"];
+                                    }
+
+                                    if (numBackings > 0) {
+                                        currentAttemptInfo.success =
+											(dataId && _lookup_usingbacking_success(this.aInfo, dataId, backingId, currentQuestId));
+                                        attemptInfo.push(currentAttemptInfo);
+                                    }
+                                }
+                            }
+                        }
+
+                        var ret = [];
+                        for (var j = 0; j < attemptInfo.length; j++) {
+                            ret.push({
+                                correct: attemptInfo[j].success,
+                                detail: "CREATED",
+                                attemptInfo: attemptInfo[j]
+                            });
+                        }
+                        return ret;
+					}
 		        }
 
 			    if (e.eventName == "Use_backing" && e.eventData_Key == "playerTurn") {
@@ -722,61 +794,62 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
                     var backingId = eventIdx[e.eventId]['backingId'];
 				    var attackId = e.eventData_Value;
 
-				    var botInfoMap = {};
-				    for (var botEventId in currentBotTypeToEvoMap) {
-					    var botInfo = currentBotTypeToEvoMap[botEventId];
-					    botInfoMap[botInfo['botName']] = {
-						    type: botInfo['botType'],
-						    evo: botInfo['botEvo']
-					    };
-				    }
+				    // Per Slack conversation with Paula, we should ignore Use_backing events with playerTurn: true
+				    if (playerTurn == false) {
+                        var botInfoMap = {};
+                        for (var botEventId in currentBotTypeToEvoMap) {
+                            var botInfo = currentBotTypeToEvoMap[botEventId];
+                            botInfoMap[botInfo['botName']] = {
+                                type: botInfo['botType'],
+                                evo: botInfo['botEvo']
+                            };
+                        }
 
-				    var attemptInfo = [];
-				    for (var i=1; i<=3; i++) {
-					    var playerBotPrefix = "playerBot"+i;
-					    var botName;
-					    if (currentPlayerBotInfo[playerBotPrefix+"Name"]) {
-						    botName = currentPlayerBotInfo[playerBotPrefix+"Name"];
-						    if (botInfoMap[botName] &&
-							    botInfoMap[botName].type &&
-							    botInfoMap[botName].evo >= 2) {
-							    var currentAttemptInfo = {
-								    "botType": botInfoMap[botName].type,
-								    "attemptType": playerTurn ? "DEFENSE" : "OFFENSE",
-								    "attackId": attackId
-							    };
+                        var attemptInfo = [];
+                        for (var i = 1; i <= 3; i++) {
+                            var playerBotPrefix = "playerBot" + i;
+                            var botName;
+                            if (currentPlayerBotInfo[playerBotPrefix + "Name"]) {
+                                botName = currentPlayerBotInfo[playerBotPrefix + "Name"];
+                                if (botInfoMap[botName] &&
+                                    botInfoMap[botName].type &&
+                                    botInfoMap[botName].evo >= 2) {
+                                    var currentAttemptInfo = {
+                                        "botType": botInfoMap[botName].type,
+                                        "attemptType": "OFFENSE",
+                                        "attackId": attackId
+                                    };
 
-							    var dataId;
-							    if (currentPlayerBotInfo[playerBotPrefix+"DataId"]) {
-								    dataId = currentPlayerBotInfo[playerBotPrefix+"DataId"];
-								    currentAttemptInfo.dataId = dataId;
-							    }
-							    var numBackings;
-							    if (currentPlayerBotInfo[playerBotPrefix+"NumBackings"]) {
-								    numBackings = currentPlayerBotInfo[playerBotPrefix+"NumBackings"];
-							    }
+                                    var dataId;
+                                    if (currentPlayerBotInfo[playerBotPrefix + "DataId"]) {
+                                        dataId = currentPlayerBotInfo[playerBotPrefix + "DataId"];
+                                        currentAttemptInfo.dataId = dataId;
+                                    }
+                                    var numBackings;
+                                    if (currentPlayerBotInfo[playerBotPrefix + "NumBackings"]) {
+                                        numBackings = currentPlayerBotInfo[playerBotPrefix + "NumBackings"];
+                                    }
 
-							    if (!playerTurn) {
-                                    currentAttemptInfo.backingId = backingId;
-								}
+                                    if (numBackings > 0) {
+                                        currentAttemptInfo.backingId = backingId;
+                                        currentAttemptInfo.success =
+											(dataId && _lookup_usingbacking_success(this.aInfo, dataId, backingId, currentQuestId, attackId));
+                                        attemptInfo.push(currentAttemptInfo);
+                                    }
+                                }
+                            }
+                        }
 
-							    currentAttemptInfo.success = (numBackings > 0 &&
-							    dataId &&
-							    _lookup_usingbacking_success(this.aInfo, dataId, backingId, attackId, playerTurn, currentQuestId));
-							    attemptInfo.push(currentAttemptInfo);
-						    }
-					    }
-				    }
-
-				    var ret = [];
-				    for (var j=0; j<attemptInfo.length; j++) {
-					    ret.push({
-						    correct: attemptInfo[j].success,
-						    detail: playerTurn ? "CREATED" : "DEFENDED",
-						    attemptInfo: attemptInfo[j]
-					    });
-				    }
-				    return ret;
+                        var ret = [];
+                        for (var j = 0; j < attemptInfo.length; j++) {
+                            ret.push({
+                                correct: attemptInfo[j].success,
+                                detail: "DEFENDED",
+                                attemptInfo: attemptInfo[j]
+                            });
+                        }
+                        return ret;
+                    }
 			    }
 		    }.bind(this));
 	        var questList = _.values(quests);
@@ -792,19 +865,19 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 	}.bind(this));
 };
 
-var _lookup_usingbacking_success = function(aInfo, dataId, backingId, attackId, playerTurn, currentQuestId) {
+var _lookup_usingbacking_success = function(aInfo, dataId, backingId, currentQuestId, attackId) {
 	var map = aInfo.useBackingDataIds;
 	var backingMap = aInfo.useBackingDataIdsToBackingIdAttackIdMap;
 	if (currentQuestId in map.quests) {
 		// The type of the JSON array is object rather than array, so we need to do this rather than indexOf
 		for (var i=0; i<map.quests[currentQuestId].length; i++) {
 			if (map.quests[currentQuestId][i] == dataId) {
-				if (playerTurn) {
-                    return true;
-                } else {
+				if (attackId) {
                     if (backingMap[""+dataId][""+backingId] && backingMap[""+dataId][""+backingId] == attackId) {
-                    	return true;
+                        return true;
                     }
+                } else {
+                    return true;
 				}
 			}
 		}
@@ -879,7 +952,7 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
             curQuestId = e.eventData_Value;
             // Sometimes multiple quests map to the same mission, and the simplest way to handle this is to merge
 	        // them before saving attempt data.
-            if (aInfo.duplicateQuestMapping[curQuestId]) {
+            if (aInfo.duplicateQuestMapping && aInfo.duplicateQuestMapping[curQuestId]) {
 	            curQuestId = aInfo.duplicateQuestMapping[curQuestId];
             }
             if (!(curQuestId in quests)) {
