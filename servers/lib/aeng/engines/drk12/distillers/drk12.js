@@ -158,7 +158,6 @@ return when.promise(function(resolve, reject) {
         */
 
         var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
-
 	        if (!eventIdx[e.eventId]) {
 		        eventIdx[e.eventId] = {};
 	        }
@@ -346,7 +345,6 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 			 */
 
 			var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
-
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
@@ -387,11 +385,10 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
                             }
                         }
 
-                        //var correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataId, opponentClaimId, eventIdx[e.eventId]['attackId']);
-
-                        //if (typeof(correct) === "undefined") {
-                        	correct = eventIdx[e.eventId]['success'];
-						//}
+						var correct = eventIdx[e.eventId]['success'];
+						if (targetedDataIds.length == 1) {
+                            correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataIds[0], opponentClaimId, eventIdx[e.eventId]['attackId']);
+						}
                         //console.log(currentQuestId + " " + targetedDataId + " " + opponentClaimId + " " + eventIdx[e.eventId]['attackId'] + " " + correct);
 						return {
 							correct: correct,
