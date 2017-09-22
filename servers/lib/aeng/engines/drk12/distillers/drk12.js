@@ -153,7 +153,7 @@ return when.promise(function(resolve, reject) {
 				Examine_object
 				Give_schemeTrainingEvidence
 
-	        4.  Open_equip
+	        5.  Open_equip
 	            Fuse_core
         */
 
@@ -166,7 +166,7 @@ return when.promise(function(resolve, reject) {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
                 // events that are not the special Quest11 type (CoreConstruction_complete), so return null in all
                 // other cases
-		        if (e.eventName == "CoreConstruction_complete" && e.eventData_Value == "Quest11") {
+		        if (e.eventName == "CoreConstruction_complete" && _disambiguate_quest_id(this.aInfo, e.eventData_Value) == "Quest11") {
 		            return {
 		                'correct': true,
                         'detail': ['OBSERVATRON', "CORECONSTRUCTION_COMPLETE"],
@@ -178,7 +178,7 @@ return when.promise(function(resolve, reject) {
                     }
                 }
 	        }
-	        else if (e.eventName == "Select_bot" && e.eventData_Key == "botType" && currentQuestId == "Quest13") {
+	        else if (e.eventName == "Select_bot" && e.eventData_Key == "botType" && (currentQuestId == "Quest13" || currentQuestId == "Quest0-3")) {
                 currentBotType = e.eventData_Value;
             }
             else if (	e.eventName == "Examine_object" && e.eventData_Key == "name" &&
@@ -922,6 +922,41 @@ AA_DRK12.prototype.unlock_bot = function(engine, db) {
 };
 
 
+var _merge_quest_results = function(resultObjToMergeInto, resultObjToMerge) {
+    if (resultObjToMerge.score.attempts) {
+        resultObjToMergeInto.score.correct += resultObjToMerge.score.correct;
+        resultObjToMergeInto.score.attempts += resultObjToMerge.score.attempts;
+        for (var skillDetail in resultObjToMerge.detail) {
+            if(!(skillDetail in resultObjToMergeInto.detail)){
+                resultObjToMergeInto.detail[skillDetail] = {
+                    'correct': 0,
+                    'attempts': 0
+                }
+            }
+            resultObjToMergeInto.detail[skillDetail].correct += resultObjToMerge.detail[skillDetail].correct;
+            resultObjToMergeInto.detail[skillDetail].attempts += resultObjToMerge.detail[skillDetail].attempts;
+        }
+        resultObjToMergeInto.attemptList = resultObjToMergeInto.attemptList.concat(resultObjToMerge.attemptList);
+    }
+    return resultObjToMergeInto;
+};
+
+var _disambiguate_quest_id = function(aInfo, questTag) {
+	// Quest titles sometimes have carriage returns in them--who knows why
+	if (questTag) {
+        questTag = questTag.replace("\r","").replace("\\r","");
+	}
+
+    if (aInfo.questIdDisambiguationMap) {
+		if (aInfo.questIdDisambiguationMap[questTag]) {
+            return aInfo.questIdDisambiguationMap[questTag];
+        } else {
+			return null;
+		}
+    }
+    return questTag;
+};
+
 /*
  * callback will be called for each event that is not Quest_start/Quest_complete/Quest_cancel
  *  it should return 1/true if it was a successful attempt
@@ -933,8 +968,9 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
 
     var quests = {};
     var curQuestId = undefined;
+    var curEventId = undefined;
     var i;
-    // var unclaimedScore = {'correct': 0, 'attempts': 0};
+
     var unclaimedSkills = {
         'score': {
             'correct': 0,
@@ -943,15 +979,56 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
         'detail': {},
 	    'attemptList': []
     };
+    var currentUnclaimedEventBuffer = {
+    	"quest": null,
+        'score': {
+            'correct': 0,
+            'attempts': 0
+        },
+        'detail': {},
+        'attemptList': []
+	};
     for (i=0; i < events.length; i++) {
         var e = events[i];
+
+        // DRK-420 If we've just moved on to a new event, if the last event wasn't put into a quest already, send to its
+		// appropriate quest or the multi-event unclaimedSkills buffer.
+		if (e.eventId != curEventId) {
+			curEventId = e.eventId;
+
+			if (currentUnclaimedEventBuffer.quest) {
+				var questTargetId = currentUnclaimedEventBuffer.quest;
+                if (!(questTargetId in quests)) {
+                    quests[questTargetId] = {
+                        'questId': questTargetId,
+                        'score': {
+                            'correct': 0,
+                            'attempts': 0
+                        },
+                        'detail': {},
+                        'attemptList': []
+                    }
+                }
+                quests[questTargetId] = _merge_quest_results(quests[questTargetId], currentUnclaimedEventBuffer);
+			} else {
+                unclaimedSkills = _merge_quest_results(unclaimedSkills, currentUnclaimedEventBuffer);
+			}
+
+            currentUnclaimedEventBuffer = {
+                "quest": null,
+                'score': {
+                    'correct': 0,
+                    'attempts': 0
+                },
+                'detail': {},
+                'attemptList': []
+            };
+		}
+
         if (e.eventName == "Quest_start" && e.eventData_Key == "questId") {
-            curQuestId = e.eventData_Value;
             // Sometimes multiple quests map to the same mission, and the simplest way to handle this is to merge
 	        // them before saving attempt data.
-            if (aInfo.duplicateQuestMapping && aInfo.duplicateQuestMapping[curQuestId]) {
-	            curQuestId = aInfo.duplicateQuestMapping[curQuestId];
-            }
+            curQuestId = _disambiguate_quest_id(aInfo, e.eventData_Value);
             if (!(curQuestId in quests)) {
                 quests[curQuestId] = {
                     'questId': curQuestId,
@@ -963,32 +1040,30 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
                     'attemptList': []
                 }
             }
-            if (unclaimedSkills.score.attempts) {
-                quests[curQuestId].score.correct += unclaimedSkills.score.correct;
-                quests[curQuestId].score.attempts += unclaimedSkills.score.attempts;
-	            for (var skillDetail in unclaimedSkills.detail) {
-		            if(!(skillDetail in quests[curQuestId].detail)){
-			            quests[curQuestId].detail[skillDetail] = {
-			            	'correct': 0,
-				            'attempts': 0
-			            }
-		            }
-		            quests[curQuestId].detail[skillDetail].correct += unclaimedSkills.detail[skillDetail].correct;
-		            quests[curQuestId].detail[skillDetail].attempts += unclaimedSkills.detail[skillDetail].attempts;
-	            }
-                quests[curQuestId].attemptList = quests[curQuestId].attemptList.concat(unclaimedSkills.attemptList);
-                unclaimedSkills.score.correct = 0;
-                unclaimedSkills.score.attempts = 0;
-                unclaimedSkills.detail = {};
-                unclaimedSkills.attemptList = [];
-            }
+            quests[curQuestId] = _merge_quest_results(quests[curQuestId], unclaimedSkills);
+            unclaimedSkills.score.correct = 0;
+            unclaimedSkills.score.attempts = 0;
+            unclaimedSkills.detail = {};
+            unclaimedSkills.attemptList = [];
         }
         else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
             curQuestId = undefined;
         }
         else {
-            // attempts that occur outside of a quest get attributed to the consequent quest
-            var q = curQuestId ? quests[curQuestId] : unclaimedSkills;
+            // attempts that occur outside of a quest get attributed to the consequent quest, or (DRK-420) to whichever
+			// quest is clearly indicated by the quest tag on the event
+            var q = undefined;
+            if (curQuestId) {
+            	q = quests[curQuestId];
+			} else {
+            	q = currentUnclaimedEventBuffer;
+
+            	// DRK-420 Assign a quest to the current event if it occurred outside of a
+				// Quest_start - Quest_complete/Quest_cancel window
+                if (e.eventData_Key == "quest" || e.eventData_Key == "questId") {
+                    currentUnclaimedEventBuffer.quest = _disambiguate_quest_id(aInfo, e.eventData_Value);
+                }
+            }
 
             var attempts = callback(e, q, curQuestId);
             var attemptsArray = Array.isArray(attempts) ? attempts  : [attempts];
