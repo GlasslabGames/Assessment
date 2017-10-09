@@ -189,20 +189,19 @@ return when.promise(function(resolve, reject) {
             }
 	        // Per slack conversation with Paula, there is a bug that causes this event name to appear in lower case sometimes.
             else if (e.eventName.toLowerCase() == "give_schemetrainingevidence") {
-                if (e.eventData_Key == "dataId" || e.eventData_Key == "success") {
+                if (e.eventData_Key == "dataId" || e.eventData_Key == "success" || e.eventData_Key == "dataScheme") {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
                 }
-                else if (e.eventData_Key == "dataScheme") {
-                	var dataScheme = e.eventData_Value;
-                    var correct = currentBotType ? (dataScheme == currentBotType) : (eventIdx[e.eventId]['success'] == "true");
+                else if (e.eventData_Key == "targetScheme") {
+                    var correct = currentBotType ? (eventIdx[e.eventId]['dataScheme'] == currentBotType) : (eventIdx[e.eventId]['success'] == "true");
                     return {
                         'correct': correct,
-                        'detail': currentBotType,
-	                    'attemptInfo': {
-		                    'botType': currentBotType,
-		                    'dataId': eventIdx[e.eventId]['dataId'],
-		                    'success': correct
-	                    }
+                        'detail': currentBotType ? currentBotType : e.eventData_Value,
+                        'attemptInfo': {
+                            'botType': currentBotType ? currentBotType : e.eventData_Value,
+                            'dataId': eventIdx[e.eventId]['dataId'],
+                            'success': correct
+                        }
                     };
                 }
             }
