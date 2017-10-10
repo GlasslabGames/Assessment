@@ -189,20 +189,38 @@ return when.promise(function(resolve, reject) {
             }
 	        // Per slack conversation with Paula, there is a bug that causes this event name to appear in lower case sometimes.
             else if (e.eventName.toLowerCase() == "give_schemetrainingevidence") {
-                if (e.eventData_Key == "dataId" || e.eventData_Key == "success" || e.eventData_Key == "dataScheme") {
+                if (e.eventData_Key == "dataId" || e.eventData_Key == "success") {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
                 }
+                else if (e.eventData_Key == "dataScheme") {
+                    if (currentBotType) {
+                        var correct = (e.eventData_Value == currentBotType);
+                        return {
+                            'correct': correct,
+                            'detail': currentBotType,
+                            'attemptInfo': {
+                                'botType': currentBotType,
+                                'dataId': eventIdx[e.eventId]['dataId'],
+                                'success': correct
+                            }
+                        };
+                    }
+                }
                 else if (e.eventData_Key == "targetScheme") {
-                    var correct = currentBotType ? (eventIdx[e.eventId]['dataScheme'] == currentBotType) : (eventIdx[e.eventId]['success'] == "true");
-                    return {
-                        'correct': correct,
-                        'detail': currentBotType ? currentBotType : e.eventData_Value,
-                        'attemptInfo': {
-                            'botType': currentBotType ? currentBotType : e.eventData_Value,
-                            'dataId': eventIdx[e.eventId]['dataId'],
-                            'success': correct
-                        }
-                    };
+                	// There are some GSTE events that lack a preceding Open_equip, Select_bot, &c. that lets us know which bot the player chose.
+					// For these cases, hold out for the targetScheme key and return on that.
+                	if (!currentBotType) {
+                        var correct = (eventIdx[e.eventId]['success'] == "true");
+                        return {
+                            'correct': correct,
+                            'detail': e.eventData_Value,
+                            'attemptInfo': {
+                                'botType': e.eventData_Value,
+                                'dataId': eventIdx[e.eventId]['dataId'],
+                                'success': correct
+                            }
+                        };
+                    }
                 }
             }
             else if (e.eventName == "Open_equip" && e.eventData_Key == "botType") {
