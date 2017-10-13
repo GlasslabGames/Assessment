@@ -1064,6 +1064,59 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
             unclaimedSkills.attemptList = [];
         }
         else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
+            if (e.eventData_Key == "questId") {
+                // DRK-483 SPECIAL CASE for Quest23a and Quest30: a Quest_complete triggers a Skill 4.1 attempt with the specified data.
+            	var specialQuestId = _disambiguate_quest_id(aInfo, e.eventData_Value);
+
+            	var specialQuestDataId = undefined;
+            	var specialQuestBotType = undefined;
+
+                if (specialQuestId == "Quest30") {
+                    specialQuestDataId = 4978;
+                    specialQuestBotType = "AUTHORITRON";
+                }
+                if (specialQuestId == "Quest23a") {
+                    specialQuestDataId = 4988;
+                    specialQuestBotType = "CONSEBOT";
+                }
+
+                if (specialQuestDataId && specialQuestBotType) {
+                    if (!(specialQuestId in quests)) {
+                        quests[specialQuestId] = {
+                            'questId': specialQuestId,
+                            'score': {
+                                'correct': 0,
+                                'attempts': 0
+                            },
+                            'detail': {},
+                            'attemptList': []
+                        }
+                    }
+
+                    var q = quests[specialQuestId];
+
+                    q.score.attempts += 1;
+                    q.score.correct += 1;
+
+                    var detail = "CREATED";
+                    if (!(detail in q.detail)) {
+                        q.detail[detail] = {
+                            'correct': 0,
+                            'attempts': 0
+                        }
+                    }
+                    q.detail[detail].attempts += 1;
+                    q.detail[detail].correct += 1;
+
+                    q.attemptList.push({
+                        "botType": specialQuestBotType,
+                        "attemptType": "DEFENSE",
+                        "success": true,
+                        "dataId": specialQuestDataId
+                    });
+				}
+            }
+
             curQuestId = undefined;
         }
         else {
