@@ -154,7 +154,7 @@ return when.promise(function(resolve, reject) {
 				Give_schemeTrainingEvidence
 
 	        5.  Open_equip
-	            Fuse_core
+	            Fuse_core (additional Fuse_cores use the same Open_equip info)
         */
 
         var quests = this.collate_events_by_quest(results, this.aInfo, function(e, currentQuest, currentQuestId) {
@@ -238,6 +238,7 @@ return when.promise(function(resolve, reject) {
                     fuseCoreIdx[e.eventId].dataId = e.eventData_Value;
                 } else if (e.eventData_Key == "schemeMismatch") {
                     var correct = (e.eventData_Value === "false");
+                    //console.log(currentQuestId + " " + currentBotType + " " + fuseCoreIdx[e.eventId].dataId + " " + fuseCoreIdx[e.eventId].claimId + " " + correct);
                     if (currentBotType) {
                         var ret = {
                             'correct': correct,
@@ -404,7 +405,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 						if (targetedDataIds.length == 1) {
                             correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataIds[0], opponentClaimId, eventIdx[e.eventId]['attackId']);
 						}
-                        
+                        //console.log(currentQuestId + " " + targetedDataIds + " " + opponentClaimId + " " + eventIdx[e.eventId]['attackId'] + " " + correct);
 						return {
 							correct: correct,
 							detail: attack_type,
