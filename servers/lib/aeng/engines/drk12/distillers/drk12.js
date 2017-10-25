@@ -140,6 +140,7 @@ return when.promise(function(resolve, reject) {
         var eventIdx = {};
         var currentBotType;
 	    var currentBotEvo;
+	    var lastQuestId;
 
 	    /* We expect to read events in any of the following sequences:
 	        1.  Quest11
@@ -161,6 +162,14 @@ return when.promise(function(resolve, reject) {
 	        if (!eventIdx[e.eventId]) {
 		        eventIdx[e.eventId] = {};
 	        }
+
+	        // Some quests contain Fuse_core events that have a different result when an Open_equip is missing, so the current bot type
+			// can not be relied upon to get updated between missions.
+	        if (currentQuestId != lastQuestId) {
+	        	currentBotType = undefined;
+	        	currentBotEvo = undefined;
+	        	lastQuestId = currentQuestId;
+			}
 
 	        if (e.eventData_Key == "quest") {
 	            // The 'quest' key is the best identifier for Quest11 eventData, but we don't want to count it for
