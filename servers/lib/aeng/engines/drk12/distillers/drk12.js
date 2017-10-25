@@ -252,8 +252,6 @@ return when.promise(function(resolve, reject) {
                                 'success': correct
 	                        }
                         };
-                        currentBotType = undefined;
-	                    currentBotEvo = undefined;
                         return ret;
                     } else {
                         /* Fuse_core that had no previous open_equip, use claimId,dataId mapping instead */
@@ -406,7 +404,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 						if (targetedDataIds.length == 1) {
                             correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataIds[0], opponentClaimId, eventIdx[e.eventId]['attackId']);
 						}
-                        //console.log(currentQuestId + " " + targetedDataId + " " + opponentClaimId + " " + eventIdx[e.eventId]['attackId'] + " " + correct);
+                        
 						return {
 							correct: correct,
 							detail: attack_type,
