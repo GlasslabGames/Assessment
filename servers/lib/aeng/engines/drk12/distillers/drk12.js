@@ -37,6 +37,7 @@ AA_DRK12.prototype.process = function(userId, gameId, gameSessionId, eventsData)
         "Fuse_core",
         "CoreConstruction_complete",
         "Set_up_battle",
+        "finish_pickupBattle",
 		"Set_up_cqTrainingRound",
         "Launch_attack",
         "Use_backing",
@@ -162,7 +163,7 @@ return when.promise(function(resolve, reject) {
 	        if (!eventIdx[e.eventId]) {
 		        eventIdx[e.eventId] = {};
 	        }
-
+            //console.log(currentQuestId + " " + e.eventId + " " + e.eventName + " " + e.eventData_Key + " " + e.eventData_Value);
 	        // Some quests contain Fuse_core events that have a different result when an Open_equip is missing, so the current bot type
 			// can not be relied upon to get updated between missions.
 	        if (currentQuestId != lastQuestId) {
@@ -373,7 +374,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 				if (!eventIdx[e.eventId]) {
 					eventIdx[e.eventId] = {};
 				}
-
+                //console.log(currentQuestId + " " + e.eventId + " " + e.eventName + " " + e.eventData_Key + " " + e.eventData_Value);
 				if (e.eventName == "Set_up_battle" && setUpBattleKeys.indexOf(e.eventData_Key) >= 0) {
                     if (e.eventId != currentBattleEventId) {
                         currentBattleEventId = e.eventId;
@@ -975,9 +976,7 @@ var _disambiguate_quest_id = function(aInfo, questTag) {
     if (aInfo.questIdDisambiguationMap) {
 		if (aInfo.questIdDisambiguationMap[questTag]) {
             return aInfo.questIdDisambiguationMap[questTag];
-        } else {
-			return null;
-		}
+        }
     }
     return questTag;
 };
@@ -995,6 +994,13 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
     var curQuestId = undefined;
     var curEventId = undefined;
     var i;
+
+    var NOT_IN_INTERSTITIAL_BATTLE = 0;
+    var IN_INTERSTITIAL_BATTLE = 1;
+    var INTERSTITIAL_BATTLE_ENDED = 2;
+
+    var interstitialBattleStatus = NOT_IN_INTERSTITIAL_BATTLE;
+    var botTrainerQuestId = "Quest18";
 
     var unclaimedSkills = {
         'score': {
@@ -1020,6 +1026,27 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
 		// appropriate quest or the multi-event unclaimedSkills buffer.
 		if (e.eventId != curEventId) {
 			curEventId = e.eventId;
+
+			// DRK-496 Per Jerry (game developer), events that occur between Set_up_battle and finish_pickupBattle events during
+			// 'interstitial' quests should be attributed to Bot Trainer. Here we ensure that each new event that takes place
+			// during the interstitial battle is kept track of.
+			if (interstitialBattleStatus === IN_INTERSTITIAL_BATTLE) {
+				curQuestId = botTrainerQuestId;
+                if (!(curQuestId in quests)) {
+                    quests[curQuestId] = {
+                        'questId': curQuestId,
+                        'score': {
+                            'correct': 0,
+                            'attempts': 0
+                        },
+                        'detail': {},
+                        'attemptList': []
+                    }
+                }
+			} else if (interstitialBattleStatus === INTERSTITIAL_BATTLE_ENDED) {
+				interstitialBattleStatus = NOT_IN_INTERSTITIAL_BATTLE;
+				curQuestId = undefined;
+			}
 
 			if (currentUnclaimedEventBuffer.quest) {
 				var questTargetId = currentUnclaimedEventBuffer.quest;
@@ -1070,6 +1097,14 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
             unclaimedSkills.score.attempts = 0;
             unclaimedSkills.detail = {};
             unclaimedSkills.attemptList = [];
+
+            // DRK-496 Per Jerry (game developer), events that occur between Set_up_battle and finish_pickupBattle events during
+            // 'interstitial' quests should be attributed to Bot Trainer. However, it appears from the telemetry that the
+			// finish_pickupBattle does not always occur, so we have to stop attributing new events to Bot Trainer once the
+			// interstitial itself is complete. (Note that this may cause events that occur AFTER the battle but within the
+			// interstitial to be incorrectly attributed to Bot Trainer. Unfortunately we don't have enough information to
+			// to discount them and must rely on the finish_pickupBattle event being present for full data correctness.)
+            interstitialBattleStatus = NOT_IN_INTERSTITIAL_BATTLE;
         }
         else if (e.eventName == "Quest_complete" || e.eventName == "Quest_cancel") {
             if (e.eventData_Key == "questId") {
@@ -1133,6 +1168,12 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
             var q = undefined;
             if (curQuestId) {
             	q = quests[curQuestId];
+
+                // DRK-496 Per Jerry (game developer), events that occur between Set_up_battle and finish_pickupBattle events during
+                // 'interstitial' quests should be attributed to Bot Trainer.
+            	if (interstitialBattleStatus === IN_INTERSTITIAL_BATTLE && e.eventName === 'finish_pickupBattle') {
+                    interstitialBattleStatus = INTERSTITIAL_BATTLE_ENDED;
+				}
 			} else {
             	q = currentUnclaimedEventBuffer;
 
@@ -1141,6 +1182,13 @@ AA_DRK12.prototype.collate_events_by_quest = function(events, aInfo, callback) {
                 if (e.eventData_Key == "quest" || e.eventData_Key == "questId") {
                     currentUnclaimedEventBuffer.quest = _disambiguate_quest_id(aInfo, e.eventData_Value);
                 }
+
+                // DRK-496 Per Jerry (game developer), events that occur between Set_up_battle and finish_pickupBattle events during
+                // 'interstitial' quests should be attributed to Bot Trainer.
+                if (currentUnclaimedEventBuffer.quest === 'interstitial' && e.eventName === 'Set_up_battle') {
+                    interstitialBattleStatus = IN_INTERSTITIAL_BATTLE;
+                    currentUnclaimedEventBuffer.quest = botTrainerQuestId;
+				}
             }
 
             var attempts = callback(e, q, curQuestId);
