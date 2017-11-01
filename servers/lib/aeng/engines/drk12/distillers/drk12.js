@@ -804,21 +804,26 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
 					}
 		        }
 
-			    if (e.eventName == "Use_backing" && e.eventData_Key == "playerTurn") {
-				    eventIdx[e.eventId][e.eventData_Key] = (e.eventData_Value == "true");
-			    }
+                if (e.eventName == "Use_backing" && e.eventData_Key == "botName") {
+                    eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
+                }
+
+                if (e.eventName == "Use_backing" && e.eventData_Key == "playerTurn") {
+                    eventIdx[e.eventId][e.eventData_Key] = (e.eventData_Value == "true");
+                }
 
                 if (e.eventName == "Use_backing" && e.eventData_Key == "backingId") {
                     eventIdx[e.eventId][e.eventData_Key] = e.eventData_Value;
                 }
 
-			    if (e.eventName == "Use_backing" && e.eventData_Key == "targetCqId") {
-				    var playerTurn = eventIdx[e.eventId]['playerTurn'];
+                if (e.eventName == "Use_backing" && e.eventData_Key == "targetCqId") {
+                    var botName = eventIdx[e.eventId]['botName'];
+                    var playerTurn = eventIdx[e.eventId]['playerTurn'];
                     var backingId = eventIdx[e.eventId]['backingId'];
-				    var attackId = e.eventData_Value;
+                    var attackId = e.eventData_Value;
 
-				    // Per Slack conversation with Paula, we should ignore Use_backing events with playerTurn: true
-				    if (playerTurn == false) {
+                    // Per Slack conversation with Paula, we should ignore Use_backing events with playerTurn: true
+                    if (playerTurn == false) {
                         var botInfoMap = {};
                         for (var botEventId in currentBotTypeToEvoMap) {
                             var botInfo = currentBotTypeToEvoMap[botEventId];
@@ -831,10 +836,9 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
                         var attemptInfo = [];
                         for (var i = 1; i <= 3; i++) {
                             var playerBotPrefix = "playerBot" + i;
-                            var botName;
                             if (currentPlayerBotInfo[playerBotPrefix + "Name"]) {
-                                botName = currentPlayerBotInfo[playerBotPrefix + "Name"];
-                                if (botInfoMap[botName] &&
+                                if (currentPlayerBotInfo[playerBotPrefix + "Name"] == botName &&
+                                    botInfoMap[botName] &&
                                     botInfoMap[botName].type &&
                                     botInfoMap[botName].evo >= 2) {
                                     var currentAttemptInfo = {
@@ -856,7 +860,7 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
                                     if (numBackings > 0) {
                                         currentAttemptInfo.backingId = backingId;
                                         currentAttemptInfo.success =
-											(dataId && _lookup_usingbacking_success(this.aInfo, dataId, backingId, currentQuestId, attackId));
+                                            (dataId && _lookup_usingbacking_success(this.aInfo, dataId, backingId, currentQuestId, attackId));
                                         attemptInfo.push(currentAttemptInfo);
                                     }
                                 }
@@ -873,7 +877,7 @@ AA_DRK12.prototype.using_backing = function(engine, db) {
                         }
                         return ret;
                     }
-			    }
+                }
 		    }.bind(this));
 	        var questList = _.values(quests);
 
