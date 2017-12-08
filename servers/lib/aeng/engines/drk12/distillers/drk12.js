@@ -413,7 +413,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 
 						var correct = eventIdx[e.eventId]['success'];
 						if (targetedDataIds.length == 1) {
-                            correct = _lookup_data_claim_attack_correctness(this.aInfo, targetedDataIds[0], opponentClaimId, eventIdx[e.eventId]['attackId']);
+                            correct = _lookup_data_claim_attack_correctness(this.aInfo, correct, targetedDataIds[0], opponentClaimId, eventIdx[e.eventId]['attackId']);
 						}
                         //console.log(currentQuestId + " " + targetedDataIds + " " + opponentClaimId + " " + eventIdx[e.eventId]['attackId'] + " " + correct);
 						return {
@@ -466,7 +466,7 @@ AA_DRK12.prototype.supporting_claims_with_evidence = function(engine, db) {
 	}.bind(this));
 };
 
-var _lookup_data_claim_attack_correctness = function(aInfo, dataId, claimId, attackId) {
+var _lookup_data_claim_attack_correctness = function(aInfo, telemetrySuccessValue, dataId, claimId, attackId) {
     var map = aInfo.dataClaimAttackMap;
 
     var strDataId = ""+dataId;
@@ -474,7 +474,9 @@ var _lookup_data_claim_attack_correctness = function(aInfo, dataId, claimId, att
 
     if (strDataId in map && strClaimId in map[strDataId]) {
         return map[strDataId][strClaimId] === parseInt(attackId);
-    }
+    } else {
+    	return telemetrySuccessValue;
+	}
 };
 
 
