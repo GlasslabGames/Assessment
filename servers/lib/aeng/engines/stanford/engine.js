@@ -140,7 +140,12 @@ StanfordEngine.prototype.processEventRules = function(userId, gameId, gameSessio
                             value = JSON.stringify(value);
                         }
                         if(!_.isString(value)) {
-                            value = value.toString();
+                            try {
+                                value = value.toString();
+                            }
+                            catch(e) {
+                                value = "";
+                            }
                         }
 
                         // Print the data for debugging

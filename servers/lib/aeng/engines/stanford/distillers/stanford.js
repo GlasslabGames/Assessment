@@ -27,9 +27,11 @@ TA_Stanford.prototype.process = function(userId, gameId, gameSessionId, eventsDa
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
-        //"mapQuality",   // currentMap
-        //"levelID",      // currentMap
-        //"classCode",    // currentMap
+        "mapQuality",   // currentMap
+        "levelID",      // currentMap
+        "classCode",    // currentMap
+        "timeStamp",    // currentMap
+        "currentTopic", // currentMap
         "map"           // currentMap
     ];
 
@@ -54,13 +56,16 @@ return when.promise(function(resolve, reject) {
             return;
         }
 
-        var mapData = [];
+        var mapData = {};
 
         for (var i=0; i < results.length; i++) {
             var e = results[i];
             
-            if (e.eventName == "currentMap" && e.eventData_Key == "map") {
-                mapData.push(e.eventData_Value);
+            if (e.eventName == "currentMap") {
+                if (!mapData[e.eventId]) {
+                    mapData[e.eventId] = {};
+                }
+                mapData[e.eventId][e.eventData_Key] = e.eventData_Value;
             }
         }
 
