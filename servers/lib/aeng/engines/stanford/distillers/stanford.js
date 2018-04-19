@@ -66,6 +66,8 @@ return when.promise(function(resolve, reject) {
             if (e.eventName == "currentMap") {
                 if (!mapData[e.eventId]) {
                     mapData[e.eventId] = {};
+                    mapData[e.eventId]["gameSessionId"] = e.gameSessionId;
+                    mapData[e.eventId]["gameLevel"] = e.gameLevel;
                 }
                 mapData[e.eventId][e.eventData_Key] = e.eventData_Value;
             }
