@@ -27,12 +27,14 @@ TA_Stanford.prototype.process = function(userId, gameId, gameSessionId, eventsDa
     ];
     // always include one or more keys for a give type above
     var filterEventKeys = [
-        "mapQuality",   // currentMap
-        "levelID",      // currentMap
-        "classCode",    // currentMap
-        "timeStamp",    // currentMap
-        "currentTopic", // currentMap
-        "map"           // currentMap
+        "all"
+        // "mapQuality",   // currentMap
+        // "levelID",      // currentMap
+        // "classCode",    // currentMap
+        // "timeStamp",    // currentMap
+        // "currentTopic", // currentMap
+        // "galaxy",       // currentMap
+        // "map"           // currentMap
     ];
 
     return this.engine.processEventRules(userId, gameId, gameSessionId, eventsData, filterEventTypes, filterEventKeys, [
